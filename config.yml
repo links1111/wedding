@@ -1,0 +1,35 @@
+# 婚礼请柬应用配置
+# 环境变量优先级高于此文件中的同名配置（大写下划线格式，如 PORT、DB_PATH）
+
+server:
+  port: "8080"
+
+database:
+  path: "./data/wedding.db"
+
+admin:
+  user: "admin"
+  pass: "lucky123"
+  jwt_secret: ""
+
+wedding:
+  groom_name: "李祥"
+  bride_name: "王羚羚"
+  wedding_date: "2026-10-03"
+  wedding_venue: "麓湖·云栖草坪"
+
+paths:
+  static_dir: "./web/static"
+  template_dir: "./web/templates"
+
+log:
+  # 日志级别: debug / info / warn / error
+  level: "info"
+  # 日志文件路径，留空则只输出到控制台
+  file: "./logs/app.log"
+  # 日志文件最大大小（MB）
+  max_size: 10
+  # 保留的旧日志文件数量
+  max_backups: 5
+  # 日志文件最大保留天数
+  max_age: 30

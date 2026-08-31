@@ -1,0 +1,30 @@
+services:
+  wedding:
+    build: .
+    image: wedding-invitation:latest
+    container_name: wedding
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # ⚠️ 生产环境请通过 .env 或 -e 覆盖以下敏感项
+      ADMIN_USER: admin
+      ADMIN_PASS: "请修改为强密码"
+      JWT_SECRET: "请修改为随机长字符串"
+      GROOM_NAME: "林予"
+      BRIDE_NAME: "沈漾"
+      WEDDING_DATE: "2026-08-30"
+      WEDDING_VENUE: "麓湖·云栖草坪"
+      PORT: "8080"
+      TZ: "Asia/Shanghai"
+    volumes:
+      # 持久化 SQLite 数据库，容器重建后数据不丢失
+      - wedding-data:/app/data
+      # 静态资源映射：将宿主机图片目录映射到容器内 /app/web/static/images
+      # 把你的婚礼照片放到 ./web/static/images/ 下，文件名 slide1.jpg ~ slide4.jpg
+      - ./web/static/images:/app/web/static/images
+      # 模板映射（可选）：修改 HTML 后无需重新构建镜像
+      - ./web/templates:/app/web/templates
+
+volumes:
+  wedding-data:

@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼请柬 · 管理后台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c9a96e;
+            --gold-light: #e0c896;
+            --gold-dark: #a8895a;
+            --bg: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --bg-hover: #16213e;
+            --text: #f5f5f5;
+            --text-muted: #8892b0;
+            --text-dim: #495670;
+            --border: rgba(201,169,110,0.15);
+            --green: #64ffda;
+            --red: #ff6b6b;
+            --yellow: #ffd93d;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Inter', 'Noto Serif SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* 登录页 */
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 40px 35px;
+            width: 360px;
+            max-width: 90vw;
+        }
+
+        .login-title {
+            text-align: center;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--gold-light);
+            margin-bottom: 8px;
+            letter-spacing: 4px;
+        }
+
+        .login-sub {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        .login-input {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 12px 16px;
+            color: var(--text);
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus { border-color: var(--gold); }
+
+        .login-btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            border: none;
+            border-radius: 4px;
+            color: #0f0f1a;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 2px;
+        }
+
+        .login-btn:hover { box-shadow: 0 4px 20px rgba(201,169,110,0.3); }
+
+        .login-error {
+            color: var(--red);
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .login-error.show { display: block; }
+
+        /* 管理界面 */
+        .admin-layout { display: none; }
+        .admin-layout.show { display: block; }
+
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 30px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 18px;
+            color: var(--gold-light);
+            letter-spacing: 3px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .content { padding: 30px; max-width: 1200px; margin: 0 auto; }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--gold-light);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* 趋势图 */
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .chart-title {
+            font-size: 15px;
+            color: var(--text);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 120px;
+            padding-top: 10px;
+        }
+
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-bar {
+            width: 100%;
+            max-width: 40px;
+            background: linear-gradient(180deg, var(--gold), var(--gold-dark));
+            border-radius: 3px 3px 0 0;
+            min-height: 2px;
+            transition: height 0.5s ease;
+            position: relative;
+        }
+
+        .chart-bar:hover::after {
+            content: attr(data-count);
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: var(--gold-light);
+            white-space: nowrap;
+        }
+
+        .chart-label {
+            font-size: 10px;
+            color: var(--text-dim);
+        }
+
+        /* Tab */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 10px 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: var(--gold-light);
+            border-bottom-color: var(--gold);
+        }
+
+        .tab:hover { color: var(--text); }
+
+        /* 表格 */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-actions {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .export-btn {
+            background: none;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            background: rgba(201,169,110,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+        }
+
+        td {
+            padding: 12px 20px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text);
+        }
+
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-yes { background: rgba(100,255,218,0.1); color: var(--green); }
+        .badge-no { background: rgba(255,107,107,0.1); color: var(--red); }
+        .badge-unknown { background: rgba(255,217,61,0.1); color: var(--yellow); }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .search-input {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 14px;
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            width: 200px;
+        }
+
+        .search-input:focus { border-color: var(--gold); }
+
+        @media (max-width: 768px) {
+            .content { padding: 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-value { font-size: 24px; }
+            th, td { padding: 10px 12px; font-size: 12px; }
+            .search-input { width: 120px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录页 -->
+    <div class="login-page" id="loginPage">
+        <div class="login-card">
+            <div class="login-title">管理后台</div>
+            <div class="login-sub">Wedding Admin</div>
+            <div class="login-error" id="loginError">用户名或密码错误</div>
+            <input type="text" class="login-input" id="loginUser" placeholder="用户名" autocomplete="username">
+            <input type="password" class="login-input" id="loginPass" placeholder="密码" autocomplete="current-password">
+            <button class="login-btn" id="loginBtn">登 录</button>
+        </div>
+    </div>
+
+    <!-- 管理界面 -->
+    <div class="admin-layout" id="adminLayout">
+        <div class="header">
+            <div class="header-title">婚礼请柬 · 管理后台</div>
+            <div class="header-right">
+                <button class="logout-btn" id="logoutBtn">退出登录</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 统计卡片 -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-label">总访问量</div>
+                    <div class="stat-value" id="statTotalVisits">-</div>
+                    <div class="stat-sub">Total Visits</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">今日访问</div>
+                    <div class="stat-value" id="statTodayVisits">-</div>
+                    <div class="stat-sub">Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">独立访客</div>
+                    <div class="stat-value" id="statUniqueVisitors">-</div>
+                    <div class="stat-sub">Unique IPs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">RSVP 回复</div>
+                    <div class="stat-value" id="statTotalRSVP">-</div>
+                    <div class="stat-sub">Total RSVP</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">出席人数</div>
+                    <div class="stat-value" id="statTotalHeadcount">-</div>
+                    <div class="stat-sub">Attending Guests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">缺席人数</div>
+                    <div class="stat-value" id="statNotAttending">-</div>
+                    <div class="stat-sub">Not Attending</div>
+                </div>
+            </div>
+
+            <!-- 趋势图 -->
+            <div class="chart-card">
+                <div class="chart-title">近7天访问趋势</div>
+                <div class="chart-bars" id="chartBars"></div>
+            </div>
+
+            <!-- Tab 切换 -->
+            <div class="tabs">
+                <div class="tab active" data-tab="guests">来宾列表</div>
+                <div class="tab" data-tab="visits">访问记录</div>
+            </div>
+
+            <!-- 来宾列表 -->
+            <div class="table-card" id="guestsTab">
+                <div class="table-actions">
+                    <input type="text" class="search-input" id="guestSearch" placeholder="搜索姓名/电话...">
+                    <a href="/api/admin/guests/export" class="export-btn">导出 CSV</a>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>电话</th>
+                            <th>出席</th>
+                            <th>人数</th>
+                            <th>留言</th>
+                            <th>提交时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guestsBody"></tbody>
+                </table>
+            </div>
+
+            <!-- 访问记录 -->
+            <div class="table-card" id="visitsTab" style="display:none;">
+                <div class="table-actions">
+                    <input type="text" class="search-input" id="visitSearch" placeholder="搜索 IP/姓名...">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>IP</th>
+                            <th>访客</th>
+                            <th>设备</th>
+                            <th>来源</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="visitsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 检查登录状态
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                if (res.status === 200) {
+                    showAdmin();
+                }
+            } catch(e) {}
+        }
+        checkAuth();
+
+        // 登录
+        const loginBtn = document.getElementById('loginBtn');
+        loginBtn.addEventListener('click', doLogin);
+        document.getElementById('loginPass').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        async function doLogin() {
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
+            if (!username || !password) return;
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = '登录中...';
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                const json = await res.json();
+                if (json.ok) {
+                    document.getElementById('loginError').classList.remove('show');
+                    showAdmin();
+                } else {
+                    document.getElementById('loginError').classList.add('show');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '登 录';
+                }
+            } catch(e) {
+                document.getElementById('loginError').textContent = '网络错误';
+                document.getElementById('loginError').classList.add('show');
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登 录';
+            }
+        }
+
+        // 退出
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await fetch('/api/admin/logout', {method: 'POST'});
+            location.reload();
+        });
+
+        function showAdmin() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('adminLayout').classList.add('show');
+            loadStats();
+            loadGuests();
+            loadVisits();
+        }
+
+        // 加载统计
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                const json = await res.json();
+                if (json.ok) {
+                    const d = json.data;
+                    document.getElementById('statTotalVisits').textContent = d.total_visits || 0;
+                    document.getElementById('statTodayVisits').textContent = d.today_visits || 0;
+                    document.getElementById('statUniqueVisitors').textContent = d.unique_visitors || 0;
+                    document.getElementById('statTotalRSVP').textContent = d.total_rsvp || 0;
+                    document.getElementById('statTotalHeadcount').textContent = d.total_headcount || 0;
+                    document.getElementById('statNotAttending').textContent = d.not_attending_count || 0;
+                    renderChart(d.visit_trend || []);
+                }
+            } catch(e) {}
+        }
+
+        // 渲染趋势图
+        function renderChart(trend) {
+            const container = document.getElementById('chartBars');
+            container.innerHTML = '';
+            const max = Math.max(...trend.map(t => t.count), 1);
+            trend.forEach(item => {
+                const group = document.createElement('div');
+                group.className = 'chart-bar-group';
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = ((item.count / max) * 100) + '%';
+                bar.setAttribute('data-count', item.count);
+                const label = document.createElement('div');
+                label.className = 'chart-label';
+                label.textContent = item.date.substring(5); // MM-DD
+                group.appendChild(bar);
+                group.appendChild(label);
+                container.appendChild(group);
+            });
+        }
+
+        // 来宾数据
+        let allGuests = [];
+        async function loadGuests() {
+            try {
+                const res = await fetch('/api/admin/guests');
+                const json = await res.json();
+                if (json.ok) {
+                    allGuests = json.data || [];
+                    renderGuests(allGuests);
+                }
+            } catch(e) {}
+        }
+
+        function renderGuests(guests) {
+            const body = document.getElementById('guestsBody');
+            if (guests.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="empty">暂无来宾回复</td></tr>';
+                return;
+            }
+            body.innerHTML = guests.map(g => {
+                let badge = '<span class="badge badge-unknown">未确认</span>';
+                if (g.attending === 1) badge = '<span class="badge badge-yes">出席</span>';
+                else if (g.attending === 2) badge = '<span class="badge badge-no">缺席</span>';
+                const msg = g.message ? escapeHtml(g.message) : '<span style="color:var(--text-dim)">—</span>';
+                return `<tr>
+                    <td>${escapeHtml(g.name)}</td>
+                    <td>${g.phone ? escapeHtml(g.phone) : '<span style="color:var(--text-dim)">—</span>'}</td>
+                    <td>${badge}</td>
+                    <td>${g.attending === 1 ? g.headcount : '—'}</td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(g.message||'')}">${msg}</td>
+                    <td style="color:var(--text-muted);font-size:12px">${formatTime(g.created_at)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // 访问记录
+        let allVisits = [];
+        async function loadVisits() {
+            try {
+                const res = await fetch('/api/admin/visits');
+                const json = await res.json();
+                if (json.ok) {
+                    allVisits = json.data || [];
+                    renderVisits(allVisits);
+                }
+            } catch(e) {}
+        }
+
+        function renderVisits(visits) {
+            const body = document.getElementById('visitsBody');
+            if (visits.length === 0) {
+                body.innerHTML = '<tr><td colspan="5" class="empty">暂无访问记录</td></tr>';
+                return;
+            }
+            body.innerHTML = visits.map(v => {
+                const ua = v.user_agent ? escapeHtml(v.user_agent.substring(0, 50)) : '<span style="color:var(--text-dim)">—</span>';
+                const ref = v.referer ? escapeHtml(v.referer.substring(0, 40)) : '<span style="color:var(--text-dim)">直接访问</span>';
+                return `<tr>
+                    <td style="font-family:monospace;font-size:13px">${escapeHtml(v.ip)}</td>
+                    <td>${v.visitor_name ? escapeHtml(v.visitor_name) : '<span style="color:var(--text-dim)">匿名</span>'}</td>
+                    <td style="font-size:12px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(v.user_agent||'')}">${ua}</td>
+                    <td style="font-size:12px;color:var(--text-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis">${ref}</td>
+                    <td style="color:var(--text-muted);font-size:12px">${formatTime(v.visited_at)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Tab 切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const target = tab.dataset.tab;
+                document.getElementById('guestsTab').style.display = target === 'guests' ? '' : 'none';
+                document.getElementById('visitsTab').style.display = target === 'visits' ? '' : 'none';
+            });
+        });
+
+        // 搜索
+        document.getElementById('guestSearch').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = allGuests.filter(g =>
+                g.name.toLowerCase().includes(q) || (g.phone && g.phone.includes(q))
+            );
+            renderGuests(filtered);
+        });
+
+        document.getElementById('visitSearch').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = allVisits.filter(v =>
+                v.ip.includes(q) || (v.visitor_name && v.visitor_name.toLowerCase().includes(q))
+            );
+            renderVisits(filtered);
+        });
+
+        // 工具函数
+        function escapeHtml(s) {
+            if (!s) return '';
+            return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function formatTime(t) {
+            if (!t) return '—';
+            return t.replace('T',' ').replace('Z','').substring(0, 19);
+        }
+
+        // 定时刷新统计
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>
