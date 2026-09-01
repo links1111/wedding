@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -61,6 +62,8 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	adminAuth := r.Group("/api/admin", h.authMiddleware())
 	adminAuth.GET("/stats", h.getStats)
 	adminAuth.GET("/guests", h.getGuests)
+	adminAuth.PUT("/guests/:id", h.updateGuest)
+	adminAuth.DELETE("/guests/:id", h.deleteGuest)
 	adminAuth.GET("/visits", h.getVisits)
 	adminAuth.GET("/guests/export", h.exportGuests)
 	adminAuth.GET("/settings", h.getSettings)
@@ -158,39 +161,46 @@ func (h *Handler) recordVisit(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
 }
 
+// guestInput 来宾字段（RSVP 提交与后台编辑共用）
+type guestInput struct {
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	Attending int    `json:"attending"`
+	Headcount int    `json:"headcount"`
+	Message   string `json:"message"`
+}
+
+// validateGuestInput 校验来宾字段并规范化（trim 姓名 / 默认人数 / 截断留言）
+func validateGuestInput(in *guestInput) error {
+	in.Name = strings.TrimSpace(in.Name)
+	if in.Name == "" || len(in.Name) > 50 {
+		return errors.New("姓名不能为空且不超过50字")
+	}
+	if len(in.Phone) > 20 {
+		return errors.New("电话号码过长")
+	}
+	if in.Attending < 0 || in.Attending > 2 {
+		return errors.New("出席状态无效")
+	}
+	if in.Headcount < 1 || in.Headcount > 20 {
+		in.Headcount = 1
+	}
+	if len(in.Message) > 500 {
+		in.Message = in.Message[:500]
+	}
+	return nil
+}
+
 // submitRSVP 提交 RSVP
 func (h *Handler) submitRSVP(c *gin.Context) {
-	var req struct {
-		Name      string `json:"name"`
-		Phone     string `json:"phone"`
-		Attending int    `json:"attending"`
-		Headcount int    `json:"headcount"`
-		Message   string `json:"message"`
-	}
+	var req guestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
 		return
 	}
-
-	// 输入校验
-	req.Name = strings.TrimSpace(req.Name)
-	if req.Name == "" || len(req.Name) > 50 {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "姓名不能为空且不超过50字"})
+	if err := validateGuestInput(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
 		return
-	}
-	if len(req.Phone) > 20 {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "电话号码过长"})
-		return
-	}
-	if req.Attending < 0 || req.Attending > 2 {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "出席状态无效"})
-		return
-	}
-	if req.Headcount < 1 || req.Headcount > 20 {
-		req.Headcount = 1
-	}
-	if len(req.Message) > 500 {
-		req.Message = req.Message[:500]
 	}
 
 	ip := clientIP(c)
@@ -332,6 +342,66 @@ func (h *Handler) getGuests(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": guests})
+}
+
+// updateGuest 更新来宾记录
+func (h *Handler) updateGuest(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "无效的 ID"})
+		return
+	}
+	var req guestInput
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
+		return
+	}
+	if err := validateGuestInput(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+
+	var guest models.Guest
+	if err := h.DB.First(&guest, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "记录不存在"})
+		return
+	}
+	if err := h.DB.Model(&guest).Updates(map[string]interface{}{
+		"name":      req.Name,
+		"phone":     req.Phone,
+		"attending": req.Attending,
+		"headcount": req.Headcount,
+		"message":   req.Message,
+	}).Error; err != nil {
+		log.Printf("更新来宾失败 (id=%d): %v", id, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存失败"})
+		return
+	}
+
+	log.Printf("管理员更新来宾: %s (ID: %d)", req.Name, id)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
+// deleteGuest 删除来宾记录
+func (h *Handler) deleteGuest(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "无效的 ID"})
+		return
+	}
+	var guest models.Guest
+	if err := h.DB.First(&guest, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "记录不存在"})
+		return
+	}
+	if err := h.DB.Delete(&guest).Error; err != nil {
+		log.Printf("删除来宾失败 (id=%d): %v", id, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
+		return
+	}
+
+	log.Printf("管理员删除来宾: %s (ID: %d)", guest.Name, id)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
 }
 
 // getVisits 获取访问记录
