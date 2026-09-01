@@ -35,6 +35,8 @@ const (
 	KeyFooter3       = "footer3"
 	KeyHandwrite     = "handwrite"
 	KeyChineseTitle  = "chinese_title"
+	KeyMapLink       = "map_link"
+	KeyMusicURL      = "music_url"
 
 	// 卡片样式
 	KeyCardTransparency = "card_transparency"
@@ -72,6 +74,8 @@ var textKeys = map[string]int{
 	KeyFooter3:       50,
 	KeyHandwrite:     100,
 	KeyChineseTitle:  50,
+	KeyMapLink:       500,
+	KeyMusicURL:      500,
 }
 
 // rangeKey 数值区间设置键
@@ -115,6 +119,8 @@ func defaultSettings(w config.WeddingConfig) map[string]string {
 		KeyFooter3:       "成都",
 		KeyHandwrite:     "with love, always.",
 		KeyChineseTitle:  "邀 请 函",
+		KeyMapLink:       "",
+		KeyMusicURL:      "/static/music/bgm.mp3",
 
 		KeyCardTransparency: "15",
 		KeyGlassEnabled:     "true",

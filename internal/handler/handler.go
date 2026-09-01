@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"wedding-invitation/internal/audio"
 	"wedding-invitation/internal/auth"
 	"wedding-invitation/internal/images"
 	"wedding-invitation/internal/models"
@@ -67,6 +68,9 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	adminAuth.GET("/images", h.listImages)
 	adminAuth.POST("/images", h.uploadImage)
 	adminAuth.DELETE("/images/:name", h.deleteImage)
+	adminAuth.GET("/audio", h.listAudio)
+	adminAuth.POST("/audio", h.uploadAudio)
+	adminAuth.DELETE("/audio/:name", h.deleteAudio)
 }
 
 // --- 公开 API ---
@@ -93,6 +97,8 @@ func (h *Handler) getInvitation(c *gin.Context) {
 			"handwrite": all[settings.KeyHandwrite],
 			"countdown": h.calcCountdown(all[settings.KeyWeddingDate]),
 			"slides":    h.slides(),
+			"map_link":  all[settings.KeyMapLink],
+			"music_url": all[settings.KeyMusicURL],
 			"style": gin.H{
 				"card_transparency": all[settings.KeyCardTransparency],
 				"glass_enabled":     all[settings.KeyGlassEnabled],
@@ -525,6 +531,113 @@ func (h *Handler) deleteImage(c *gin.Context) {
 		return
 	}
 	log.Printf("管理员删除背景图片: %s", name)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
+// --- 背景音乐管理 ---
+
+// musicDir 背景音乐目录
+func (h *Handler) musicDir() string {
+	return filepath.Join(h.StaticDir, "music")
+}
+
+// listAudio 列出背景音乐文件
+func (h *Handler) listAudio(c *gin.Context) {
+	names, err := audio.List(h.musicDir())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取音乐目录失败"})
+		return
+	}
+	items := make([]gin.H, 0, len(names))
+	for _, n := range names {
+		items = append(items, gin.H{"name": n, "url": "/static/music/" + n})
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": items})
+}
+
+// uploadAudio 上传背景音乐到 static/music
+func (h *Handler) uploadAudio(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请选择要上传的音频"})
+		return
+	}
+	defer file.Close()
+
+	name, err := audio.SanitizeName(header.Filename)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	if header.Size > maxUploadBytes {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "音频大小不能超过 20MB"})
+		return
+	}
+
+	dir := h.musicDir()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建音乐目录失败"})
+		return
+	}
+
+	// 同名文件已存在时自动追加序号
+	dst := name
+	for i := 2; ; i++ {
+		p, jerr := audio.SafeJoin(dir, dst)
+		if jerr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": jerr.Error()})
+			return
+		}
+		if _, serr := os.Stat(p); os.IsNotExist(serr) {
+			break
+		}
+		ext := filepath.Ext(name)
+		dst = strings.TrimSuffix(name, ext) + "_" + strconv.Itoa(i) + ext
+	}
+
+	dstPath, err := audio.SafeJoin(dir, dst)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	out, err := os.Create(dstPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存音频失败"})
+		return
+	}
+	defer out.Close()
+	if _, err := io.Copy(out, file); err != nil {
+		_ = os.Remove(dstPath)
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存音频失败"})
+		return
+	}
+
+	log.Printf("管理员上传背景音乐: %s", dst)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/music/" + dst}})
+}
+
+// deleteAudio 删除背景音乐
+func (h *Handler) deleteAudio(c *gin.Context) {
+	name := c.Param("name")
+	if !audio.IsAllowedAudio(name) {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
+		return
+	}
+	p, err := audio.SafeJoin(h.musicDir(), name)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
+		return
+	}
+	if err := os.Remove(p); err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "文件不存在"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
+		return
+	}
+	log.Printf("管理员删除背景音乐: %s", name)
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
 }
 

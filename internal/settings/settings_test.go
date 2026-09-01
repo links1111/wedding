@@ -162,6 +162,31 @@ func TestTimeFields(t *testing.T) {
 	}
 }
 
+func TestMapLinkAndMusicURL(t *testing.T) {
+	s := newTestStore(t, nil)
+	// 默认值
+	if got := s.Get(KeyMapLink); got != "" {
+		t.Errorf("默认导航链接 = %q, 期望空", got)
+	}
+	if got := s.Get(KeyMusicURL); got != "/static/music/bgm.mp3" {
+		t.Errorf("默认音乐地址 = %q, 期望 /static/music/bgm.mp3", got)
+	}
+	// 设置与回读
+	if err := s.Set(KeyMapLink, "https://uri.amap.com/search?keyword=test"); err != nil {
+		t.Errorf("Set(map_link) 报错: %v", err)
+	}
+	if err := s.Set(KeyMusicURL, "https://example.com/bgm.mp3"); err != nil {
+		t.Errorf("Set(music_url) 报错: %v", err)
+	}
+	if got := s.Get(KeyMapLink); got != "https://uri.amap.com/search?keyword=test" {
+		t.Errorf("导航链接 = %q", got)
+	}
+	// 超长应报错
+	if err := s.Set(KeyMusicURL, strings.Repeat("a", 501)); err == nil {
+		t.Error("超长 music_url 应报错")
+	}
+}
+
 func TestValidate(t *testing.T) {
 	if err := Validate(KeyGlassBlur, "20"); err != nil {
 		t.Errorf("Validate 合法值应通过: %v", err)

@@ -453,6 +453,12 @@
             cursor: pointer;
         }
         .img-card .img-del:hover { background: rgba(255,107,107,0.1); }
+        .img-card .audio-actions { display: flex; border-top: 1px solid var(--border); }
+        .img-card .audio-actions button { flex: 1; border: none; background: none; padding: 7px; font-size: 12px; cursor: pointer; }
+        .img-card .audio-actions .use { color: var(--gold); }
+        .img-card .audio-actions .use:hover { background: rgba(201,169,110,0.1); }
+        .img-card .audio-actions .del { color: var(--red); border-left: 1px solid var(--border); }
+        .img-card .audio-actions .del:hover { background: rgba(255,107,107,0.1); }
         .empty-tip { font-size: 13px; color: var(--text-dim); padding: 12px 0; }
         .upload-status { width: 100%; font-size: 13px; color: var(--green); min-height: 18px; }
 
@@ -656,6 +662,8 @@
                         <div class="form-field"><label>底部文案 2</label><input type="text" id="setFooter2" maxlength="50"></div>
                         <div class="form-field"><label>底部文案 3</label><input type="text" id="setFooter3" maxlength="50"></div>
                         <div class="form-field"><label>手写寄语</label><input type="text" id="setHandwrite" maxlength="100"></div>
+                        <div class="form-field"><label>导航链接（选填）</label><input type="text" id="setMapLink" maxlength="500" placeholder="留空则按地点跳高德地图"></div>
+                        <div class="form-field"><label>背景音乐地址</label><input type="text" id="setMusicUrl" maxlength="500" placeholder="/static/music/bgm.mp3 或外链"></div>
                     </div>
                 </div>
 
@@ -719,6 +727,18 @@
                     <div class="img-grid" id="imageGrid"></div>
                     <div class="empty-tip" id="imageEmpty" style="display:none;">暂无背景图片</div>
                     </div><!-- /背景图片 form-card -->
+
+                    <!-- 背景音乐 -->
+                    <div class="form-card" style="margin-top:30px;">
+                        <h3>背景音乐</h3>
+                        <div class="upload-row">
+                            <input type="file" class="upload-input" id="audioFile" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,audio/flac">
+                            <button class="upload-btn" id="audioUploadBtn">上传音乐</button>
+                            <span class="upload-hint">支持 mp3 / wav / ogg / m4a / aac / flac，不超过 20MB。上传后点下方"使用"设为背景音乐，或在"背景音乐地址"直接填 URL。</span>
+                        </div>
+                        <div class="img-grid" id="audioGrid"></div>
+                        <div class="empty-tip" id="audioEmpty" style="display:none;">暂无上传的音乐文件</div>
+                    </div><!-- /背景音乐 form-card -->
                 </div><!-- /table-card -->
             </div><!-- /view-settings -->
             </div><!-- /main-content -->
@@ -906,6 +926,7 @@
                 if (view === 'settings') {
                     loadSettings();
                     loadImages();
+                    loadAudio();
                 }
             });
         });
@@ -938,6 +959,8 @@
                 document.getElementById('setFooter2').value = settingsData.footer2 || '';
                 document.getElementById('setFooter3').value = settingsData.footer3 || '';
                 document.getElementById('setHandwrite').value = settingsData.handwrite || '';
+                document.getElementById('setMapLink').value = settingsData.map_link || '';
+                document.getElementById('setMusicUrl').value = settingsData.music_url || '';
                 document.getElementById('setTransparency').value = settingsData.card_transparency || '15';
                 document.getElementById('setTransparencyVal').textContent = (settingsData.card_transparency || '15') + '%';
                 document.getElementById('setGlassEnabled').checked = settingsData.glass_enabled !== 'false';
@@ -972,6 +995,8 @@
                 footer2: document.getElementById('setFooter2').value.trim(),
                 footer3: document.getElementById('setFooter3').value.trim(),
                 handwrite: document.getElementById('setHandwrite').value.trim(),
+                map_link: document.getElementById('setMapLink').value.trim(),
+                music_url: document.getElementById('setMusicUrl').value.trim(),
                 card_transparency: document.getElementById('setTransparency').value,
                 glass_enabled: document.getElementById('setGlassEnabled').checked ? 'true' : 'false',
                 glass_blur: document.getElementById('setGlassBlur').value,
@@ -1094,6 +1119,75 @@
             } catch(e) {
                 alert('网络错误');
             }
+        });
+
+        // ===== 背景音乐管理 =====
+        document.getElementById('audioUploadBtn').addEventListener('click', uploadAudio);
+
+        async function loadAudio() {
+            try {
+                const res = await fetch('/api/admin/audio');
+                const json = await res.json();
+                if (!json.ok) return;
+                const items = json.data || [];
+                document.getElementById('audioEmpty').style.display = items.length ? 'none' : 'block';
+                document.getElementById('audioGrid').innerHTML = items.map(a => `
+                    <div class="img-card">
+                        <div class="img-name" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</div>
+                        <div class="audio-actions">
+                            <button class="use" data-url="${escapeHtml(a.url)}">使用</button>
+                            <button class="del" data-name="${escapeHtml(a.name)}">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) {}
+        }
+
+        async function uploadAudio() {
+            const input = document.getElementById('audioFile');
+            if (!input.files || !input.files.length) {
+                alert('请先选择音频文件');
+                return;
+            }
+            const btn = document.getElementById('audioUploadBtn');
+            btn.disabled = true;
+            btn.textContent = '上传中...';
+            const fd = new FormData();
+            fd.append('file', input.files[0]);
+            try {
+                const res = await fetch('/api/admin/audio', { method: 'POST', body: fd });
+                const json = await res.json();
+                if (json.ok) {
+                    document.getElementById('setMusicUrl').value = json.data.url;
+                    loadAudio();
+                    input.value = '';
+                } else {
+                    alert(json.error || '上传失败');
+                }
+            } catch(e) {
+                alert('网络错误');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '上传音乐';
+            }
+        }
+
+        // 音频列表：使用 / 删除（事件委托）
+        document.getElementById('audioGrid').addEventListener('click', async (e) => {
+            const useBtn = e.target.closest('.use');
+            if (useBtn) {
+                document.getElementById('setMusicUrl').value = useBtn.dataset.url;
+                return;
+            }
+            const delBtn = e.target.closest('.del');
+            if (!delBtn) return;
+            const name = delBtn.dataset.name;
+            if (!confirm('确定删除音频 ' + name + ' 吗？')) return;
+            try {
+                const res = await fetch('/api/admin/audio/' + encodeURIComponent(name), { method: 'DELETE' });
+                const json = await res.json();
+                if (json.ok) loadAudio(); else alert(json.error || '删除失败');
+            } catch(e) { alert('网络错误'); }
         });
 
         // ===== 来宾筛选与去重 =====
