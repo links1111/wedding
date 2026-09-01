@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>高级感 · 婚礼请柬 · 磨砂透明</title>
+    <title>婚礼请柬</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&display=swap" rel="stylesheet">
@@ -268,30 +268,28 @@
         /* 背景音乐悬浮按钮 */
         .music-btn {
             position: fixed;
+            top: 20px;
             right: 20px;
-            bottom: 24px;
             z-index: 50;
-            width: 46px;
-            height: 46px;
-            border-radius: 50%;
-            background: rgba(30,24,20,0.55);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,245,235,0.25);
-            color: #f5ede4;
-            font-size: 20px;
+            width: 44px;
+            height: 44px;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 22px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.55);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
             transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
         }
-        .music-btn:active { transform: scale(0.94); }
+        .music-btn:active { transform: scale(0.92); }
         .music-btn.playing { animation: musicPulse 2s ease-in-out infinite; }
         @keyframes musicPulse {
-            0%, 100% { box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 0 rgba(224,200,150,0.35); }
-            50% { box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 9px rgba(224,200,150,0); }
+            0%, 100% { text-shadow: 0 2px 10px rgba(0,0,0,0.55); }
+            50% { text-shadow: 0 2px 16px rgba(0,0,0,0.55), 0 0 14px rgba(255,255,255,0.4); }
         }
         .footer-note {
             display: flex;
@@ -598,6 +596,9 @@
                     // 新人姓名
                     if (d.groom) document.getElementById('groomName').textContent = d.groom;
                     if (d.bride) document.getElementById('brideName').textContent = d.bride;
+                    // 网站标题用新人姓名（微信分享/标签页更友好）
+                    var titleNames = [d.groom, d.bride].filter(function(n){ return n; }).join(' & ');
+                    if (titleNames) document.title = titleNames + ' · 婚礼请柬';
                     // 日期与地点
                     if (d.date_main) document.getElementById('dateMain').textContent = d.date_main;
                     if (d.date_sub) document.getElementById('dateSub').textContent = d.date_sub;
