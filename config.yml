@@ -16,7 +16,7 @@ wedding:
   groom_name: "李祥"
   bride_name: "王羚羚"
   wedding_date: "2026-10-03"
-  wedding_venue: "麓湖·云栖草坪"
+  wedding_venue: "弥勒·太平湖森林公园"
 
 paths:
   static_dir: "./web/static"
