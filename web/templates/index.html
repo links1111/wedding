@@ -686,12 +686,57 @@
             }
 
             // 亮背景(brightness>150) → 深色文字；否则浅色文字
+            // 文字颜色随时间平滑渐变（时长与背景交叉淡化一致），而非瞬间切换
+            const PALETTES = {
+                dark:  { strong: [255,251,247,1], body: [245,237,228,1], muted: [255,245,235,0.7], dim: [255,245,235,0.45], glow: [0,0,0,0.5] },
+                light: { strong: [42,36,30,1], body: [59,51,42,1], muted: [42,36,30,0.72], dim: [42,36,30,0.5], glow: [255,255,255,0.5] }
+            };
+            let colorFactor = null; // null = 未初始化（首图直接落位）
+            let colorAnim = null;
+
+            function lerpColor(a, b, f) {
+                return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f, a[3]+(b[3]-a[3])*f];
+            }
+            function setColorVar(card, name, c) {
+                const col = c[3] >= 1
+                    ? 'rgb(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ')'
+                    : 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + c[3].toFixed(2) + ')';
+                card.style.setProperty(name, col);
+            }
+            function applyPalette(card, f) {
+                const p0 = PALETTES.dark, p1 = PALETTES.light;
+                setColorVar(card, '--text-strong', lerpColor(p0.strong, p1.strong, f));
+                setColorVar(card, '--text-body', lerpColor(p0.body, p1.body, f));
+                setColorVar(card, '--text-muted', lerpColor(p0.muted, p1.muted, f));
+                setColorVar(card, '--text-dim', lerpColor(p0.dim, p1.dim, f));
+                setColorVar(card, '--glow', lerpColor(p0.glow, p1.glow, f));
+            }
             function applyBrightness(index) {
                 const card = document.querySelector('.invitation-card');
                 const b = slideBrightness[index];
-                if (card && b != null) {
-                    card.classList.toggle('light-bg', b > 150);
+                if (!card || b == null) return;
+                const target = b > 150 ? 1 : 0;
+                // 结构性颜色（边框/按钮等）仍由 .light-bg 类即时切换
+                card.classList.toggle('light-bg', target === 1);
+                if (colorFactor === null) {
+                    colorFactor = target;
+                    applyPalette(card, target);
+                    return;
                 }
+                if (target === colorFactor) return;
+                if (colorAnim) cancelAnimationFrame(colorAnim);
+                const start = colorFactor;
+                const t0 = performance.now();
+                const dur = 1800;
+                const ease = function(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; };
+                function frame(now) {
+                    const t = Math.min((now - t0) / dur, 1);
+                    colorFactor = start + (target - start) * ease(t);
+                    applyPalette(card, colorFactor);
+                    if (t < 1) colorAnim = requestAnimationFrame(frame);
+                    else colorFactor = target;
+                }
+                colorAnim = requestAnimationFrame(frame);
             }
 
             function buildCarousel(urls) {
