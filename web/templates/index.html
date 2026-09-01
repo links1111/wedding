@@ -730,6 +730,15 @@
             }
 
             // ===== 位置导航 =====
+            // safeHref 仅允许 http/https 或站内相对路径，防止 javascript:/data: 注入
+            function safeHref(href) {
+                try {
+                    const u = new URL(href, location.origin);
+                    return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : '';
+                } catch(e) {
+                    return '';
+                }
+            }
             function setupNav(mapLink, venue) {
                 const nav = document.getElementById('navBtn');
                 if (!nav) return;
@@ -739,7 +748,8 @@
                     href = 'https://uri.amap.com/search?keyword=' + encodeURIComponent(venue) + '&callnative=1';
                 }
                 if (href) {
-                    nav.href = href;
+                    nav.href = safeHref(href);
+                    if (!nav.href) nav.style.display = 'none';
                 } else {
                     nav.style.display = 'none';
                 }

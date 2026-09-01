@@ -187,6 +187,33 @@ func TestMapLinkAndMusicURL(t *testing.T) {
 	}
 }
 
+func TestValidateURLLinks(t *testing.T) {
+	s := newTestStore(t, nil)
+	valid := []struct{ key, val string }{
+		{KeyMapLink, ""},
+		{KeyMapLink, "https://uri.amap.com/search?keyword=x"},
+		{KeyMapLink, "http://example.com/x"},
+		{KeyMusicURL, "/static/music/bgm.mp3"},
+		{KeyMusicURL, "https://cdn.example.com/bgm.mp3"},
+	}
+	for _, c := range valid {
+		if err := s.Set(c.key, c.val); err != nil {
+			t.Errorf("Set(%s=%q) 不应报错: %v", c.key, c.val, err)
+		}
+	}
+	invalid := []struct{ key, val string }{
+		{KeyMapLink, "javascript:alert(1)"},
+		{KeyMapLink, "data:text/html,<script>alert(1)</script>"},
+		{KeyMapLink, "vbscript:msgbox(1)"},
+		{KeyMusicURL, "javascript:void(0)"},
+	}
+	for _, c := range invalid {
+		if err := s.Set(c.key, c.val); err == nil {
+			t.Errorf("Set(%s=%q) 应报错", c.key, c.val)
+		}
+	}
+}
+
 func TestValidate(t *testing.T) {
 	if err := Validate(KeyGlassBlur, "20"); err != nil {
 		t.Errorf("Validate 合法值应通过: %v", err)

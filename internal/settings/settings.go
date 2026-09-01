@@ -174,6 +174,11 @@ func Validate(key, value string) error {
 		if len(value) > maxLen {
 			return fmt.Errorf("%w: %s 长度超过 %d", ErrInvalidValue, key, maxLen)
 		}
+		if key == KeyMapLink || key == KeyMusicURL {
+			if err := validateURL(key, value); err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 	if r, ok := rangeKeys[key]; ok {
@@ -196,4 +201,16 @@ func Validate(key, value string) error {
 		return ErrUnknownKey
 	}
 	return nil
+}
+
+// validateURL 仅允许 http/https 或站内相对路径，阻止 javascript:/data: 等注入
+func validateURL(key, value string) error {
+	v := strings.TrimSpace(value)
+	if v == "" {
+		return nil
+	}
+	if strings.HasPrefix(v, "http://") || strings.HasPrefix(v, "https://") || strings.HasPrefix(v, "/") {
+		return nil
+	}
+	return fmt.Errorf("%w: %s 需为 http/https 或站内相对路径", ErrInvalidValue, key)
 }
