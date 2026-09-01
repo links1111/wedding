@@ -20,6 +20,7 @@ type Config struct {
 
 // ServerConfig 服务器配置
 type ServerConfig struct {
+	Host string `yaml:"host"`
 	Port string `yaml:"port"`
 }
 

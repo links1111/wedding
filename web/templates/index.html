@@ -43,13 +43,18 @@
         }
         .carousel-bg .slide.active { opacity: 1; }
         .invitation-card {
+            /* 可通过管理后台动态调整：卡片底色、透明度、毛玻璃模糊/饱和度 */
+            --card-rgb: 247, 242, 235;
+            --card-alpha: 0.15;
+            --glass-blur: 16px;
+            --glass-saturate: 1.8;
             position: relative;
             z-index: 10;
             max-width: 460px;
             width: 100%;
-            background: rgba(247, 242, 235, 0.15);
-            backdrop-filter: blur(16px) saturate(1.8);
-            -webkit-backdrop-filter: blur(16px) saturate(1.8);
+            background: rgba(var(--card-rgb), var(--card-alpha));
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
             border-radius: 48px;
             padding: 40px 28px 36px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,245,235,0.15) inset;
@@ -363,7 +368,7 @@
             100% { opacity: 0.4; }
         }
         @media (max-width: 480px) {
-            .invitation-card { padding: 28px 18px 30px; border-radius: 36px; background: rgba(247,242,235,0.08); backdrop-filter: blur(4px) saturate(1.1); }
+            .invitation-card { padding: 28px 18px 30px; border-radius: 36px; backdrop-filter: blur(min(4px, var(--glass-blur))) saturate(var(--glass-saturate)); -webkit-backdrop-filter: blur(min(4px, var(--glass-blur))) saturate(var(--glass-saturate)); }
             .names { font-size: 38px; }
             .date-main { font-size: 22px; }
             .info-text { font-size: 15px; }
@@ -379,13 +384,8 @@
 </head>
 <body>
 
-    <!-- ===== 背景轮播 ===== -->
-    <div class="carousel-bg" id="bgCarousel">
-        <div class="slide active" style="background-image: url('/static/images/slide1.jpg');"></div>
-        <div class="slide" style="background-image: url('/static/images/slide2.jpg');"></div>
-        <div class="slide" style="background-image: url('/static/images/slide3.jpg');"></div>
-        <div class="slide" style="background-image: url('/static/images/slide4.jpg');"></div>
-    </div>
+    <!-- ===== 背景轮播（图片列表由 /api/invitation 动态生成） ===== -->
+    <div class="carousel-bg" id="bgCarousel"></div>
 
     <!-- ===== 透明磨砂卡片 ===== -->
     <div class="invitation-card">
@@ -396,7 +396,7 @@
             <span></span>
         </div>
 
-        <div class="chinese-title">— 邀 请 函 —</div>
+        <div class="chinese-title" id="chineseTitle">— 邀 请 函 —</div>
 
         <div class="names" id="names">
             <span id="groomName">林 予</span> <span class="ampersand">&</span> <span id="brideName">沈 漾</span>
@@ -405,6 +405,7 @@
         <div class="date-block">
             <div class="date-main" id="dateMain">2026 · 八月 · 三十</div>
             <div class="date-sub" id="dateSub">星期日 · 傍晚六时</div>
+            <div class="date-sub" id="venueLine" style="margin-top:6px;">麓湖 · 云栖草坪</div>
         </div>
 
         <div class="countdown-block" id="countdownBlock" style="display:none;">
@@ -419,35 +420,35 @@
             <div class="info-item">
                 <span class="info-icon">✧</span>
                 <div class="info-text">
-                    <strong>仪式</strong> · 暮光花园<br>
-                    <span class="light">麓湖 · 云栖草坪</span>
+                    <strong class="it-title">仪式</strong>
+                    <span class="light it-sub">暮光花园</span>
                 </div>
             </div>
             <div class="info-item">
                 <span class="info-icon">✧</span>
                 <div class="info-text">
-                    <strong>晚宴</strong> · 水岸餐厅<br>
-                    <span class="light">湖畔厅 · 西式长桌</span>
+                    <strong class="it-title">晚宴</strong>
+                    <span class="light it-sub">水岸餐厅</span>
                 </div>
             </div>
             <div class="info-item">
                 <span class="info-icon">✧</span>
                 <div class="info-text">
-                    <strong>着装</strong> · 优雅正装<br>
-                    <span class="light">浅色系 · 自在舒适</span>
+                    <strong class="it-title">着装</strong>
+                    <span class="light it-sub">优雅正装</span>
                 </div>
             </div>
         </div>
 
         <div class="footer-note">
-            <span>敬候光临</span>
+            <span class="ft">敬候光临</span>
             <span class="dot-divider"></span>
-            <span>2026 · 秋</span>
+            <span class="ft">2026 · 秋</span>
             <span class="dot-divider"></span>
-            <span>成都</span>
+            <span class="ft">成都</span>
         </div>
 
-        <div class="handwrite">with love, always.</div>
+        <div class="handwrite" id="handwrite">with love, always.</div>
 
         <div class="rsvp-section">
             <div class="section-title">R · S · V · P</div>
@@ -484,9 +485,83 @@
     <!-- ===== 轮播 & API 对接 ===== -->
     <script>
         (function() {
-            // ===== 背景轮播 =====
-            const slides = document.querySelectorAll('#bgCarousel .slide');
-            if (slides.length) {
+            // ===== 加载请柬信息（文案 / 样式 / 背景图列表） =====
+            fetch('/api/invitation')
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.ok || !res.data) return;
+                    const d = res.data;
+                    // 新人姓名
+                    if (d.groom) document.getElementById('groomName').textContent = d.groom;
+                    if (d.bride) document.getElementById('brideName').textContent = d.bride;
+                    // 日期与地点
+                    if (d.date_main) document.getElementById('dateMain').textContent = d.date_main;
+                    if (d.date_sub) document.getElementById('dateSub').textContent = d.date_sub;
+                    if (d.venue) {
+                        document.getElementById('venueLine').textContent = d.venue;
+                    } else {
+                        document.getElementById('venueLine').style.display = 'none';
+                    }
+                    // 标题
+                    if (d.chinese_title) {
+                        document.getElementById('chineseTitle').textContent = '— ' + d.chinese_title + ' —';
+                    }
+                    // 信息条目（仪式 / 晚宴 / 着装）
+                    const titles = document.querySelectorAll('.it-title');
+                    const subs = document.querySelectorAll('.it-sub');
+                    (d.info_items || []).forEach(function(item, i) {
+                        if (titles[i]) titles[i].textContent = item.title || '';
+                        if (subs[i]) subs[i].textContent = item.sub || '';
+                    });
+                    // footer 文案
+                    const fts = document.querySelectorAll('.footer-note .ft');
+                    (d.footer || []).forEach(function(txt, i) {
+                        if (fts[i]) fts[i].textContent = txt;
+                    });
+                    if (d.handwrite) document.getElementById('handwrite').textContent = d.handwrite;
+                    // 倒计时
+                    if (typeof d.countdown === 'number' && d.countdown >= 0) {
+                        document.getElementById('countdownBlock').style.display = 'block';
+                        document.getElementById('countdownNumber').textContent = d.countdown;
+                    }
+                    // 卡片样式（透明度 / 毛玻璃）
+                    applyStyle(d.style);
+                    // 背景轮播
+                    buildCarousel(d.slides || []);
+                })
+                .catch(err => console.error('加载请柬信息失败:', err));
+
+            // ===== 卡片透明度 / 毛玻璃样式 =====
+            function applyStyle(style) {
+                if (!style) return;
+                const card = document.querySelector('.invitation-card');
+                if (!card) return;
+                const alpha = clamp(parseInt(style.card_transparency, 10) || 0, 0, 100) / 100;
+                const color = style.card_color || '#f7f2eb';
+                const glass = style.glass_enabled !== 'false';
+                const blur = clamp(parseInt(style.glass_blur, 10) || 0, 0, 50);
+                const sat = clamp(parseInt(style.glass_saturate, 10) || 100, 100, 300);
+                card.style.setProperty('--card-rgb', hexToRgb(color));
+                card.style.setProperty('--card-alpha', alpha.toFixed(2));
+                card.style.setProperty('--glass-blur', (glass ? blur : 0) + 'px');
+                card.style.setProperty('--glass-saturate', (glass ? sat / 100 : 1).toFixed(2));
+                if (!glass) {
+                    card.style.backdropFilter = 'none';
+                    card.style.webkitBackdropFilter = 'none';
+                }
+            }
+
+            // ===== 背景轮播（根据图片列表动态生成） =====
+            function buildCarousel(urls) {
+                const carousel = document.getElementById('bgCarousel');
+                if (!carousel || !urls || !urls.length) return;
+                urls.forEach(function(url) {
+                    const div = document.createElement('div');
+                    div.className = 'slide';
+                    div.style.backgroundImage = "url('" + url + "')";
+                    carousel.appendChild(div);
+                });
+                const slides = carousel.querySelectorAll('.slide');
                 let currentIndex = 0;
                 const totalSlides = slides.length;
                 const intervalTime = 5000;
@@ -497,35 +572,23 @@
                     currentIndex = safeIndex;
                 }
                 function nextSlide() { goToSlide(currentIndex + 1); }
+                slides[0].classList.add('active');
                 let timer = setInterval(nextSlide, intervalTime);
-                const carousel = document.getElementById('bgCarousel');
                 carousel.addEventListener('mouseenter', function() { clearInterval(timer); });
                 carousel.addEventListener('mouseleave', function() { timer = setInterval(nextSlide, intervalTime); });
                 carousel.addEventListener('touchstart', function() { clearInterval(timer); });
                 carousel.addEventListener('touchend', function() { timer = setInterval(nextSlide, intervalTime); });
             }
 
-            // ===== 加载请柬信息 =====
-            fetch('/api/invitation')
-                .then(r => r.json())
-                .then(res => {
-                    if (!res.ok || !res.data) return;
-                    const d = res.data;
-                    // 新人姓名
-                    if (d.groom) document.getElementById('groomName').textContent = d.groom;
-                    if (d.bride) document.getElementById('brideName').textContent = d.bride;
-                    // 日期
-                    if (d.date) document.getElementById('dateMain').textContent = d.date;
-                    if (d.venue) document.getElementById('dateSub').textContent = d.venue;
-                    // 倒计时
-                    if (typeof d.countdown === 'number' && d.countdown >= 0) {
-                        const block = document.getElementById('countdownBlock');
-                        const num = document.getElementById('countdownNumber');
-                        block.style.display = 'block';
-                        num.textContent = d.countdown;
-                    }
-                })
-                .catch(err => console.error('加载请柬信息失败:', err));
+            // ===== 工具函数 =====
+            function hexToRgb(hex) {
+                hex = String(hex || '').replace('#', '');
+                if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+                const n = parseInt(hex, 16);
+                if (isNaN(n) || hex.length !== 6) return '247, 242, 235';
+                return ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255);
+            }
+            function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
             // ===== 记录访问 =====
             fetch('/api/visit', {

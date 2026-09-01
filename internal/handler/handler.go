@@ -1,8 +1,12 @@
 package handler
 
 import (
+	"bytes"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -11,30 +15,37 @@ import (
 	"gorm.io/gorm"
 
 	"wedding-invitation/internal/auth"
+	"wedding-invitation/internal/images"
 	"wedding-invitation/internal/models"
+	"wedding-invitation/internal/settings"
 )
 
 // Handler 聚合所有 HTTP 处理器依赖
 type Handler struct {
-	DB           *gorm.DB
-	Sessions     *auth.TokenStore
-	GroomName    string
-	BrideName    string
-	WeddingDate  string
-	WeddingVenue string
+	DB        *gorm.DB
+	Sessions  *auth.TokenStore
+	Settings  *settings.Store
+	StaticDir string
 }
 
 // New 创建 Handler
-func New(db *gorm.DB, sessions *auth.TokenStore, groom, bride, date, venue string) *Handler {
+func New(db *gorm.DB, sessions *auth.TokenStore, store *settings.Store, staticDir string) *Handler {
 	return &Handler{
-		DB:           db,
-		Sessions:     sessions,
-		GroomName:    groom,
-		BrideName:    bride,
-		WeddingDate:  date,
-		WeddingVenue: venue,
+		DB:        db,
+		Sessions:  sessions,
+		Settings:  store,
+		StaticDir: staticDir,
 	}
 }
+
+// maxUploadBytes 背景图片上传大小上限（压缩场景常见手机原图较大）
+const maxUploadBytes = 20 << 20 // 20MB
+
+// 压缩参数：长边上限与 JPEG 质量
+const (
+	maxImageDim  = 1920
+	jpegQuality  = 82
+)
 
 // RegisterRoutes 在 Gin 引擎上注册所有路由
 func (h *Handler) RegisterRoutes(r *gin.Engine) {
@@ -51,22 +62,59 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	adminAuth.GET("/guests", h.getGuests)
 	adminAuth.GET("/visits", h.getVisits)
 	adminAuth.GET("/guests/export", h.exportGuests)
+	adminAuth.GET("/settings", h.getSettings)
+	adminAuth.PUT("/settings", h.updateSettings)
+	adminAuth.GET("/images", h.listImages)
+	adminAuth.POST("/images", h.uploadImage)
+	adminAuth.DELETE("/images/:name", h.deleteImage)
 }
 
 // --- 公开 API ---
 
-// getInvitation 返回请柬信息
+// getInvitation 返回请柬信息（文案、样式、背景图列表）
 func (h *Handler) getInvitation(c *gin.Context) {
+	all := h.Settings.All()
 	c.JSON(http.StatusOK, gin.H{
 		"ok": true,
 		"data": gin.H{
-			"groom":     h.GroomName,
-			"bride":     h.BrideName,
-			"date":      h.WeddingDate,
-			"venue":     h.WeddingVenue,
-			"countdown": h.calcCountdown(),
+			"groom":         all[settings.KeyGroomName],
+			"bride":         all[settings.KeyBrideName],
+			"date":          all[settings.KeyWeddingDate],
+			"date_main":     all[settings.KeyDateMain],
+			"date_sub":      all[settings.KeyDateSub],
+			"venue":         all[settings.KeyVenue],
+			"chinese_title": all[settings.KeyChineseTitle],
+			"info_items": []gin.H{
+				{"title": all[settings.KeyCeremonyTitle], "sub": all[settings.KeyCeremonySub]},
+				{"title": all[settings.KeyDinnerTitle], "sub": all[settings.KeyDinnerSub]},
+				{"title": all[settings.KeyDressTitle], "sub": all[settings.KeyDressSub]},
+			},
+			"footer":    []string{all[settings.KeyFooter1], all[settings.KeyFooter2], all[settings.KeyFooter3]},
+			"handwrite": all[settings.KeyHandwrite],
+			"countdown": h.calcCountdown(all[settings.KeyWeddingDate]),
+			"slides":    h.slides(),
+			"style": gin.H{
+				"card_transparency": all[settings.KeyCardTransparency],
+				"glass_enabled":     all[settings.KeyGlassEnabled],
+				"glass_blur":        all[settings.KeyGlassBlur],
+				"glass_saturate":    all[settings.KeyGlassSaturate],
+				"card_color":        all[settings.KeyCardColor],
+			},
 		},
 	})
+}
+
+// slides 列出静态目录 images 下所有图片的访问 URL
+func (h *Handler) slides() []string {
+	names, err := images.List(filepath.Join(h.StaticDir, "images"))
+	if err != nil {
+		return nil
+	}
+	urls := make([]string, 0, len(names))
+	for _, n := range names {
+		urls = append(urls, "/static/images/"+n)
+	}
+	return urls
 }
 
 // recordVisit 记录访问
@@ -320,6 +368,166 @@ func (h *Handler) exportGuests(c *gin.Context) {
 	}
 }
 
+// --- 设置管理 ---
+
+// getSettings 返回全部可配置设置（默认值 + DB 覆盖）
+func (h *Handler) getSettings(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": h.Settings.All()})
+}
+
+// updateSettings 批量更新设置（先全量校验，再写入）
+func (h *Handler) updateSettings(c *gin.Context) {
+	var req map[string]string
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
+		return
+	}
+	if len(req) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "没有可更新的设置"})
+		return
+	}
+	for key, val := range req {
+		if err := settings.Validate(key, val); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+			return
+		}
+	}
+	for key, val := range req {
+		if err := h.Settings.Set(key, val); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存设置失败"})
+			return
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": h.Settings.All()})
+}
+
+// --- 背景图片管理 ---
+
+// imagesDir 静态图片目录
+func (h *Handler) imagesDir() string {
+	return filepath.Join(h.StaticDir, "images")
+}
+
+// listImages 列出背景图片
+func (h *Handler) listImages(c *gin.Context) {
+	names, err := images.List(h.imagesDir())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取图片目录失败"})
+		return
+	}
+	items := make([]gin.H, 0, len(names))
+	for _, n := range names {
+		items = append(items, gin.H{"name": n, "url": "/static/images/" + n})
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": items})
+}
+
+// uploadImage 上传背景图片到 static/images；compress=true 时压缩到最佳大小后保存
+func (h *Handler) uploadImage(c *gin.Context) {
+	// 限制请求体大小，防止超大文件
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
+
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请选择要上传的图片"})
+		return
+	}
+	defer file.Close()
+
+	name, err := images.SanitizeName(header.Filename)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	if header.Size > maxUploadBytes {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "图片大小不能超过 20MB"})
+		return
+	}
+
+	// 先读入内存：压缩需要，且便于压缩失败时回退保存原图
+	data, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取图片失败"})
+		return
+	}
+
+	compress := c.PostForm("compress") == "true"
+	if compress {
+		name = images.CompressedName(name)
+		if compressed, cerr := images.CompressToJPEG(bytes.NewReader(data), maxImageDim, jpegQuality); cerr == nil {
+			data = compressed
+		} else {
+			log.Printf("压缩图片失败，保存原图 %s: %v", header.Filename, cerr)
+		}
+	}
+
+	dir := h.imagesDir()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建图片目录失败"})
+		return
+	}
+
+	// 同名文件已存在时自动追加序号，避免覆盖已有图片
+	dst := name
+	for i := 2; ; i++ {
+		p, jerr := images.SafeJoin(dir, dst)
+		if jerr != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": jerr.Error()})
+			return
+		}
+		if _, serr := os.Stat(p); os.IsNotExist(serr) {
+			break
+		}
+		ext := filepath.Ext(name)
+		dst = strings.TrimSuffix(name, ext) + "_" + strconv.Itoa(i) + ext
+	}
+
+	dstPath, err := images.SafeJoin(dir, dst)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	out, err := os.Create(dstPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存图片失败"})
+		return
+	}
+	defer out.Close()
+	if _, err := io.Copy(out, bytes.NewReader(data)); err != nil {
+		_ = os.Remove(dstPath)
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存图片失败"})
+		return
+	}
+
+	log.Printf("管理员上传背景图片: %s (compress=%v)", dst, compress)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/images/" + dst}})
+}
+
+// deleteImage 删除背景图片
+func (h *Handler) deleteImage(c *gin.Context) {
+	name := c.Param("name")
+	// 仅允许删除图片文件，且必须为 images 目录的直接子项
+	if !images.IsAllowedImage(name) {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
+		return
+	}
+	p, err := images.SafeJoin(h.imagesDir(), name)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
+		return
+	}
+	if err := os.Remove(p); err != nil {
+		if os.IsNotExist(err) {
+			c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "文件不存在"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
+		return
+	}
+	log.Printf("管理员删除背景图片: %s", name)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
 // --- 中间件 ---
 
 // authMiddleware 管理员认证中间件
@@ -336,8 +544,8 @@ func (h *Handler) authMiddleware() gin.HandlerFunc {
 
 // --- 工具函数 ---
 
-func (h *Handler) calcCountdown() int {
-	t, err := time.Parse("2006-01-02", h.WeddingDate)
+func (h *Handler) calcCountdown(date string) int {
+	t, err := time.Parse("2006-01-02", date)
 	if err != nil {
 		return 0
 	}

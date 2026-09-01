@@ -34,6 +34,12 @@ type AdminUser struct {
 	CreatedAt    time.Time `json:"created_at" gorm:"autoCreateTime"`
 }
 
+// Setting 键值对设置（管理后台可配置的请柬信息与样式）
+type Setting struct {
+	Key   string `json:"key" gorm:"primaryKey"`
+	Value string `json:"value" gorm:"not null"`
+}
+
 // Attending 状态常量
 const (
 	AttendingUnknown = 0

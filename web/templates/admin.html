@@ -257,30 +257,6 @@
             color: var(--text-dim);
         }
 
-        /* Tab */
-        .tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .tab {
-            padding: 10px 24px;
-            cursor: pointer;
-            color: var(--text-muted);
-            font-size: 14px;
-            border-bottom: 2px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .tab.active {
-            color: var(--gold-light);
-            border-bottom-color: var(--gold);
-        }
-
-        .tab:hover { color: var(--text); }
-
         /* 表格 */
         .table-card {
             background: var(--bg-card);
@@ -369,9 +345,152 @@
         }
 
         .search-input:focus { border-color: var(--gold); }
+        .filter-select {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 12px;
+            color: var(--text);
+            font-size: 13px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .filter-select:focus { border-color: var(--gold); }
+        .filter-select option { background: var(--bg-card); color: var(--text); }
+        .dedup-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .dedup-toggle input[type="checkbox"] { accent-color: var(--gold); width: 15px; height: 15px; }
+        .guest-count { font-size: 12px; color: var(--text-muted); }
+
+        /* 设置表单 */
+        .form-card { margin-bottom: 30px; }
+        .form-card h3 {
+            font-size: 15px;
+            color: var(--text);
+            font-weight: 500;
+            margin-bottom: 18px;
+            letter-spacing: 1px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        .form-field { display: flex; flex-direction: column; gap: 6px; }
+        .form-field label { font-size: 12px; color: var(--text-muted); letter-spacing: 1px; }
+        .form-field input[type="text"],
+        .form-field input[type="date"],
+        .form-field textarea {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 9px 12px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+        .form-field input:focus, .form-field textarea:focus { border-color: var(--gold); }
+        .form-field input[type="range"] { accent-color: var(--gold); width: 100%; }
+        .form-field input[type="color"] { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 4px; padding: 2px; }
+        .range-row { display: flex; align-items: center; gap: 10px; }
+        .range-row output { min-width: 46px; text-align: right; font-size: 13px; color: var(--gold-light); font-variant-numeric: tabular-nums; }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; }
+        .checkbox-row input[type="checkbox"] { accent-color: var(--gold); width: 16px; height: 16px; }
+        .form-actions { margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .save-btn {
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            border: none;
+            color: #0f0f1a;
+            padding: 10px 28px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+        .save-btn:hover { box-shadow: 0 4px 20px rgba(201,169,110,0.3); }
+        .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .save-msg { font-size: 13px; min-height: 18px; }
+        .save-msg.success { color: var(--green); }
+        .save-msg.error { color: var(--red); }
+
+        /* 背景图片管理 */
+        .upload-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+        .upload-input { color: var(--text-muted); font-size: 13px; max-width: 100%; }
+        .upload-btn {
+            background: none;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .upload-btn:hover { background: rgba(201,169,110,0.1); }
+        .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .upload-hint { width: 100%; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+        .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+        .img-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .img-card img { width: 100%; height: 90px; object-fit: cover; display: block; background: #0f0f1a; }
+        .img-card .img-name { padding: 6px 8px; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .img-card .img-del {
+            width: 100%;
+            border: none;
+            border-top: 1px solid var(--border);
+            background: none;
+            color: var(--red);
+            padding: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .img-card .img-del:hover { background: rgba(255,107,107,0.1); }
+        .empty-tip { font-size: 13px; color: var(--text-dim); padding: 12px 0; }
+        .upload-status { width: 100%; font-size: 13px; color: var(--green); min-height: 18px; }
+
+        /* 左侧菜单 */
+        .admin-body { display: flex; min-height: calc(100vh - 60px); }
+        .sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 14px;
+            letter-spacing: 1px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .menu-item:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+        .menu-item.active {
+            color: var(--gold-light);
+            border-left-color: var(--gold);
+            background: rgba(201,169,110,0.08);
+        }
+        .menu-item .menu-icon { font-size: 15px; opacity: 0.8; }
+        .main-content { flex: 1; padding: 30px; min-width: 0; }
+        .view { display: none; }
+        .view.active { display: block; }
 
         @media (max-width: 768px) {
-            .content { padding: 16px; }
+            .sidebar { width: 160px; }
+            .main-content { padding: 16px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .stat-value { font-size: 24px; }
             th, td { padding: 10px 12px; font-size: 12px; }
@@ -401,7 +520,15 @@
             </div>
         </div>
 
-        <div class="content">
+        <div class="admin-body">
+            <nav class="sidebar">
+                <div class="menu-item active" data-view="overview"><span class="menu-icon">◈</span>总览</div>
+                <div class="menu-item" data-view="guests"><span class="menu-icon">✧</span>来宾列表</div>
+                <div class="menu-item" data-view="visits"><span class="menu-icon">✦</span>访客记录</div>
+                <div class="menu-item" data-view="settings"><span class="menu-icon">⚙</span>设置</div>
+            </nav>
+            <div class="main-content">
+                <div class="view active" id="view-overview">
             <!-- 统计卡片 -->
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-card">
@@ -442,17 +569,30 @@
                 <div class="chart-bars" id="chartBars"></div>
             </div>
 
-            <!-- Tab 切换 -->
-            <div class="tabs">
-                <div class="tab active" data-tab="guests">来宾列表</div>
-                <div class="tab" data-tab="visits">访问记录</div>
-            </div>
+                </div><!-- /view-overview -->
 
-            <!-- 来宾列表 -->
-            <div class="table-card" id="guestsTab">
-                <div class="table-actions">
-                    <input type="text" class="search-input" id="guestSearch" placeholder="搜索姓名/电话...">
-                    <a href="/api/admin/guests/export" class="export-btn">导出 CSV</a>
+                <div class="view" id="view-guests">
+                <!-- 来宾列表 -->
+                <div class="table-card">
+                <div class="table-actions" style="flex-wrap:wrap; gap:10px;">
+                    <input type="text" class="search-input" id="filterName" placeholder="按姓名筛选">
+                    <input type="text" class="search-input" id="filterPhone" placeholder="按电话筛选">
+                    <select class="filter-select" id="filterAttending">
+                        <option value="">全部出席状态</option>
+                        <option value="1">出席</option>
+                        <option value="2">缺席</option>
+                        <option value="0">未确认</option>
+                    </select>
+                    <label class="dedup-toggle">
+                        <input type="checkbox" id="dedupGuests">
+                        去重
+                        <select class="filter-select" id="dedupField">
+                            <option value="phone">按电话</option>
+                            <option value="name">按姓名</option>
+                        </select>
+                    </label>
+                    <span class="guest-count" id="guestCount"></span>
+                    <a href="/api/admin/guests/export" class="export-btn" style="margin-left:auto;">导出 CSV</a>
                 </div>
                 <table>
                     <thead>
@@ -467,10 +607,12 @@
                     </thead>
                     <tbody id="guestsBody"></tbody>
                 </table>
-            </div>
+                </div><!-- /table-card -->
+                </div><!-- /view-guests -->
 
-            <!-- 访问记录 -->
-            <div class="table-card" id="visitsTab" style="display:none;">
+                <div class="view" id="view-visits">
+                <!-- 访问记录 -->
+                <div class="table-card">
                 <div class="table-actions">
                     <input type="text" class="search-input" id="visitSearch" placeholder="搜索 IP/姓名...">
                 </div>
@@ -486,9 +628,100 @@
                     </thead>
                     <tbody id="visitsBody"></tbody>
                 </table>
-            </div>
-        </div>
-    </div>
+                </div><!-- /table-card -->
+                </div><!-- /view-visits -->
+
+                <div class="view" id="view-settings">
+                <div class="table-card" style="padding: 24px;">
+                <!-- 请柬内容 -->
+                <div class="form-card">
+                    <h3>请柬内容</h3>
+                    <div class="form-grid">
+                        <div class="form-field"><label>新郎姓名</label><input type="text" id="setGroom" maxlength="50"></div>
+                        <div class="form-field"><label>新娘姓名</label><input type="text" id="setBride" maxlength="50"></div>
+                        <div class="form-field"><label>婚礼日期（用于倒计时）</label><input type="date" id="setWeddingDate"></div>
+                        <div class="form-field"><label>主标题</label><input type="text" id="setChineseTitle" maxlength="50"></div>
+                        <div class="form-field"><label>日期主文案</label><input type="text" id="setDateMain" maxlength="100"></div>
+                        <div class="form-field"><label>日期副文案</label><input type="text" id="setDateSub" maxlength="100"></div>
+                        <div class="form-field"><label>举办地点</label><input type="text" id="setVenue" maxlength="100"></div>
+                        <div class="form-field"><label>仪式 · 标题</label><input type="text" id="setCeremonyTitle" maxlength="50"></div>
+                        <div class="form-field"><label>仪式 · 说明</label><input type="text" id="setCeremonySub" maxlength="100"></div>
+                        <div class="form-field"><label>晚宴 · 标题</label><input type="text" id="setDinnerTitle" maxlength="50"></div>
+                        <div class="form-field"><label>晚宴 · 说明</label><input type="text" id="setDinnerSub" maxlength="100"></div>
+                        <div class="form-field"><label>着装 · 标题</label><input type="text" id="setDressTitle" maxlength="50"></div>
+                        <div class="form-field"><label>着装 · 说明</label><input type="text" id="setDressSub" maxlength="100"></div>
+                        <div class="form-field"><label>底部文案 1</label><input type="text" id="setFooter1" maxlength="50"></div>
+                        <div class="form-field"><label>底部文案 2</label><input type="text" id="setFooter2" maxlength="50"></div>
+                        <div class="form-field"><label>底部文案 3</label><input type="text" id="setFooter3" maxlength="50"></div>
+                        <div class="form-field"><label>手写寄语</label><input type="text" id="setHandwrite" maxlength="100"></div>
+                    </div>
+                </div>
+
+                <!-- 卡片样式 -->
+                <div class="form-card">
+                    <h3>卡片样式</h3>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label>卡片透明度</label>
+                            <div class="range-row">
+                                <input type="range" id="setTransparency" min="0" max="100" value="15">
+                                <output id="setTransparencyVal">15%</output>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>毛玻璃效果</label>
+                            <div class="checkbox-row">
+                                <input type="checkbox" id="setGlassEnabled" checked>
+                                <span style="font-size:13px;color:var(--text-muted)">启用</span>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>模糊强度（px）</label>
+                            <div class="range-row">
+                                <input type="range" id="setGlassBlur" min="0" max="50" value="16">
+                                <output id="setGlassBlurVal">16px</output>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>色彩饱和度（%）</label>
+                            <div class="range-row">
+                                <input type="range" id="setGlassSaturate" min="100" max="300" value="180">
+                                <output id="setGlassSaturateVal">180%</output>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>卡片底色</label>
+                            <input type="color" id="setCardColor" value="#f7f2eb" style="width:64px;height:32px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="save-btn" id="saveSettingsBtn">保存设置</button>
+                    <span class="save-msg" id="settingsMsg"></span>
+                </div>
+
+                <!-- 背景图片 -->
+                <div class="form-card" style="margin-top:30px;">
+                    <h3>背景图片</h3>
+                    <div class="upload-row">
+                        <input type="file" class="upload-input" id="imageFile" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp" multiple>
+                        <button class="upload-btn" id="uploadBtn">上传</button>
+                        <label class="checkbox-row" style="font-size:13px;color:var(--text-muted);margin-left:4px;">
+                            <input type="checkbox" id="compressImages" checked>
+                            压缩图片（自动缩放到最佳大小）
+                        </label>
+                        <span class="upload-hint">可一次选择多张图片；勾选压缩后，上传时自动将长边缩至 1920px 并统一转为 JPEG。单张原图不超过 20MB。轮播图会展示 images 目录下的全部图片（按文件名排序）。</span>
+                    </div>
+                    <div class="upload-status" id="uploadStatus"></div>
+                    <div class="img-grid" id="imageGrid"></div>
+                    <div class="empty-tip" id="imageEmpty" style="display:none;">暂无背景图片</div>
+                    </div><!-- /背景图片 form-card -->
+                </div><!-- /table-card -->
+            </div><!-- /view-settings -->
+            </div><!-- /main-content -->
+        </div><!-- /admin-body -->
+    </div><!-- /admin-layout -->
 
     <script>
         // 检查登录状态
@@ -601,7 +834,7 @@
                 const json = await res.json();
                 if (json.ok) {
                     allGuests = json.data || [];
-                    renderGuests(allGuests);
+                    applyGuestFilters();
                 }
             } catch(e) {}
         }
@@ -660,25 +893,240 @@
             }).join('');
         }
 
-        // Tab 切换
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                const target = tab.dataset.tab;
-                document.getElementById('guestsTab').style.display = target === 'guests' ? '' : 'none';
-                document.getElementById('visitsTab').style.display = target === 'visits' ? '' : 'none';
+        // ===== 左侧菜单切换 =====
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+                item.classList.add('active');
+                const view = item.dataset.view;
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-' + view).classList.add('active');
+                if (view === 'settings') {
+                    loadSettings();
+                    loadImages();
+                }
             });
         });
 
-        // 搜索
-        document.getElementById('guestSearch').addEventListener('input', (e) => {
-            const q = e.target.value.toLowerCase();
-            const filtered = allGuests.filter(g =>
-                g.name.toLowerCase().includes(q) || (g.phone && g.phone.includes(q))
-            );
-            renderGuests(filtered);
+        // ===== 设置管理 =====
+        let settingsData = {};
+
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/admin/settings');
+                const json = await res.json();
+                if (!json.ok) return;
+                settingsData = json.data || {};
+                document.getElementById('setGroom').value = settingsData.groom_name || '';
+                document.getElementById('setBride').value = settingsData.bride_name || '';
+                document.getElementById('setWeddingDate').value = settingsData.wedding_date || '';
+                document.getElementById('setChineseTitle').value = settingsData.chinese_title || '';
+                document.getElementById('setDateMain').value = settingsData.date_main || '';
+                document.getElementById('setDateSub').value = settingsData.date_sub || '';
+                document.getElementById('setVenue').value = settingsData.venue || '';
+                document.getElementById('setCeremonyTitle').value = settingsData.ceremony_title || '';
+                document.getElementById('setCeremonySub').value = settingsData.ceremony_sub || '';
+                document.getElementById('setDinnerTitle').value = settingsData.dinner_title || '';
+                document.getElementById('setDinnerSub').value = settingsData.dinner_sub || '';
+                document.getElementById('setDressTitle').value = settingsData.dress_title || '';
+                document.getElementById('setDressSub').value = settingsData.dress_sub || '';
+                document.getElementById('setFooter1').value = settingsData.footer1 || '';
+                document.getElementById('setFooter2').value = settingsData.footer2 || '';
+                document.getElementById('setFooter3').value = settingsData.footer3 || '';
+                document.getElementById('setHandwrite').value = settingsData.handwrite || '';
+                document.getElementById('setTransparency').value = settingsData.card_transparency || '15';
+                document.getElementById('setTransparencyVal').textContent = (settingsData.card_transparency || '15') + '%';
+                document.getElementById('setGlassEnabled').checked = settingsData.glass_enabled !== 'false';
+                document.getElementById('setGlassBlur').value = settingsData.glass_blur || '16';
+                document.getElementById('setGlassBlurVal').textContent = (settingsData.glass_blur || '16') + 'px';
+                document.getElementById('setGlassSaturate').value = settingsData.glass_saturate || '180';
+                document.getElementById('setGlassSaturateVal').textContent = (settingsData.glass_saturate || '180') + '%';
+                document.getElementById('setCardColor').value = settingsData.card_color || '#f7f2eb';
+            } catch(e) {}
+        }
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+
+        async function saveSettings() {
+            const payload = {
+                groom_name: document.getElementById('setGroom').value.trim(),
+                bride_name: document.getElementById('setBride').value.trim(),
+                wedding_date: document.getElementById('setWeddingDate').value,
+                chinese_title: document.getElementById('setChineseTitle').value.trim(),
+                date_main: document.getElementById('setDateMain').value.trim(),
+                date_sub: document.getElementById('setDateSub').value.trim(),
+                venue: document.getElementById('setVenue').value.trim(),
+                ceremony_title: document.getElementById('setCeremonyTitle').value.trim(),
+                ceremony_sub: document.getElementById('setCeremonySub').value.trim(),
+                dinner_title: document.getElementById('setDinnerTitle').value.trim(),
+                dinner_sub: document.getElementById('setDinnerSub').value.trim(),
+                dress_title: document.getElementById('setDressTitle').value.trim(),
+                dress_sub: document.getElementById('setDressSub').value.trim(),
+                footer1: document.getElementById('setFooter1').value.trim(),
+                footer2: document.getElementById('setFooter2').value.trim(),
+                footer3: document.getElementById('setFooter3').value.trim(),
+                handwrite: document.getElementById('setHandwrite').value.trim(),
+                card_transparency: document.getElementById('setTransparency').value,
+                glass_enabled: document.getElementById('setGlassEnabled').checked ? 'true' : 'false',
+                glass_blur: document.getElementById('setGlassBlur').value,
+                glass_saturate: document.getElementById('setGlassSaturate').value,
+                card_color: document.getElementById('setCardColor').value
+            };
+            const btn = document.getElementById('saveSettingsBtn');
+            const msg = document.getElementById('settingsMsg');
+            btn.disabled = true;
+            msg.textContent = '保存中...';
+            msg.className = 'save-msg';
+            try {
+                const res = await fetch('/api/admin/settings', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (json.ok) {
+                    msg.textContent = '✓ 设置已保存';
+                    msg.className = 'save-msg success';
+                } else {
+                    msg.textContent = json.error || '保存失败';
+                    msg.className = 'save-msg error';
+                }
+            } catch(e) {
+                msg.textContent = '网络错误';
+                msg.className = 'save-msg error';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // 滑块数值显示
+        function bindRange(id, outId, suffix) {
+            const el = document.getElementById(id);
+            const out = document.getElementById(outId);
+            const upd = () => { out.textContent = el.value + suffix; };
+            el.addEventListener('input', upd);
+        }
+        bindRange('setTransparency', 'setTransparencyVal', '%');
+        bindRange('setGlassBlur', 'setGlassBlurVal', 'px');
+        bindRange('setGlassSaturate', 'setGlassSaturateVal', '%');
+
+        // ===== 背景图片管理（多文件 + 可选压缩） =====
+        document.getElementById('uploadBtn').addEventListener('click', uploadImages);
+
+        async function loadImages() {
+            try {
+                const res = await fetch('/api/admin/images');
+                const json = await res.json();
+                if (!json.ok) return;
+                const items = json.data || [];
+                document.getElementById('imageEmpty').style.display = items.length ? 'none' : 'block';
+                document.getElementById('imageGrid').innerHTML = items.map(img => `
+                    <div class="img-card">
+                        <img src="${img.url}" alt="${escapeHtml(img.name)}">
+                        <div class="img-name" title="${escapeHtml(img.name)}">${escapeHtml(img.name)}</div>
+                        <button class="img-del" data-name="${escapeHtml(img.name)}">删除</button>
+                    </div>
+                `).join('');
+            } catch(e) {}
+        }
+
+        async function uploadImages() {
+            const input = document.getElementById('imageFile');
+            const files = input.files;
+            if (!files || !files.length) {
+                alert('请先选择图片');
+                return;
+            }
+            const compress = document.getElementById('compressImages').checked;
+            const btn = document.getElementById('uploadBtn');
+            const status = document.getElementById('uploadStatus');
+            const total = files.length;
+            let ok = 0, fail = 0;
+            btn.disabled = true;
+            status.textContent = '';
+            for (let i = 0; i < total; i++) {
+                btn.textContent = '上传中 ' + (i + 1) + '/' + total + '...';
+                const fd = new FormData();
+                fd.append('file', files[i]);
+                fd.append('compress', compress ? 'true' : 'false');
+                try {
+                    const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
+                    const json = await res.json();
+                    if (json.ok) {
+                        ok++;
+                    } else {
+                        fail++;
+                        console.error('上传失败:', files[i].name, json.error);
+                    }
+                } catch(e) {
+                    fail++;
+                    console.error('上传失败:', files[i].name, e);
+                }
+            }
+            btn.disabled = false;
+            btn.textContent = '上传';
+            input.value = '';
+            loadImages();
+            status.textContent = ok + ' 张成功，' + fail + ' 张失败';
+            status.style.color = fail ? 'var(--red)' : 'var(--green)';
+        }
+
+        // 删除图片（事件委托）
+        document.getElementById('imageGrid').addEventListener('click', async (e) => {
+            const btn = e.target.closest('.img-del');
+            if (!btn) return;
+            const name = btn.dataset.name;
+            if (!confirm('确定删除图片 ' + name + ' 吗？')) return;
+            try {
+                const res = await fetch('/api/admin/images/' + encodeURIComponent(name), { method: 'DELETE' });
+                const json = await res.json();
+                if (json.ok) {
+                    loadImages();
+                } else {
+                    alert(json.error || '删除失败');
+                }
+            } catch(e) {
+                alert('网络错误');
+            }
         });
+
+        // ===== 来宾筛选与去重 =====
+        document.getElementById('filterName').addEventListener('input', applyGuestFilters);
+        document.getElementById('filterPhone').addEventListener('input', applyGuestFilters);
+        document.getElementById('filterAttending').addEventListener('change', applyGuestFilters);
+        document.getElementById('dedupGuests').addEventListener('change', applyGuestFilters);
+        document.getElementById('dedupField').addEventListener('change', applyGuestFilters);
+
+        // 组合筛选：姓名 / 电话 / 出席状态；可选按姓名或电话去重（保留最新一条）
+        function applyGuestFilters() {
+            const nameQ = document.getElementById('filterName').value.trim().toLowerCase();
+            const phoneQ = document.getElementById('filterPhone').value.trim().toLowerCase();
+            const attending = document.getElementById('filterAttending').value;
+            const dedup = document.getElementById('dedupGuests').checked;
+            const dedupField = document.getElementById('dedupField').value;
+
+            let list = allGuests.filter(g => {
+                if (nameQ && !(g.name || '').toLowerCase().includes(nameQ)) return false;
+                if (phoneQ && !(g.phone || '').toLowerCase().includes(phoneQ)) return false;
+                if (attending !== '' && String(g.attending) !== attending) return false;
+                return true;
+            });
+
+            if (dedup) {
+                const seen = new Set();
+                // allGuests 已按提交时间倒序，首次出现即为最新一条
+                list = list.filter(g => {
+                    const key = (dedupField === 'name' ? (g.name || '') : (g.phone || '')).trim();
+                    if (!key) return true; // 空键不去重
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            }
+
+            document.getElementById('guestCount').textContent = '共 ' + list.length + ' 条' + (dedup ? '（已去重）' : '');
+            renderGuests(list);
+        }
 
         document.getElementById('visitSearch').addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase();

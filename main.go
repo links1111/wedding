@@ -21,6 +21,7 @@ import (
 	"wedding-invitation/internal/config"
 	"wedding-invitation/internal/db"
 	"wedding-invitation/internal/handler"
+	"wedding-invitation/internal/settings"
 )
 
 func main() {
@@ -64,7 +65,8 @@ func main() {
 	r.Use(securityHeaders())
 
 	// API 处理器
-	h := handler.New(db.DB, sessions, cfg.Wedding.GroomName, cfg.Wedding.BrideName, cfg.Wedding.WeddingDate, cfg.Wedding.WeddingVenue)
+	settingsStore := settings.New(db.DB, cfg.Wedding)
+	h := handler.New(db.DB, sessions, settingsStore, cfg.Paths.StaticDir)
 	h.RegisterRoutes(r)
 
 	// 静态资源（图片等），从 STATIC_DIR 提供，Docker 可挂载映射
@@ -91,7 +93,7 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:         ":" + cfg.Server.Port,
+		Addr:         "0.0.0.0:" + cfg.Server.Port,
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
