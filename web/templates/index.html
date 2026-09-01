@@ -11,6 +11,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -25,6 +26,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             z-index: 0;
             overflow: hidden;
             background: #1a1410;
@@ -48,6 +50,21 @@
             --card-alpha: 0.15;
             --glass-blur: 16px;
             --glass-saturate: 1.8;
+            /* 文字与装饰色（随轮播背景亮度自适应切换） */
+            --text-strong: #fffbf7;
+            --text-body: #f5ede4;
+            --text-muted: rgba(255,245,235,0.7);
+            --text-dim: rgba(255,245,235,0.45);
+            --line: rgba(255,245,235,0.12);
+            --line-soft: rgba(255,245,235,0.08);
+            --line-bright: rgba(255,245,235,0.4);
+            --line-strong: rgba(255,245,235,0.2);
+            --card-inset: rgba(255,245,235,0.15);
+            --glow: rgba(0,0,0,0.5);
+            --btn-bg: rgba(255,245,235,0.12);
+            --btn-border: rgba(255,245,235,0.3);
+            --btn-bg-hover: rgba(255,245,235,0.3);
+            --btn-border-hover: rgba(255,245,235,0.6);
             position: relative;
             z-index: 10;
             max-width: 460px;
@@ -56,87 +73,104 @@
             backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
             -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
             border-radius: 48px;
-            padding: 40px 28px 36px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,245,235,0.15) inset;
-            border: 1px solid rgba(255,245,235,0.2);
-            color: #f5ede4;
-            text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            padding: 26px 26px 22px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--card-inset) inset;
+            border: 1px solid var(--line-strong);
+            color: var(--text-body);
+            text-shadow: 0 2px 12px var(--glow);
         }
-        .invitation-card * { color: #f5ede4; text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+        .invitation-card * { color: var(--text-body); text-shadow: 0 2px 12px var(--glow); }
+        /* 亮背景 → 深色文字，始终保持最佳对比度 */
+        .invitation-card.light-bg {
+            --text-strong: #2a241e;
+            --text-body: #3b332a;
+            --text-muted: rgba(42,36,30,0.72);
+            --text-dim: rgba(42,36,30,0.5);
+            --line: rgba(42,36,30,0.16);
+            --line-soft: rgba(42,36,30,0.1);
+            --line-bright: rgba(42,36,30,0.32);
+            --line-strong: rgba(42,36,30,0.22);
+            --card-inset: rgba(42,36,30,0.08);
+            --glow: rgba(255,255,255,0.5);
+            --btn-bg: rgba(42,36,30,0.08);
+            --btn-border: rgba(42,36,30,0.32);
+            --btn-bg-hover: rgba(42,36,30,0.16);
+            --btn-border-hover: rgba(42,36,30,0.55);
+        }
         .ornament-line {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            margin-bottom: 28px;
+            margin-bottom: 14px;
             opacity: 0.7;
         }
         .ornament-line span {
             display: block;
             height: 1px;
-            background: rgba(255,245,235,0.4);
-            width: 40px;
+            background: var(--line-bright);
+            width: 36px;
         }
         .ornament-line i {
             font-size: 8px;
-            color: rgba(255,245,235,0.6);
+            color: var(--text-muted);
             letter-spacing: 4px;
             animation: softGlow 4s infinite ease-in-out;
         }
         .chinese-title {
             font-family: 'Cormorant Garamond', serif;
             font-weight: 400;
-            font-size: 14px;
+            font-size: 13px;
             letter-spacing: 6px;
             text-transform: uppercase;
-            color: rgba(255,245,235,0.8);
+            color: var(--text-muted);
             text-align: center;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .names {
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
-            font-size: 48px;
+            font-size: 44px;
             line-height: 1.1;
             text-align: center;
-            color: #fffbf7;
+            color: var(--text-strong);
             letter-spacing: 2px;
-            margin: 8px 0 8px;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            margin: 4px 0 4px;
+            text-shadow: 0 4px 20px var(--glow);
         }
         .names .ampersand {
             font-weight: 300;
             font-style: italic;
-            color: rgba(255,245,235,0.7);
+            color: var(--text-muted);
             padding: 0 6px;
-            font-size: 40px;
+            font-size: 38px;
         }
         .date-block {
             text-align: center;
-            margin: 20px 0 18px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255,245,235,0.12);
+            margin: 12px 0 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line);
         }
         .date-main {
             font-family: 'Cormorant Garamond', serif;
             font-weight: 400;
-            font-size: 28px;
+            font-size: 26px;
             letter-spacing: 3px;
-            color: #fffbf7;
+            color: var(--text-strong);
         }
         .date-sub {
             font-size: 13px;
             font-weight: 300;
             letter-spacing: 4px;
-            color: rgba(255,245,235,0.7);
+            color: var(--text-muted);
             margin-top: 4px;
             text-transform: uppercase;
         }
         .info-grid {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin: 20px 0 22px;
+            gap: 10px;
+            margin: 12px 0 14px;
         }
         .info-item {
             display: flex;
@@ -146,64 +180,74 @@
         }
         .info-icon {
             font-size: 14px;
-            color: rgba(255,245,235,0.6);
+            color: var(--text-muted);
             width: 24px;
             text-align: center;
             margin-top: 1px;
             opacity: 0.9;
         }
         .info-text {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 300;
-            color: #f5ede4;
+            color: var(--text-body);
             letter-spacing: 0.3px;
             line-height: 1.5;
         }
-        .info-text strong { font-weight: 500; color: #ffffff; }
+        .info-text strong { font-weight: 500; color: var(--text-strong); }
+        .info-text .it-time {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+        .info-text .it-time:empty { display: none; }
         .info-text .light {
-            color: rgba(255,245,235,0.6);
+            color: var(--text-muted);
             font-size: 14px;
             display: block;
             margin-top: 2px;
         }
         .rsvp-section {
-            margin: 20px 0 16px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255,245,235,0.12);
+            margin: 12px 0 10px;
+            padding-top: 12px;
+            border-top: 1px solid var(--line);
             text-align: center;
         }
         .rsvp-section .section-title {
             font-family: 'Cormorant Garamond', serif;
             font-weight: 400;
-            font-size: 18px;
+            font-size: 17px;
             letter-spacing: 4px;
-            color: rgba(255,245,235,0.8);
-            margin-bottom: 18px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
         }
         .rsvp-btn {
             display: inline-block;
-            padding: 16px 48px;
-            background: rgba(255,245,235,0.12);
-            border: 1px solid rgba(255,245,235,0.3);
+            padding: 13px 44px;
+            background: var(--btn-bg);
+            border: 1px solid var(--btn-border);
             border-radius: 50px;
-            color: #f5ede4;
+            color: var(--text-body);
             text-decoration: none;
             letter-spacing: 3px;
-            font-size: 16px;
+            font-size: 15px;
             backdrop-filter: blur(8px);
             transition: all 0.3s ease;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
         }
         .rsvp-btn:hover {
-            background: rgba(255,245,235,0.3);
-            border-color: rgba(255,245,235,0.6);
+            background: var(--btn-bg-hover);
+            border-color: var(--btn-border-hover);
             transform: scale(1.02);
         }
         .rsvp-hint {
-            margin-top: 12px;
+            margin-top: 8px;
             font-size: 12px;
-            color: rgba(255,245,235,0.35);
+            color: var(--text-dim);
             letter-spacing: 1px;
         }
         .footer-note {
@@ -213,61 +257,62 @@
             font-size: 11px;
             font-weight: 300;
             letter-spacing: 2px;
-            color: rgba(255,245,235,0.4);
+            color: var(--text-dim);
             text-transform: uppercase;
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid rgba(255,245,235,0.08);
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--line-soft);
         }
         .footer-note span { opacity: 0.8; }
         .dot-divider {
             display: inline-block;
             width: 3px;
             height: 3px;
-            background: rgba(255,245,235,0.3);
+            background: var(--text-dim);
             border-radius: 50%;
             margin: 0 8px;
             opacity: 0.5;
         }
         .handwrite {
             text-align: center;
-            margin-top: 12px;
+            margin-top: 8px;
             font-family: 'Cormorant Garamond', serif;
             font-style: italic;
             font-size: 12px;
-            color: rgba(255,245,235,0.3);
+            color: var(--text-dim);
             letter-spacing: 2px;
         }
         .countdown-block {
             text-align: center;
-            margin: 16px 0 6px;
+            margin: 12px 0 4px;
         }
         .countdown-label {
             font-size: 12px;
             font-weight: 300;
             letter-spacing: 4px;
-            color: rgba(255,245,235,0.6);
+            color: var(--text-muted);
             text-transform: uppercase;
             margin-bottom: 6px;
         }
         .countdown-number {
             font-family: 'Cormorant Garamond', serif;
             font-weight: 600;
-            font-size: 42px;
-            color: #fffbf7;
+            font-size: 38px;
+            color: var(--text-strong);
             line-height: 1;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            text-shadow: 0 4px 20px var(--glow);
         }
         .countdown-unit {
             font-size: 14px;
             font-weight: 300;
             letter-spacing: 2px;
-            color: rgba(255,245,235,0.6);
+            color: var(--text-muted);
             margin-left: 4px;
         }
         .rsvp-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
+            height: 100dvh;
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
             z-index: 100;
@@ -368,17 +413,25 @@
             100% { opacity: 0.4; }
         }
         @media (max-width: 480px) {
-            .invitation-card { padding: 28px 18px 30px; border-radius: 36px; backdrop-filter: blur(min(4px, var(--glass-blur))) saturate(var(--glass-saturate)); -webkit-backdrop-filter: blur(min(4px, var(--glass-blur))) saturate(var(--glass-saturate)); }
-            .names { font-size: 38px; }
-            .date-main { font-size: 22px; }
-            .info-text { font-size: 15px; }
-            .rsvp-btn { padding: 14px 32px; font-size: 14px; }
-            .countdown-number { font-size: 34px; }
+            body { padding: 10px; }
+            .invitation-card { padding: 16px 18px 16px; border-radius: 32px; backdrop-filter: blur(min(4px, var(--glass-blur))) saturate(var(--glass-saturate)); -webkit-backdrop-filter: blur(min(4px, var(--glass-blur))) saturate(var(--glass-saturate)); }
+            .ornament-line { margin-bottom: 10px; }
+            .names { font-size: 30px; margin: 2px 0 2px; }
+            .date-block { margin: 10px 0 10px; padding-bottom: 10px; }
+            .date-main { font-size: 20px; }
+            .info-grid { gap: 8px; margin: 10px 0 12px; }
+            .info-text { font-size: 14px; }
+            .countdown-number { font-size: 28px; }
+            .rsvp-section { margin: 10px 0 8px; padding-top: 10px; }
+            .rsvp-section .section-title { margin-bottom: 10px; }
+            .rsvp-btn { padding: 11px 28px; font-size: 14px; }
+            .footer-note { margin-top: 10px; padding-top: 8px; }
+            .handwrite { margin-top: 6px; }
             .rsvp-modal { padding: 28px 20px 24px; border-radius: 24px; }
         }
         @media (max-width: 380px) {
-            .invitation-card { padding: 20px 14px 24px; }
-            .names { font-size: 32px; }
+            .invitation-card { padding: 14px 14px 14px; }
+            .names { font-size: 28px; }
         }
     </style>
 </head>
@@ -421,6 +474,7 @@
                 <span class="info-icon">✧</span>
                 <div class="info-text">
                     <strong class="it-title">仪式</strong>
+                    <span class="it-time"></span>
                     <span class="light it-sub">暮光花园</span>
                 </div>
             </div>
@@ -428,6 +482,7 @@
                 <span class="info-icon">✧</span>
                 <div class="info-text">
                     <strong class="it-title">晚宴</strong>
+                    <span class="it-time"></span>
                     <span class="light it-sub">水岸餐厅</span>
                 </div>
             </div>
@@ -435,6 +490,7 @@
                 <span class="info-icon">✧</span>
                 <div class="info-text">
                     <strong class="it-title">着装</strong>
+                    <span class="it-time"></span>
                     <span class="light it-sub">优雅正装</span>
                 </div>
             </div>
@@ -509,9 +565,11 @@
                     // 信息条目（仪式 / 晚宴 / 着装）
                     const titles = document.querySelectorAll('.it-title');
                     const subs = document.querySelectorAll('.it-sub');
+                    const times = document.querySelectorAll('.it-time');
                     (d.info_items || []).forEach(function(item, i) {
                         if (titles[i]) titles[i].textContent = item.title || '';
                         if (subs[i]) subs[i].textContent = item.sub || '';
+                        if (times[i]) times[i].textContent = item.time || '';
                     });
                     // footer 文案
                     const fts = document.querySelectorAll('.footer-note .ft');
@@ -551,11 +609,49 @@
                 }
             }
 
-            // ===== 背景轮播（根据图片列表动态生成） =====
+            // ===== 背景轮播（动态生成 + 按背景亮度自适应文字颜色） =====
+            const slideBrightness = [];
+
+            // 计算单张图片的平均亮度（Rec.709 加权），用于判断该用深色还是浅色文字
+            function computeBrightness(url, done) {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function() {
+                    try {
+                        const c = document.createElement('canvas');
+                        c.width = 32; c.height = 32;
+                        const ctx = c.getContext('2d');
+                        ctx.drawImage(img, 0, 0, 32, 32);
+                        const d = ctx.getImageData(0, 0, 32, 32).data;
+                        let sum = 0;
+                        for (let i = 0; i < d.length; i += 4) {
+                            sum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+                        }
+                        done(sum / (d.length / 4));
+                    } catch(e) { done(null); }
+                };
+                img.onerror = function() { done(null); };
+                img.src = url;
+            }
+
+            // 亮背景(brightness>150) → 深色文字；否则浅色文字
+            function applyBrightness(index) {
+                const card = document.querySelector('.invitation-card');
+                const b = slideBrightness[index];
+                if (card && b != null) {
+                    card.classList.toggle('light-bg', b > 150);
+                }
+            }
+
             function buildCarousel(urls) {
                 const carousel = document.getElementById('bgCarousel');
                 if (!carousel || !urls || !urls.length) return;
-                urls.forEach(function(url) {
+                urls.forEach(function(url, i) {
+                    slideBrightness.push(null);
+                    computeBrightness(url, function(b) {
+                        slideBrightness[i] = b;
+                        if (i === currentIndex) applyBrightness(i);
+                    });
                     const div = document.createElement('div');
                     div.className = 'slide';
                     div.style.backgroundImage = "url('" + url + "')";
@@ -570,9 +666,11 @@
                     const safeIndex = (index + totalSlides) % totalSlides;
                     slides[safeIndex].classList.add('active');
                     currentIndex = safeIndex;
+                    applyBrightness(safeIndex);
                 }
                 function nextSlide() { goToSlide(currentIndex + 1); }
                 slides[0].classList.add('active');
+                applyBrightness(0);
                 let timer = setInterval(nextSlide, intervalTime);
                 carousel.addEventListener('mouseenter', function() { clearInterval(timer); });
                 carousel.addEventListener('mouseleave', function() { timer = setInterval(nextSlide, intervalTime); });

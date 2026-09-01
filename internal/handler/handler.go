@@ -85,9 +85,9 @@ func (h *Handler) getInvitation(c *gin.Context) {
 			"venue":         all[settings.KeyVenue],
 			"chinese_title": all[settings.KeyChineseTitle],
 			"info_items": []gin.H{
-				{"title": all[settings.KeyCeremonyTitle], "sub": all[settings.KeyCeremonySub]},
-				{"title": all[settings.KeyDinnerTitle], "sub": all[settings.KeyDinnerSub]},
-				{"title": all[settings.KeyDressTitle], "sub": all[settings.KeyDressSub]},
+				{"title": all[settings.KeyCeremonyTitle], "sub": all[settings.KeyCeremonySub], "time": all[settings.KeyCeremonyTime]},
+				{"title": all[settings.KeyDinnerTitle], "sub": all[settings.KeyDinnerSub], "time": all[settings.KeyDinnerTime]},
+				{"title": all[settings.KeyDressTitle], "sub": all[settings.KeyDressSub], "time": ""},
 			},
 			"footer":    []string{all[settings.KeyFooter1], all[settings.KeyFooter2], all[settings.KeyFooter3]},
 			"handwrite": all[settings.KeyHandwrite],

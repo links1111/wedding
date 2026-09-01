@@ -646,8 +646,10 @@
                         <div class="form-field"><label>举办地点</label><input type="text" id="setVenue" maxlength="100"></div>
                         <div class="form-field"><label>仪式 · 标题</label><input type="text" id="setCeremonyTitle" maxlength="50"></div>
                         <div class="form-field"><label>仪式 · 说明</label><input type="text" id="setCeremonySub" maxlength="100"></div>
+                        <div class="form-field"><label>仪式 · 时间</label><input type="text" id="setCeremonyTime" maxlength="20" placeholder="如 15:30"></div>
                         <div class="form-field"><label>晚宴 · 标题</label><input type="text" id="setDinnerTitle" maxlength="50"></div>
                         <div class="form-field"><label>晚宴 · 说明</label><input type="text" id="setDinnerSub" maxlength="100"></div>
+                        <div class="form-field"><label>晚宴 · 时间</label><input type="text" id="setDinnerTime" maxlength="20" placeholder="如 18:00"></div>
                         <div class="form-field"><label>着装 · 标题</label><input type="text" id="setDressTitle" maxlength="50"></div>
                         <div class="form-field"><label>着装 · 说明</label><input type="text" id="setDressSub" maxlength="100"></div>
                         <div class="form-field"><label>底部文案 1</label><input type="text" id="setFooter1" maxlength="50"></div>
@@ -926,8 +928,10 @@
                 document.getElementById('setVenue').value = settingsData.venue || '';
                 document.getElementById('setCeremonyTitle').value = settingsData.ceremony_title || '';
                 document.getElementById('setCeremonySub').value = settingsData.ceremony_sub || '';
+                document.getElementById('setCeremonyTime').value = settingsData.ceremony_time || '';
                 document.getElementById('setDinnerTitle').value = settingsData.dinner_title || '';
                 document.getElementById('setDinnerSub').value = settingsData.dinner_sub || '';
+                document.getElementById('setDinnerTime').value = settingsData.dinner_time || '';
                 document.getElementById('setDressTitle').value = settingsData.dress_title || '';
                 document.getElementById('setDressSub').value = settingsData.dress_sub || '';
                 document.getElementById('setFooter1').value = settingsData.footer1 || '';
@@ -958,8 +962,10 @@
                 venue: document.getElementById('setVenue').value.trim(),
                 ceremony_title: document.getElementById('setCeremonyTitle').value.trim(),
                 ceremony_sub: document.getElementById('setCeremonySub').value.trim(),
+                ceremony_time: document.getElementById('setCeremonyTime').value.trim(),
                 dinner_title: document.getElementById('setDinnerTitle').value.trim(),
                 dinner_sub: document.getElementById('setDinnerSub').value.trim(),
+                dinner_time: document.getElementById('setDinnerTime').value.trim(),
                 dress_title: document.getElementById('setDressTitle').value.trim(),
                 dress_sub: document.getElementById('setDressSub').value.trim(),
                 footer1: document.getElementById('setFooter1').value.trim(),

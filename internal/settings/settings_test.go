@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/glebarez/sqlite"
@@ -133,6 +134,31 @@ func TestSetInvalidValue(t *testing.T) {
 		if err := s.Set(c.key, c.val); err != nil {
 			t.Errorf("Set(%s=%q) 不应报错: %v", c.key, c.val, err)
 		}
+	}
+}
+
+func TestTimeFields(t *testing.T) {
+	s := newTestStore(t, nil)
+	// 默认空（未配置时不展示）
+	if got := s.Get(KeyCeremonyTime); got != "" {
+		t.Errorf("默认仪式时间 = %q, 期望空", got)
+	}
+	if got := s.Get(KeyDinnerTime); got != "" {
+		t.Errorf("默认晚宴时间 = %q, 期望空", got)
+	}
+	// 设置合法值
+	if err := s.Set(KeyCeremonyTime, "15:30"); err != nil {
+		t.Errorf("Set(ceremony_time) 报错: %v", err)
+	}
+	if err := s.Set(KeyDinnerTime, "18:00"); err != nil {
+		t.Errorf("Set(dinner_time) 报错: %v", err)
+	}
+	if got := s.Get(KeyCeremonyTime); got != "15:30" {
+		t.Errorf("仪式时间 = %q, 期望 %q", got, "15:30")
+	}
+	// 超长应报错
+	if err := s.Set(KeyCeremonyTime, strings.Repeat("1", 21)); err == nil {
+		t.Error("超长时间应报错")
 	}
 }
 

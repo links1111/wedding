@@ -24,8 +24,10 @@ const (
 	KeyVenue         = "venue"
 	KeyCeremonyTitle = "ceremony_title"
 	KeyCeremonySub   = "ceremony_sub"
+	KeyCeremonyTime  = "ceremony_time"
 	KeyDinnerTitle   = "dinner_title"
 	KeyDinnerSub     = "dinner_sub"
+	KeyDinnerTime    = "dinner_time"
 	KeyDressTitle    = "dress_title"
 	KeyDressSub      = "dress_sub"
 	KeyFooter1       = "footer1"
@@ -59,8 +61,10 @@ var textKeys = map[string]int{
 	KeyVenue:         100,
 	KeyCeremonyTitle: 50,
 	KeyCeremonySub:   100,
+	KeyCeremonyTime:  20,
 	KeyDinnerTitle:   50,
 	KeyDinnerSub:     100,
+	KeyDinnerTime:    20,
 	KeyDressTitle:    50,
 	KeyDressSub:      100,
 	KeyFooter1:       50,
@@ -100,8 +104,10 @@ func defaultSettings(w config.WeddingConfig) map[string]string {
 		KeyDateSub:       "星期日 · 傍晚六时",
 		KeyCeremonyTitle: "仪式",
 		KeyCeremonySub:   "暮光花园",
+		KeyCeremonyTime:  "",
 		KeyDinnerTitle:   "晚宴",
 		KeyDinnerSub:     "水岸餐厅",
+		KeyDinnerTime:    "",
 		KeyDressTitle:    "着装",
 		KeyDressSub:      "优雅正装",
 		KeyFooter1:       "敬候光临",
