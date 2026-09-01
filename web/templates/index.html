@@ -755,30 +755,50 @@
                 }
             }
 
-            // ===== 背景音乐 =====
+            // ===== 背景音乐（默认自动播放） =====
             function setupMusic(url) {
                 const bgm = document.getElementById('bgm');
                 const btn = document.getElementById('musicBtn');
                 if (!bgm || !btn || !url) return;
                 bgm.src = url;
+                bgm.load();
                 // 音频加载失败（文件缺失等）时隐藏按钮
                 bgm.addEventListener('error', function() { btn.style.display = 'none'; });
                 btn.addEventListener('click', function() {
                     if (bgm.paused) {
+                        bgm.muted = false;
                         bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function(){});
                     } else {
                         bgm.pause();
                         btn.classList.remove('playing');
                     }
                 });
-                // 尝试自动播放；被浏览器/微信拦截时等首次用户手势
-                bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function(){
-                    const start = function() {
-                        bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function(){});
-                    };
-                    document.addEventListener('touchstart', start, { once: true });
-                    document.addEventListener('click', start, { once: true });
+
+                function ok() { btn.classList.add('playing'); }
+                function noop() {}
+                function play() { return bgm.play().then(ok).catch(noop); }
+                // 恢复声音：首次手势触发（静音自动播放时）
+                function enableSound() {
+                    bgm.muted = false;
+                    play();
+                    document.removeEventListener('touchstart', enableSound);
+                    document.removeEventListener('click', enableSound);
+                }
+
+                // 等媒体可播放后再尝试自动播放：先有声，被拦截则静音播放，首次手势恢复声音
+                bgm.addEventListener('canplay', function() {
+                    bgm.play().then(ok).catch(function() {
+                        bgm.muted = true;
+                        play();
+                        document.addEventListener('touchstart', enableSound);
+                        document.addEventListener('click', enableSound);
+                    });
                 });
+
+                // 微信 X5 内核：JSBridge 就绪后重试自动播放
+                if (typeof WeixinJSBridge !== 'undefined') {
+                    document.addEventListener('WeixinJSBridgeReady', function(){ play(); });
+                }
             }
 
             // ===== 工具函数 =====
