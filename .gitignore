@@ -1,2 +1,8 @@
 wedding
 *.DS_Store
+
+# 图片/音乐为运行时本地文件，不纳入版本库
+web/static/images/*
+!web/static/images/README.txt
+web/static/music/*
+!web/static/music/README.txt
