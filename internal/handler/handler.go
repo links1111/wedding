@@ -62,6 +62,7 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	adminAuth := r.Group("/api/admin", h.authMiddleware())
 	adminAuth.GET("/stats", h.getStats)
 	adminAuth.GET("/guests", h.getGuests)
+	adminAuth.POST("/guests", h.createGuest)
 	adminAuth.PUT("/guests/:id", h.updateGuest)
 	adminAuth.DELETE("/guests/:id", h.deleteGuest)
 	adminAuth.GET("/visits", h.getVisits)
@@ -342,6 +343,35 @@ func (h *Handler) getGuests(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": guests})
+}
+
+// createGuest 后台新增来宾
+func (h *Handler) createGuest(c *gin.Context) {
+	var req guestInput
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
+		return
+	}
+	if err := validateGuestInput(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+
+	guest := models.Guest{
+		Name:      req.Name,
+		Phone:     req.Phone,
+		Attending: req.Attending,
+		Headcount: req.Headcount,
+		Message:   req.Message,
+	}
+	if err := h.DB.Create(&guest).Error; err != nil {
+		log.Printf("新增来宾失败: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存失败"})
+		return
+	}
+
+	log.Printf("管理员新增来宾: %s (ID: %d)", guest.Name, guest.ID)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"id": guest.ID}})
 }
 
 // updateGuest 更新来宾记录
