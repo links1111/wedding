@@ -16,6 +16,13 @@ type Config struct {
 	Wedding  WeddingConfig  `yaml:"wedding"`
 	Paths    PathsConfig    `yaml:"paths"`
 	Log      LogConfig      `yaml:"log"`
+	TLS      TLSConfig      `yaml:"tls"`
+}
+
+// TLSConfig HTTPS 证书配置（cert_file/key_file 均配置且文件存在时启用 HTTPS）
+type TLSConfig struct {
+	CertFile string `yaml:"cert_file"`
+	KeyFile  string `yaml:"key_file"`
 }
 
 // ServerConfig 服务器配置
@@ -106,6 +113,8 @@ func Load() *Config {
 	cfg.Paths.TemplateDir = getEnv("TEMPLATE_DIR", cfg.Paths.TemplateDir)
 	cfg.Log.File = getEnv("LOG_FILE", cfg.Log.File)
 	cfg.Log.Level = getEnv("LOG_LEVEL", cfg.Log.Level)
+	cfg.TLS.CertFile = getEnv("TLS_CERT_FILE", cfg.TLS.CertFile)
+	cfg.TLS.KeyFile = getEnv("TLS_KEY_FILE", cfg.TLS.KeyFile)
 
 	// 如果未设置密码或密钥，生成随机值并提示
 	if cfg.Admin.Pass == "" {

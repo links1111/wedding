@@ -2,7 +2,15 @@
 # 环境变量优先级高于此文件中的同名配置（大写下划线格式，如 PORT、DB_PATH）
 
 server:
+  # 监听地址，留空则监听所有网卡
+  host: ""
   port: "8080"
+
+# HTTPS 证书配置：cert_file 与 key_file 都配置且文件存在时以 HTTPS 启动，否则用 HTTP
+# 可用环境变量覆盖：TLS_CERT_FILE / TLS_KEY_FILE
+tls:
+  cert_file: ""
+  key_file: ""
 
 database:
   path: "./data/wedding.db"

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -46,12 +47,22 @@ func main() {
 		log.Fatalf("创建管理员失败: %v", err)
 	}
 
+	// 协议：配置了 TLS 证书且文件存在则 HTTPS，否则 HTTP
+	scheme := "http"
+	if cfg.TLS.CertFile != "" && cfg.TLS.KeyFile != "" {
+		if _, err := os.Stat(cfg.TLS.CertFile); err == nil {
+			scheme = "https"
+		} else {
+			log.Printf("TLS 证书文件不存在 (%s)，回退 HTTP", cfg.TLS.CertFile)
+		}
+	}
+
 	// 打印管理员凭据（仅首次）
 	if isFreshDB() {
 		log.Printf("========================================")
 		log.Printf("管理员账号: %s", cfg.Admin.User)
 		log.Printf("管理员密码: %s (请尽快修改)", cfg.Admin.Pass)
-		log.Printf("管理后台: http://localhost:%s/admin", cfg.Server.Port)
+		log.Printf("管理后台: %s://localhost:%s/admin", scheme, cfg.Server.Port)
 		log.Printf("========================================")
 	}
 
@@ -92,8 +103,13 @@ func main() {
 		log.Printf("模板目录(嵌入): web/templates")
 	}
 
+	// 监听地址：server.host 未配置则监听所有网卡
+	bindHost := cfg.Server.Host
+	if bindHost == "" {
+		bindHost = "0.0.0.0"
+	}
 	server := &http.Server{
-		Addr:         "0.0.0.0:" + cfg.Server.Port,
+		Addr:         net.JoinHostPort(bindHost, cfg.Server.Port),
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -102,10 +118,10 @@ func main() {
 
 	// 优雅关闭
 	go func() {
-		log.Printf("服务器启动: http://localhost:%s", cfg.Server.Port)
-		log.Printf("请柬页面: http://localhost:%s/", cfg.Server.Port)
-		log.Printf("管理后台: http://localhost:%s/admin", cfg.Server.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Printf("服务器启动: %s://localhost:%s", scheme, cfg.Server.Port)
+		log.Printf("请柬页面: %s://localhost:%s/", scheme, cfg.Server.Port)
+		log.Printf("管理后台: %s://localhost:%s/admin", scheme, cfg.Server.Port)
+		if err := serve(server, scheme, cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("服务器启动失败: %v", err)
 		}
 	}()
@@ -185,6 +201,14 @@ func cleanupSessions(sessions *auth.TokenStore) {
 	for range ticker.C {
 		sessions.Cleanup()
 	}
+}
+
+// serve 按协议启动 HTTP 或 HTTPS 监听
+func serve(server *http.Server, scheme, certFile, keyFile string) error {
+	if scheme == "https" {
+		return server.ListenAndServeTLS(certFile, keyFile)
+	}
+	return server.ListenAndServe()
 }
 
 // loadEmbeddedTemplates 从 embed.FS 加载模板（回退方案）
