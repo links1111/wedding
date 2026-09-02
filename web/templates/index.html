@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow: hidden; }
         body {
             min-height: 100vh;
             min-height: 100dvh;
@@ -19,6 +20,9 @@
             font-family: 'Inter', sans-serif;
             padding: 20px;
             position: relative;
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: none;
         }
         .carousel-bg {
             position: fixed;
@@ -353,6 +357,7 @@
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             height: 100dvh;
+            touch-action: pan-y;
             background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
             z-index: 100;
@@ -630,7 +635,8 @@
                         document.getElementById('countdownBlock').style.display = 'block';
                         document.getElementById('countdownNumber').textContent = d.countdown;
                     }
-                    // 卡片样式（透明度 / 毛玻璃）
+                    // 卡片样式（透明度 / 毛玻璃），记录配置供手势恢复
+                    lastStyle = d.style;
                     applyStyle(d.style);
                     // 背景轮播
                     buildCarousel(d.slides || []);
@@ -922,6 +928,90 @@
                         console.error('RSVP 提交失败:', err);
                     })
                     .finally(() => { rsvpSubmit.disabled = false; });
+            });
+
+            // ===== 触摸手势：上划增强模糊 / 下划淡出卡片（移动端） =====
+            let lastStyle = null;      // 最近一次 applyStyle 的配置，用于松手恢复
+            const GESTURE_DIST = 150;  // 满行程距离（px）
+            let touchStartY = null;
+            let baseBlurPx = 16;       // 手势起点时的配置模糊
+            let restoreAnim = null;
+
+            // 阻止页面滚动（RSVP 弹窗内除外），保证手势不被浏览器滚动抢占
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.closest && e.target.closest('.rsvp-overlay')) return;
+                e.preventDefault();
+            }, { passive: false });
+
+            document.addEventListener('touchstart', function(e) {
+                if (e.target.closest && e.target.closest('.rsvp-overlay')) return;
+                touchStartY = e.touches[0].clientY;
+                if (restoreAnim) cancelAnimationFrame(restoreAnim);
+                const card = document.querySelector('.invitation-card');
+                if (card) {
+                    const v = parseFloat(getComputedStyle(card).getPropertyValue('--glass-blur'));
+                    baseBlurPx = isNaN(v) ? 16 : v;
+                }
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.closest && e.target.closest('.rsvp-overlay')) return;
+                if (touchStartY == null) return;
+                const card = document.querySelector('.invitation-card');
+                if (!card) return;
+                const dy = e.touches[0].clientY - touchStartY;
+                if (dy < 0) {
+                    // 上划：毛玻璃模糊从配置值逐步升至 20px，背景更均匀、文字更清晰
+                    if (card.style.backdropFilter === 'none') {
+                        card.style.backdropFilter = 'blur(var(--glass-blur)) saturate(var(--glass-saturate))';
+                        card.style.webkitBackdropFilter = card.style.backdropFilter;
+                    }
+                    const target = Math.max(baseBlurPx, 20);
+                    const t = Math.min(-dy / GESTURE_DIST, 1);
+                    const blur = baseBlurPx + (target - baseBlurPx) * t;
+                    card.style.setProperty('--glass-blur', blur.toFixed(1) + 'px');
+                    card.style.opacity = '1';
+                } else if (dy > 0) {
+                    // 下划：卡片整体（含文字）淡出，露出清晰的轮播图
+                    const t = Math.min(dy / GESTURE_DIST, 1);
+                    card.style.opacity = String(Math.max(0, 1 - t));
+                }
+            }, { passive: false });
+
+            // 松手：平滑恢复配置的模糊与透明度
+            function restoreCardState() {
+                const card = document.querySelector('.invitation-card');
+                if (!card) return;
+                const bNow = parseFloat(card.style.getPropertyValue('--glass-blur'));
+                const b0 = isNaN(bNow) ? baseBlurPx : bNow;
+                const opRaw = card.style.opacity;
+                const o0 = (opRaw === '' || isNaN(parseFloat(opRaw))) ? 1 : parseFloat(opRaw);
+                const t0 = performance.now();
+                const dur = 300;
+                function frame(now) {
+                    const t = Math.min((now - t0) / dur, 1);
+                    const e = 1 - Math.pow(1 - t, 3);
+                    card.style.setProperty('--glass-blur', (b0 + (baseBlurPx - b0) * e).toFixed(1) + 'px');
+                    card.style.opacity = String(o0 + (1 - o0) * e);
+                    if (t < 1) {
+                        restoreAnim = requestAnimationFrame(frame);
+                    } else {
+                        card.style.opacity = '';
+                        if (lastStyle) applyStyle(lastStyle); // 完全恢复配置（含毛玻璃关闭状态）
+                    }
+                }
+                restoreAnim = requestAnimationFrame(frame);
+            }
+
+            document.addEventListener('touchend', function() {
+                if (touchStartY == null) return;
+                touchStartY = null;
+                restoreCardState();
+            });
+            document.addEventListener('touchcancel', function() {
+                if (touchStartY == null) return;
+                touchStartY = null;
+                restoreCardState();
             });
 
             console.log('✨ 婚礼请柬 · 磨砂透明 · API 已对接');
