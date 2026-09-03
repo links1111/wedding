@@ -29,6 +29,8 @@ type TLSConfig struct {
 type ServerConfig struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
+	// HTTPRedirectPort HTTPS 开启时，HTTP→HTTPS 重定向监听端口；留空则不开启重定向
+	HTTPRedirectPort string `yaml:"http_redirect_port"`
 }
 
 // DatabaseConfig 数据库配置
@@ -101,6 +103,7 @@ func Load() *Config {
 
 	// 环境变量覆盖（优先级最高）
 	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
+	cfg.Server.HTTPRedirectPort = getEnv("HTTP_REDIRECT_PORT", cfg.Server.HTTPRedirectPort)
 	cfg.Database.Path = getEnv("DB_PATH", cfg.Database.Path)
 	cfg.Admin.User = getEnv("ADMIN_USER", cfg.Admin.User)
 	cfg.Admin.Pass = getEnv("ADMIN_PASS", cfg.Admin.Pass)
