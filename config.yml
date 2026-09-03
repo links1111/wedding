@@ -4,6 +4,8 @@
 server:
   # 监听地址，留空则监听所有网卡
   host: ""
+  # 公网域名（如 wewedding.space）：证书下管理端 HTTP→HTTPS 跳转目标；留空则不跳转返回 403
+  public_host: ""
   # HTTP 内容端口；生产设 80（80/443 需 root 或容器提权才能绑定）
   port: "8080"
 

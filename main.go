@@ -76,7 +76,7 @@ func main() {
 	r.Use(securityHeaders())
 	// 证书开启时：管理后台 HTTP 请求强制跳转 HTTPS（公开内容仍双协议提供）
 	if scheme == "https" {
-		r.Use(adminHTTPSRedirect(cfg.TLS.HTTPSPort))
+		r.Use(adminHTTPSRedirect(cfg.TLS.HTTPSPort, cfg.Server.PublicHost))
 	}
 
 	// API 处理器
@@ -212,22 +212,25 @@ func securityHeaders() gin.HandlerFunc {
 	}
 }
 
-// adminHTTPSRedirect 证书开启时，将管理后台的 HTTP 请求 301 跳转到 HTTPS，
-// 防止登录凭据与会话在明文 HTTP 上传输；公开页面不受影响
-func adminHTTPSRedirect(httpsPort string) gin.HandlerFunc {
+// adminHTTPSRedirect 证书开启时，将管理后台的 HTTP 请求强制走 HTTPS，
+// 防止登录凭据与会话在明文 HTTP 上传输；公开页面不受影响。
+// 跳转目标使用配置的公网域名 publicHost，不基于不可信的 Host 头（防 open redirect）；
+// 未配置公网域名时不跳转，直接返回 403 提示。
+func adminHTTPSRedirect(httpsPort, publicHost string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
-		if c.Request.TLS == nil && (path == "/admin" || path == "/admin/" || strings.HasPrefix(path, "/api/admin")) {
-			host := c.Request.Host
-			if h, _, err := net.SplitHostPort(host); err == nil {
-				host = h
+		isAdmin := path == "/admin" || path == "/admin/" || strings.HasPrefix(path, "/api/admin")
+		if c.Request.TLS == nil && isAdmin {
+			if publicHost != "" {
+				target := "https://" + publicHost
+				if httpsPort != "443" {
+					target += ":" + httpsPort
+				}
+				target += c.Request.URL.RequestURI()
+				c.Redirect(http.StatusMovedPermanently, target)
+			} else {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"ok": false, "error": "管理后台请通过 HTTPS 访问"})
 			}
-			target := "https://" + host
-			if httpsPort != "443" {
-				target += ":" + httpsPort
-			}
-			target += c.Request.URL.RequestURI()
-			c.Redirect(http.StatusMovedPermanently, target)
 			c.Abort()
 			return
 		}

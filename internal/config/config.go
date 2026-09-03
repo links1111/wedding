@@ -32,6 +32,8 @@ type ServerConfig struct {
 	Host string `yaml:"host"`
 	// Port 始终提供 HTTP 内容；生产可设为 80
 	Port string `yaml:"port"`
+	// PublicHost 公网域名（如 wewedding.space），用于证书下 HTTP→HTTPS 跳转目标；留空则不跳转改返回 403
+	PublicHost string `yaml:"public_host"`
 }
 
 // DatabaseConfig 数据库配置
@@ -105,6 +107,7 @@ func Load() *Config {
 
 	// 环境变量覆盖（优先级最高）
 	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
+	cfg.Server.PublicHost = getEnv("PUBLIC_HOST", cfg.Server.PublicHost)
 	cfg.TLS.HTTPSPort = getEnv("HTTPS_PORT", cfg.TLS.HTTPSPort)
 	cfg.Database.Path = getEnv("DB_PATH", cfg.Database.Path)
 	cfg.Admin.User = getEnv("ADMIN_USER", cfg.Admin.User)

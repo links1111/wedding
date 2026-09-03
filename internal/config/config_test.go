@@ -19,6 +19,7 @@ func writeTempConfig(t *testing.T, content string) string {
 func TestLoadTLS(t *testing.T) {
 	t.Setenv("CONFIG_FILE", writeTempConfig(t, `server:
   port: "8080"
+  public_host: "wewedding.space"
 tls:
   cert_file: "/etc/ssl/cert.pem"
   key_file: "/etc/ssl/key.pem"
@@ -27,10 +28,14 @@ tls:
 	t.Setenv("TLS_CERT_FILE", "")
 	t.Setenv("TLS_KEY_FILE", "")
 	t.Setenv("HTTPS_PORT", "")
+	t.Setenv("PUBLIC_HOST", "")
 
 	cfg := Load()
 	if cfg.Server.Port != "8080" {
 		t.Errorf("HTTP 端口 = %q, 期望 %q", cfg.Server.Port, "8080")
+	}
+	if cfg.Server.PublicHost != "wewedding.space" {
+		t.Errorf("公网域名 = %q, 期望 %q", cfg.Server.PublicHost, "wewedding.space")
 	}
 	if cfg.TLS.HTTPSPort != "8443" {
 		t.Errorf("HTTPS 端口 = %q, 期望 %q", cfg.TLS.HTTPSPort, "8443")
