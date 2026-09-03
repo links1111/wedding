@@ -23,14 +23,15 @@ type Config struct {
 type TLSConfig struct {
 	CertFile string `yaml:"cert_file"`
 	KeyFile  string `yaml:"key_file"`
+	// HTTPSPort HTTPS 内容监听端口（证书开启时）；默认 443
+	HTTPSPort string `yaml:"https_port"`
 }
 
 // ServerConfig 服务器配置
 type ServerConfig struct {
 	Host string `yaml:"host"`
+	// Port 始终提供 HTTP 内容；生产可设为 80
 	Port string `yaml:"port"`
-	// HTTPRedirectPort HTTPS 开启时，HTTP→HTTPS 重定向监听端口；留空则不开启重定向
-	HTTPRedirectPort string `yaml:"http_redirect_port"`
 }
 
 // DatabaseConfig 数据库配置
@@ -91,6 +92,7 @@ func Load() *Config {
 			MaxBackups: 5,
 			MaxAge:     30,
 		},
+		TLS: TLSConfig{HTTPSPort: "443"},
 	}
 
 	// 尝试从 config.yml 加载
@@ -103,7 +105,7 @@ func Load() *Config {
 
 	// 环境变量覆盖（优先级最高）
 	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
-	cfg.Server.HTTPRedirectPort = getEnv("HTTP_REDIRECT_PORT", cfg.Server.HTTPRedirectPort)
+	cfg.TLS.HTTPSPort = getEnv("HTTPS_PORT", cfg.TLS.HTTPSPort)
 	cfg.Database.Path = getEnv("DB_PATH", cfg.Database.Path)
 	cfg.Admin.User = getEnv("ADMIN_USER", cfg.Admin.User)
 	cfg.Admin.Pass = getEnv("ADMIN_PASS", cfg.Admin.Pass)

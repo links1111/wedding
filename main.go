@@ -108,38 +108,41 @@ func main() {
 	if bindHost == "" {
 		bindHost = "0.0.0.0"
 	}
-	server := &http.Server{
+	httpServer := &http.Server{
 		Addr:         net.JoinHostPort(bindHost, cfg.Server.Port),
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
-	servers := []*http.Server{server}
+	servers := []*http.Server{httpServer}
 
-	// 主服务：证书存在时 HTTPS，否则 HTTP
+	// HTTP 内容服务：始终监听 server.port（生产可设 80）
 	go func() {
-		log.Printf("服务器启动: %s://localhost:%s", scheme, cfg.Server.Port)
-		log.Printf("请柬页面: %s://localhost:%s/", scheme, cfg.Server.Port)
-		log.Printf("管理后台: %s://localhost:%s/admin", scheme, cfg.Server.Port)
-		if err := serve(server, scheme, cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("服务器启动失败: %v", err)
+		log.Printf("HTTP 服务: http://localhost:%s", cfg.Server.Port)
+		log.Printf("请柬页面: http://localhost:%s/", cfg.Server.Port)
+		log.Printf("管理后台: http://localhost:%s/admin", cfg.Server.Port)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("HTTP 服务器启动失败: %v", err)
 		}
 	}()
 
-	// 证书开启时，另起 HTTP→HTTPS 重定向监听，两者同时可用
-	if scheme == "https" && cfg.Server.HTTPRedirectPort != "" {
-		redirect := &http.Server{
-			Addr:        net.JoinHostPort(bindHost, cfg.Server.HTTPRedirectPort),
-			Handler:     httpsRedirectHandler(cfg.Server.Port),
-			ReadTimeout: 15 * time.Second,
+	// 证书存在时：HTTPS 内容服务监听 tls.https_port，与 HTTP 同时提供完整内容（无转发）
+	if scheme == "https" {
+		httpsServer := &http.Server{
+			Addr:         net.JoinHostPort(bindHost, cfg.TLS.HTTPSPort),
+			Handler:      r,
+			ReadTimeout:  15 * time.Second,
+			WriteTimeout: 15 * time.Second,
+			IdleTimeout:  60 * time.Second,
 		}
-		servers = append(servers, redirect)
+		servers = append(servers, httpsServer)
 		go func() {
-			log.Printf("HTTP→HTTPS 重定向: http://localhost:%s -> https://localhost:%s", cfg.Server.HTTPRedirectPort, cfg.Server.Port)
-			if err := redirect.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				// 重定向端口绑定失败（权限/端口占用）不阻断 HTTPS
-				log.Printf("HTTP 重定向服务启动失败: %v（HTTPS 继续运行）", err)
+			log.Printf("HTTPS 服务: https://localhost:%s", cfg.TLS.HTTPSPort)
+			log.Printf("请柬页面: https://localhost:%s/", cfg.TLS.HTTPSPort)
+			log.Printf("管理后台: https://localhost:%s/admin", cfg.TLS.HTTPSPort)
+			if err := httpsServer.ListenAndServeTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("HTTPS 服务器启动失败: %v", err)
 			}
 		}()
 	}
@@ -157,22 +160,6 @@ func main() {
 		}
 	}
 	log.Println("服务器已关闭")
-}
-
-// httpsRedirectHandler 将请求 301 重定向到 HTTPS 对应地址
-func httpsRedirectHandler(httpsPort string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		host := r.Host
-		if h, _, err := net.SplitHostPort(r.Host); err == nil {
-			host = h
-		}
-		target := "https://" + host
-		if httpsPort != "443" {
-			target += ":" + httpsPort
-		}
-		target += r.URL.RequestURI()
-		http.Redirect(w, r, target, http.StatusMovedPermanently)
-	})
 }
 
 // initLogger 初始化日志输出：同时写入文件（lumberjack 轮转）和控制台
@@ -237,14 +224,6 @@ func cleanupSessions(sessions *auth.TokenStore) {
 	for range ticker.C {
 		sessions.Cleanup()
 	}
-}
-
-// serve 按协议启动 HTTP 或 HTTPS 监听
-func serve(server *http.Server, scheme, certFile, keyFile string) error {
-	if scheme == "https" {
-		return server.ListenAndServeTLS(certFile, keyFile)
-	}
-	return server.ListenAndServe()
 }
 
 // loadEmbeddedTemplates 从 embed.FS 加载模板（回退方案）

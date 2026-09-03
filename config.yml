@@ -4,16 +4,16 @@
 server:
   # 监听地址，留空则监听所有网卡
   host: ""
+  # HTTP 内容端口；生产设 80（80/443 需 root 或容器提权才能绑定）
   port: "8080"
-  # HTTPS 开启（下方 tls 配置了证书）时，HTTP→HTTPS 重定向监听端口；留空则不开启重定向
-  # 非 root/容器内运行若无法绑定 80，请改大端口或留空
-  http_redirect_port: "80"
 
-# HTTPS 证书配置：cert_file 与 key_file 都配置且文件存在时以 HTTPS 启动，否则用 HTTP
-# 可用环境变量覆盖：TLS_CERT_FILE / TLS_KEY_FILE
+# HTTPS 证书配置：cert_file 与 key_file 都配置且文件存在时，
+# 在 tls.https_port（默认 443）同时提供 HTTPS 完整内容；HTTP 仍在 server.port 提供，二者无转发
+# 可用环境变量覆盖：TLS_CERT_FILE / TLS_KEY_FILE / HTTPS_PORT
 tls:
   cert_file: ""
   key_file: ""
+  https_port: "443"
 
 database:
   path: "./data/wedding.db"

@@ -18,22 +18,22 @@ func writeTempConfig(t *testing.T, content string) string {
 
 func TestLoadTLS(t *testing.T) {
 	t.Setenv("CONFIG_FILE", writeTempConfig(t, `server:
-  port: "8443"
-  http_redirect_port: "8080"
+  port: "8080"
 tls:
   cert_file: "/etc/ssl/cert.pem"
   key_file: "/etc/ssl/key.pem"
+  https_port: "8443"
 `))
 	t.Setenv("TLS_CERT_FILE", "")
 	t.Setenv("TLS_KEY_FILE", "")
-	t.Setenv("HTTP_REDIRECT_PORT", "")
+	t.Setenv("HTTPS_PORT", "")
 
 	cfg := Load()
-	if cfg.Server.Port != "8443" {
-		t.Errorf("端口 = %q, 期望 %q", cfg.Server.Port, "8443")
+	if cfg.Server.Port != "8080" {
+		t.Errorf("HTTP 端口 = %q, 期望 %q", cfg.Server.Port, "8080")
 	}
-	if cfg.Server.HTTPRedirectPort != "8080" {
-		t.Errorf("HTTP 重定向端口 = %q, 期望 %q", cfg.Server.HTTPRedirectPort, "8080")
+	if cfg.TLS.HTTPSPort != "8443" {
+		t.Errorf("HTTPS 端口 = %q, 期望 %q", cfg.TLS.HTTPSPort, "8443")
 	}
 	if cfg.TLS.CertFile != "/etc/ssl/cert.pem" {
 		t.Errorf("证书路径 = %q, 期望 /etc/ssl/cert.pem", cfg.TLS.CertFile)
