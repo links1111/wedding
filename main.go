@@ -74,6 +74,10 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Logger(), gin.Recovery())
 	r.Use(securityHeaders())
+	// 证书开启时：管理后台 HTTP 请求强制跳转 HTTPS（公开内容仍双协议提供）
+	if scheme == "https" {
+		r.Use(adminHTTPSRedirect(cfg.TLS.HTTPSPort))
+	}
 
 	// API 处理器
 	settingsStore := settings.New(db.DB, cfg.Wedding)
@@ -204,6 +208,29 @@ func securityHeaders() gin.HandlerFunc {
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Next()
+	}
+}
+
+// adminHTTPSRedirect 证书开启时，将管理后台的 HTTP 请求 301 跳转到 HTTPS，
+// 防止登录凭据与会话在明文 HTTP 上传输；公开页面不受影响
+func adminHTTPSRedirect(httpsPort string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if c.Request.TLS == nil && (path == "/admin" || path == "/admin/" || strings.HasPrefix(path, "/api/admin")) {
+			host := c.Request.Host
+			if h, _, err := net.SplitHostPort(host); err == nil {
+				host = h
+			}
+			target := "https://" + host
+			if httpsPort != "443" {
+				target += ":" + httpsPort
+			}
+			target += c.Request.URL.RequestURI()
+			c.Redirect(http.StatusMovedPermanently, target)
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }
