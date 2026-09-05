@@ -2,9 +2,18 @@ package models
 
 import "time"
 
+// Wedding 一场婚礼（多租户），token 即访问凭证
+type Wedding struct {
+	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	Token     string    `json:"token" gorm:"uniqueIndex;not null;size:64"`
+	Name      string    `json:"name" gorm:"not null;size:100"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+}
+
 // Visit 访问记录
 type Visit struct {
 	ID          int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	WeddingID   int64     `json:"wedding_id" gorm:"index;not null;default:0"`
 	IP          string    `json:"ip" gorm:"not null"`
 	UserAgent   string    `json:"user_agent" gorm:"default:''"`
 	Referer     string    `json:"referer" gorm:"default:''"`
@@ -16,6 +25,7 @@ type Visit struct {
 // Guest 来宾 RSVP 回复
 type Guest struct {
 	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	WeddingID int64     `json:"wedding_id" gorm:"index;not null;default:0"`
 	Name      string    `json:"name" gorm:"not null"`
 	Phone     string    `json:"phone" gorm:"default:''"`
 	Attending int       `json:"attending" gorm:"default:0"` // 0=未确认 1=出席 2=缺席
@@ -34,10 +44,11 @@ type AdminUser struct {
 	CreatedAt    time.Time `json:"created_at" gorm:"autoCreateTime"`
 }
 
-// Setting 键值对设置（管理后台可配置的请柬信息与样式）
+// Setting 键值对设置，按婚礼隔离
 type Setting struct {
-	Key   string `json:"key" gorm:"primaryKey"`
-	Value string `json:"value" gorm:"not null"`
+	WeddingID int64  `json:"wedding_id" gorm:"primaryKey"`
+	Key       string `json:"key" gorm:"primaryKey"`
+	Value     string `json:"value" gorm:"not null"`
 }
 
 // Attending 状态常量
