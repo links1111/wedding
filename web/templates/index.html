@@ -591,8 +591,11 @@
     <!-- ===== 轮播 & API 对接 ===== -->
     <script>
         (function() {
+            // 从路径 /w/{token} 取 token
+            var WEDDING_TOKEN = (location.pathname.split('/')[2] || '');
+            var API = '/api/w/' + WEDDING_TOKEN;
             // ===== 加载请柬信息（文案 / 样式 / 背景图列表） =====
-            fetch('/api/invitation')
+            fetch(API + '/invitation')
                 .then(r => r.json())
                 .then(res => {
                     if (!res.ok || !res.data) return;
@@ -874,7 +877,7 @@
             function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
             // ===== 记录访问 =====
-            fetch('/api/visit', {
+            fetch(API + '/visit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({})
@@ -916,7 +919,7 @@
                 rsvpMessage.textContent = '提交中...';
                 rsvpMessage.className = 'rsvp-message';
 
-                fetch('/api/rsvp', {
+                fetch(API + '/rsvp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
