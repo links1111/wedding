@@ -32,83 +32,6 @@
             min-height: 100vh;
         }
 
-        /* 登录页 */
-        .login-page {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-        }
-
-        .login-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 40px 35px;
-            width: 360px;
-            max-width: 90vw;
-        }
-
-        .login-title {
-            text-align: center;
-            font-family: 'Noto Serif SC', serif;
-            font-size: 22px;
-            font-weight: 400;
-            color: var(--gold-light);
-            margin-bottom: 8px;
-            letter-spacing: 4px;
-        }
-
-        .login-sub {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-muted);
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-        }
-
-        .login-input {
-            width: 100%;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 12px 16px;
-            color: var(--text);
-            font-size: 14px;
-            margin-bottom: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .login-input:focus { border-color: var(--gold); }
-
-        .login-btn {
-            width: 100%;
-            padding: 13px;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-            border: none;
-            border-radius: 4px;
-            color: #0f0f1a;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            letter-spacing: 2px;
-        }
-
-        .login-btn:hover { box-shadow: 0 4px 20px rgba(201,169,110,0.3); }
-
-        .login-error {
-            color: var(--red);
-            font-size: 13px;
-            text-align: center;
-            margin-bottom: 16px;
-            display: none;
-        }
-
-        .login-error.show { display: block; }
-
         /* 管理界面 */
         .admin-layout { display: none; }
         .admin-layout.show { display: block; }
@@ -153,6 +76,30 @@
         .logout-btn:hover {
             border-color: var(--red);
             color: var(--red);
+        }
+
+        .wedding-name {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 14px;
+            color: var(--gold-light);
+            letter-spacing: 2px;
+        }
+
+        .invite-link {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .invite-link:hover {
+            border-color: var(--gold);
+            color: var(--gold-light);
         }
 
         .content { padding: 30px; max-width: 1200px; margin: 0 auto; }
@@ -584,24 +531,13 @@
     </style>
 </head>
 <body>
-    <!-- 登录页 -->
-    <div class="login-page" id="loginPage">
-        <div class="login-card">
-            <div class="login-title">管理后台</div>
-            <div class="login-sub">Wedding Admin</div>
-            <div class="login-error" id="loginError">用户名或密码错误</div>
-            <input type="text" class="login-input" id="loginUser" placeholder="用户名" autocomplete="username">
-            <input type="password" class="login-input" id="loginPass" placeholder="密码" autocomplete="current-password">
-            <button class="login-btn" id="loginBtn">登 录</button>
-        </div>
-    </div>
-
     <!-- 管理界面 -->
     <div class="admin-layout" id="adminLayout">
         <div class="header">
             <div class="header-title">婚礼请柬 · 管理后台</div>
             <div class="header-right">
-                <button class="logout-btn" id="logoutBtn">退出登录</button>
+                <span id="weddingName" class="wedding-name"></span>
+                <a class="invite-link" id="inviteLink" href="#">查看请柬</a>
             </div>
         </div>
 
@@ -678,7 +614,7 @@
                     </label>
                     <span class="guest-count" id="guestCount"></span>
                     <button class="export-btn" id="addGuestBtn" style="margin-left:auto;">新增来宾</button>
-                    <a href="/api/admin/guests/export" class="export-btn">导出 CSV</a>
+                    <a href="#" id="exportLink" class="export-btn">导出 CSV</a>
                 </div>
                 <table>
                     <thead>
@@ -853,63 +789,33 @@
     </div>
 
     <script>
-        // 检查登录状态
-        async function checkAuth() {
+        // ===== token 解析与后台初始化（无登录，token 即访问凭证） =====
+        var WEDDING_TOKEN = (location.pathname.split('/')[2] || '');
+        var API = '/api/w/' + WEDDING_TOKEN;
+
+        async function initAdmin() {
+            let json;
             try {
-                const res = await fetch('/api/admin/stats');
-                if (res.status === 200) {
-                    showAdmin();
+                const res = await fetch(API + '/meta');
+                if (!res.ok) {
+                    location.href = '/admin';
+                    return;
                 }
-            } catch(e) {}
-        }
-        checkAuth();
-
-        // 登录
-        const loginBtn = document.getElementById('loginBtn');
-        loginBtn.addEventListener('click', doLogin);
-        document.getElementById('loginPass').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') doLogin();
-        });
-
-        async function doLogin() {
-            const username = document.getElementById('loginUser').value.trim();
-            const password = document.getElementById('loginPass').value;
-            if (!username || !password) return;
-
-            loginBtn.disabled = true;
-            loginBtn.textContent = '登录中...';
-
-            try {
-                const res = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({username, password})
-                });
-                const json = await res.json();
-                if (json.ok) {
-                    document.getElementById('loginError').classList.remove('show');
-                    showAdmin();
-                } else {
-                    document.getElementById('loginError').classList.add('show');
-                    loginBtn.disabled = false;
-                    loginBtn.textContent = '登 录';
-                }
-            } catch(e) {
-                document.getElementById('loginError').textContent = '网络错误';
-                document.getElementById('loginError').classList.add('show');
-                loginBtn.disabled = false;
-                loginBtn.textContent = '登 录';
+                json = await res.json();
+            } catch (e) {
+                location.href = '/admin';
+                return;
             }
+            if (json && json.ok) {
+                document.getElementById('weddingName').textContent = json.data.name || '';
+            }
+            document.getElementById('inviteLink').href = '/w/' + WEDDING_TOKEN;
+            document.getElementById('exportLink').href = API + '/guests/export';
+            showAdmin();
         }
-
-        // 退出
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await fetch('/api/admin/logout', {method: 'POST'});
-            location.reload();
-        });
+        initAdmin();
 
         function showAdmin() {
-            document.getElementById('loginPage').style.display = 'none';
             document.getElementById('adminLayout').classList.add('show');
             loadStats();
             loadGuests();
@@ -919,7 +825,7 @@
         // 加载统计
         async function loadStats() {
             try {
-                const res = await fetch('/api/admin/stats');
+                const res = await fetch(API + '/stats');
                 const json = await res.json();
                 if (json.ok) {
                     const d = json.data;
@@ -959,7 +865,7 @@
         let allGuests = [];
         async function loadGuests() {
             try {
-                const res = await fetch('/api/admin/guests');
+                const res = await fetch(API + '/guests');
                 const json = await res.json();
                 if (json.ok) {
                     allGuests = json.data || [];
@@ -998,7 +904,7 @@
         let allVisits = [];
         async function loadVisits() {
             try {
-                const res = await fetch('/api/admin/visits');
+                const res = await fetch(API + '/visits');
                 const json = await res.json();
                 if (json.ok) {
                     allVisits = json.data || [];
@@ -1047,7 +953,7 @@
 
         async function loadSettings() {
             try {
-                const res = await fetch('/api/admin/settings');
+                const res = await fetch(API + '/settings');
                 const json = await res.json();
                 if (!json.ok) return;
                 settingsData = json.data || {};
@@ -1120,7 +1026,7 @@
             msg.textContent = '保存中...';
             msg.className = 'save-msg';
             try {
-                const res = await fetch('/api/admin/settings', {
+                const res = await fetch(API + '/settings', {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
@@ -1157,7 +1063,7 @@
 
         async function loadImages() {
             try {
-                const res = await fetch('/api/admin/images');
+                const res = await fetch(API + '/images');
                 const json = await res.json();
                 if (!json.ok) return;
                 const items = json.data || [];
@@ -1192,7 +1098,7 @@
                 fd.append('file', files[i]);
                 fd.append('compress', compress ? 'true' : 'false');
                 try {
-                    const res = await fetch('/api/admin/images', { method: 'POST', body: fd });
+                    const res = await fetch(API + '/images', { method: 'POST', body: fd });
                     const json = await res.json();
                     if (json.ok) {
                         ok++;
@@ -1220,7 +1126,7 @@
             const name = btn.dataset.name;
             if (!confirm('确定删除图片 ' + name + ' 吗？')) return;
             try {
-                const res = await fetch('/api/admin/images/' + encodeURIComponent(name), { method: 'DELETE' });
+                const res = await fetch(API + '/images/' + encodeURIComponent(name), { method: 'DELETE' });
                 const json = await res.json();
                 if (json.ok) {
                     loadImages();
@@ -1237,7 +1143,7 @@
 
         async function loadAudio() {
             try {
-                const res = await fetch('/api/admin/audio');
+                const res = await fetch(API + '/audio');
                 const json = await res.json();
                 if (!json.ok) return;
                 const items = json.data || [];
@@ -1266,7 +1172,7 @@
             const fd = new FormData();
             fd.append('file', input.files[0]);
             try {
-                const res = await fetch('/api/admin/audio', { method: 'POST', body: fd });
+                const res = await fetch(API + '/audio', { method: 'POST', body: fd });
                 const json = await res.json();
                 if (json.ok) {
                     document.getElementById('setMusicUrl').value = json.data.url;
@@ -1295,7 +1201,7 @@
             const name = delBtn.dataset.name;
             if (!confirm('确定删除音频 ' + name + ' 吗？')) return;
             try {
-                const res = await fetch('/api/admin/audio/' + encodeURIComponent(name), { method: 'DELETE' });
+                const res = await fetch(API + '/audio/' + encodeURIComponent(name), { method: 'DELETE' });
                 const json = await res.json();
                 if (json.ok) loadAudio(); else alert(json.error || '删除失败');
             } catch(e) { alert('网络错误'); }
@@ -1402,7 +1308,7 @@
             msg.textContent = '保存中...';
             msg.className = 'save-msg';
             try {
-                const url = editingGuestId == null ? '/api/admin/guests' : '/api/admin/guests/' + editingGuestId;
+                const url = editingGuestId == null ? API + '/guests' : API + '/guests/' + editingGuestId;
                 const res = await fetch(url, {
                     method: editingGuestId == null ? 'POST' : 'PUT',
                     headers: {'Content-Type': 'application/json'},
@@ -1427,7 +1333,7 @@
         async function deleteGuestRow(id, name) {
             if (!confirm('确定删除来宾「' + name + '」的记录吗？')) return;
             try {
-                const res = await fetch('/api/admin/guests/' + id, { method: 'DELETE' });
+                const res = await fetch(API + '/guests/' + id, { method: 'DELETE' });
                 const json = await res.json();
                 if (json.ok) {
                     loadGuests();
