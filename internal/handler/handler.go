@@ -97,30 +97,41 @@ const (
 
 // RegisterRoutes 在 Gin 引擎上注册所有路由
 func (h *Handler) RegisterRoutes(r *gin.Engine) {
-	// 公开 API
-	r.GET("/api/invitation", h.getInvitation)
-	r.POST("/api/visit", h.recordVisit)
-	r.POST("/api/rsvp", h.submitRSVP)
+	// 页面
+	r.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/admin") })
+	r.GET("/admin", func(c *gin.Context) { c.HTML(http.StatusOK, "system.html", nil) })
+	r.GET("/w/:token", h.weddingPage)
+	r.GET("/admin/:token", h.adminPage)
 
-	// 管理 API
+	// 系统管理员认证
 	r.POST("/api/admin/login", h.adminLogin)
 	r.POST("/api/admin/logout", h.adminLogout)
-	adminAuth := r.Group("/api/admin", h.authMiddleware())
-	adminAuth.GET("/stats", h.getStats)
-	adminAuth.GET("/guests", h.getGuests)
-	adminAuth.POST("/guests", h.createGuest)
-	adminAuth.PUT("/guests/:id", h.updateGuest)
-	adminAuth.DELETE("/guests/:id", h.deleteGuest)
-	adminAuth.GET("/visits", h.getVisits)
-	adminAuth.GET("/guests/export", h.exportGuests)
-	adminAuth.GET("/settings", h.getSettings)
-	adminAuth.PUT("/settings", h.updateSettings)
-	adminAuth.GET("/images", h.listImages)
-	adminAuth.POST("/images", h.uploadImage)
-	adminAuth.DELETE("/images/:name", h.deleteImage)
-	adminAuth.GET("/audio", h.listAudio)
-	adminAuth.POST("/audio", h.uploadAudio)
-	adminAuth.DELETE("/audio/:name", h.deleteAudio)
+	sys := r.Group("/api/admin", h.authMiddleware())
+	sys.GET("/weddings", h.listWeddings)
+	sys.POST("/weddings", h.createWedding)
+	sys.DELETE("/weddings/:id", h.deleteWedding)
+
+	// 某婚礼（公开+后台共用 token 命名空间）
+	w := r.Group("/api/w/:token", h.weddingContext())
+	w.GET("/invitation", h.getInvitation)
+	w.GET("/meta", h.getWeddingMeta)
+	w.GET("/stats", h.getWeddingStats)
+	w.POST("/visit", h.recordVisit)
+	w.POST("/rsvp", h.submitRSVP)
+	w.GET("/settings", h.getSettings)
+	w.PUT("/settings", h.updateSettings)
+	w.GET("/guests", h.getGuests)
+	w.POST("/guests", h.createGuest)
+	w.PUT("/guests/:id", h.updateGuest)
+	w.DELETE("/guests/:id", h.deleteGuest)
+	w.GET("/guests/export", h.exportGuests)
+	w.GET("/visits", h.getVisits)
+	w.GET("/images", h.listImages)
+	w.POST("/images", h.uploadImage)
+	w.DELETE("/images/:name", h.deleteImage)
+	w.GET("/audio", h.listAudio)
+	w.POST("/audio", h.uploadAudio)
+	w.DELETE("/audio/:name", h.deleteAudio)
 }
 
 // --- 公开 API ---
@@ -173,6 +184,36 @@ func (h *Handler) getWeddingMeta(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": w.Name, "token": w.Token}})
+}
+
+// weddingPage 请柬页：校验 token 后渲染 index.html
+func (h *Handler) weddingPage(c *gin.Context) {
+	tok := c.Param("token")
+	if !weddings.IsValidToken(tok) {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	var w models.Wedding
+	if err := h.DB.Where("token = ?", tok).First(&w).Error; err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	c.HTML(http.StatusOK, "index.html", gin.H{"Token": tok})
+}
+
+// adminPage 婚礼后台页：校验 token 后渲染 admin.html
+func (h *Handler) adminPage(c *gin.Context) {
+	tok := c.Param("token")
+	if !weddings.IsValidToken(tok) {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+	var w models.Wedding
+	if err := h.DB.Where("token = ?", tok).First(&w).Error; err != nil {
+		c.Redirect(http.StatusFound, "/admin")
+		return
+	}
+	c.HTML(http.StatusOK, "admin.html", gin.H{"Token": tok})
 }
 
 // slidesFor 列出某婚礼静态目录 images 下所有图片的访问 URL
@@ -348,8 +389,8 @@ func (h *Handler) adminLogout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
 }
 
-// getStats 获取统计数据
-func (h *Handler) getStats(c *gin.Context) {
+// getWeddingStats 获取某婚礼的统计数据（按 wedding_id 作用域）
+func (h *Handler) getWeddingStats(c *gin.Context) {
 	w := weddingFrom(c)
 	if w == nil {
 		c.AbortWithStatus(http.StatusNotFound)

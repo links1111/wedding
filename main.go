@@ -94,12 +94,6 @@ func main() {
 	if _, err := os.Stat(cfg.Paths.TemplateDir); err == nil {
 		r.LoadHTMLGlob(cfg.Paths.TemplateDir + "/*")
 		log.Printf("模板目录(本地): %s", cfg.Paths.TemplateDir)
-		r.GET("/", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "index.html", nil)
-		})
-		r.GET("/admin", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin.html", nil)
-		})
 	} else {
 		loadEmbeddedTemplates(r)
 		log.Printf("模板目录(嵌入): web/templates")
@@ -217,7 +211,7 @@ func securityHeaders() gin.HandlerFunc {
 func adminHTTPSRedirect(httpsPort, publicHost string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
-		isAdmin := path == "/admin" || path == "/admin/" || strings.HasPrefix(path, "/api/admin")
+		isAdmin := path == "/admin" || strings.HasPrefix(path, "/admin/") || strings.HasPrefix(path, "/api/admin")
 		if c.Request.TLS == nil && isAdmin {
 			if publicHost != "" {
 				target := "https://" + publicHost
@@ -265,10 +259,4 @@ func loadEmbeddedTemplates(r *gin.Engine) {
 		log.Fatalf("嵌入模板加载失败: %v", err)
 	}
 	r.SetHTMLTemplate(tmpl)
-	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
-	})
-	r.GET("/admin", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin.html", nil)
-	})
 }
