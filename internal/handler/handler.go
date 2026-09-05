@@ -630,6 +630,120 @@ func (h *Handler) updateSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": st.All()})
 }
 
+// --- 系统管理员：婚礼管理 ---
+
+// listWeddings 系统管理员：列出全部婚礼（含统计）
+func (h *Handler) listWeddings(c *gin.Context) {
+	type row struct {
+		models.Wedding
+		RsvpCount      int64 `json:"rsvp_count"`
+		AttendingCount int64 `json:"attending_count"`
+	}
+	var rows []row
+	err := h.DB.Model(&models.Wedding{}).
+		Select(`weddings.*,
+			(SELECT COUNT(*) FROM guests WHERE wedding_id = weddings.id) AS rsvp_count,
+			(SELECT COUNT(*) FROM guests WHERE wedding_id = weddings.id AND attending = 1) AS attending_count`).
+		Order("created_at DESC").Scan(&rows).Error
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "查询失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": rows})
+}
+
+// createWedding 系统管理员：创建婚礼并生成 token，可选预填新人信息
+func (h *Handler) createWedding(c *gin.Context) {
+	var req struct {
+		Name        string `json:"name"`
+		GroomName   string `json:"groom_name"`
+		BrideName   string `json:"bride_name"`
+		WeddingDate string `json:"wedding_date"`
+		Venue       string `json:"venue"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
+		return
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" || len(req.Name) > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "婚礼名称不能为空且不超过100字"})
+		return
+	}
+	tok, err := weddings.GenerateToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "生成 token 失败"})
+		return
+	}
+	w := models.Wedding{Token: tok, Name: req.Name}
+	if err := h.DB.Create(&w).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建失败"})
+		return
+	}
+	// 预填可编辑设置（可选字段）
+	store := h.settingsFor(w.ID)
+	prefill := map[string]string{
+		settings.KeyGroomName:   req.GroomName,
+		settings.KeyBrideName:   req.BrideName,
+		settings.KeyWeddingDate: req.WeddingDate,
+		settings.KeyVenue:       req.Venue,
+	}
+	for k, v := range prefill {
+		if strings.TrimSpace(v) != "" {
+			if err := store.Set(k, strings.TrimSpace(v)); err != nil {
+				log.Printf("预填设置失败 %s: %v", k, err)
+			}
+		}
+	}
+	// 多租户音乐默认地址：始终 seed token 化路径，使新婚礼音乐开箱即用
+	if err := store.Set(settings.KeyMusicURL, "/static/"+tok+"/music/bgm.mp3"); err != nil {
+		log.Printf("预填音乐地址失败: %v", err)
+	}
+	log.Printf("系统管理员创建婚礼: %s (token=%s)", w.Name, w.Token)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{
+		"id": w.ID, "name": w.Name, "token": w.Token,
+		"invite_url": "/w/" + w.Token, "admin_url": "/admin/" + w.Token,
+	}})
+}
+
+// deleteWedding 系统管理员：删除婚礼并级联清理数据与媒体目录
+func (h *Handler) deleteWedding(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "无效的 ID"})
+		return
+	}
+	var w models.Wedding
+	if err := h.DB.First(&w, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "婚礼不存在"})
+		return
+	}
+	tx := h.DB.Begin()
+	for _, m := range []interface{}{
+		&models.Setting{}, &models.Guest{}, &models.Visit{},
+	} {
+		if err := tx.Where("wedding_id = ?", w.ID).Delete(m).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
+			return
+		}
+	}
+	if err := tx.Delete(&w).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
+		return
+	}
+	tx.Commit()
+	// 清理媒体目录（失败仅告警）
+	if dir := filepath.Join(h.StaticDir, w.Token); dir != "" {
+		if err := os.RemoveAll(dir); err != nil {
+			log.Printf("删除媒体目录失败 %s: %v", dir, err)
+		}
+	}
+	log.Printf("系统管理员删除婚礼: %s (id=%d)", w.Name, w.ID)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
 // --- 背景图片管理 ---
 
 // listImages 列出背景图片
