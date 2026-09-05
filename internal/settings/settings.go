@@ -89,13 +89,14 @@ var rangeKeys = map[string]rangeKey{
 
 // Store 读取/写入设置：默认值来自 config，DB 中的值覆盖默认值
 type Store struct {
-	db       *gorm.DB
-	defaults map[string]string
+	db        *gorm.DB
+	weddingID int64
+	defaults  map[string]string
 }
 
-// New 创建 Store，defaults 以 config 中的婚礼信息 + 代码常量为种子
-func New(db *gorm.DB, wedding config.WeddingConfig) *Store {
-	return &Store{db: db, defaults: defaultSettings(wedding)}
+// New 创建 Store，defaults 以 config 中的婚礼信息 + 代码常量为种子，并按 weddingID 隔离
+func New(db *gorm.DB, weddingID int64, wedding config.WeddingConfig) *Store {
+	return &Store{db: db, weddingID: weddingID, defaults: defaultSettings(wedding)}
 }
 
 func defaultSettings(w config.WeddingConfig) map[string]string {
@@ -140,7 +141,7 @@ func (s *Store) All() map[string]string {
 		return out
 	}
 	var rows []models.Setting
-	if err := s.db.Find(&rows).Error; err != nil {
+	if err := s.db.Where("wedding_id = ?", s.weddingID).Find(&rows).Error; err != nil {
 		return out
 	}
 	for _, r := range rows {
@@ -165,7 +166,7 @@ func (s *Store) Set(key, value string) error {
 	if err := Validate(key, value); err != nil {
 		return err
 	}
-	return s.db.Save(&models.Setting{Key: key, Value: value}).Error
+	return s.db.Save(&models.Setting{WeddingID: s.weddingID, Key: key, Value: value}).Error
 }
 
 // Validate 校验单个设置键值是否合法

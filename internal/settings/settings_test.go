@@ -12,8 +12,8 @@ import (
 	"wedding-invitation/internal/models"
 )
 
-// newTestStore 构造一个使用内存 SQLite 的 Store，可选预置种子数据
-func newTestStore(t *testing.T, seed map[string]string) *Store {
+// newDB 构造一个已迁移的内存 SQLite 数据库
+func newDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -24,21 +24,28 @@ func newTestStore(t *testing.T, seed map[string]string) *Store {
 	if err := db.AutoMigrate(&models.Setting{}); err != nil {
 		t.Fatalf("迁移失败: %v", err)
 	}
+	return db
+}
+
+// newTestStore 构造一个使用内存 SQLite 的 Store，可选预置种子数据
+func newTestStore(t *testing.T, seed map[string]string) (*Store, *gorm.DB) {
+	t.Helper()
+	db := newDB(t)
 	for k, v := range seed {
-		if err := db.Create(&models.Setting{Key: k, Value: v}).Error; err != nil {
+		if err := db.Create(&models.Setting{WeddingID: 1, Key: k, Value: v}).Error; err != nil {
 			t.Fatalf("写入种子失败: %v", err)
 		}
 	}
-	return New(db, config.WeddingConfig{
+	return New(db, 1, config.WeddingConfig{
 		GroomName:    "李祥",
 		BrideName:    "王羚羚",
 		WeddingDate:  "2026-10-03",
 		WeddingVenue: "麓湖·云栖草坪",
-	})
+	}), db
 }
 
 func TestDefaults(t *testing.T) {
-	s := newTestStore(t, nil)
+	s, _ := newTestStore(t, nil)
 	all := s.All()
 	cases := map[string]string{
 		KeyGroomName:        "李祥",
@@ -58,8 +65,26 @@ func TestDefaults(t *testing.T) {
 	}
 }
 
+func TestIsolationBetweenWeddings(t *testing.T) {
+	db := newDB(t)
+	s1 := New(db, 1, config.WeddingConfig{GroomName: "A"})
+	s2 := New(db, 2, config.WeddingConfig{GroomName: "B"})
+	if err := s1.Set(KeyVenue, "场地A"); err != nil {
+		t.Fatal(err)
+	}
+	if got := s2.Get(KeyVenue); got != "" {
+		t.Errorf("婚礼2 不应看到婚礼1 的设置: %q", got)
+	}
+	if got := s1.Get(KeyVenue); got != "场地A" {
+		t.Errorf("婚礼1 丢失设置: %q", got)
+	}
+	if got := s2.Get(KeyGroomName); got != "B" {
+		t.Errorf("婚礼2 默认值应来自自身 defaults: %q", got)
+	}
+}
+
 func TestDBOverridesDefault(t *testing.T) {
-	s := newTestStore(t, map[string]string{
+	s, _ := newTestStore(t, map[string]string{
 		KeyGroomName: "林予",
 		KeyCardColor: "#ffffff",
 	})
@@ -77,7 +102,7 @@ func TestDBOverridesDefault(t *testing.T) {
 }
 
 func TestSetAndGet(t *testing.T) {
-	s := newTestStore(t, nil)
+	s, _ := newTestStore(t, nil)
 	if err := s.Set(KeyDateSub, "星期六 · 下午五时"); err != nil {
 		t.Fatalf("Set 失败: %v", err)
 	}
@@ -85,21 +110,21 @@ func TestSetAndGet(t *testing.T) {
 		t.Errorf("Get = %q, 期望 %q", got, "星期六 · 下午五时")
 	}
 	// 已保存的值从新 Store 也应读到（持久化）
-	s2 := New(s.db, config.WeddingConfig{BrideName: "王羚羚"})
+	s2 := New(s.db, 1, config.WeddingConfig{BrideName: "王羚羚"})
 	if got := s2.Get(KeyDateSub); got != "星期六 · 下午五时" {
 		t.Errorf("重启后 Get = %q, 期望 %q", got, "星期六 · 下午五时")
 	}
 }
 
 func TestSetUnknownKey(t *testing.T) {
-	s := newTestStore(t, nil)
+	s, _ := newTestStore(t, nil)
 	if err := s.Set("not_a_key", "x"); err == nil {
 		t.Fatal("设置未知键应报错")
 	}
 }
 
 func TestSetInvalidValue(t *testing.T) {
-	s := newTestStore(t, nil)
+	s, _ := newTestStore(t, nil)
 	invalid := []struct{ key, val string }{
 		{KeyCardTransparency, "abc"},
 		{KeyCardTransparency, "-1"},
@@ -138,7 +163,7 @@ func TestSetInvalidValue(t *testing.T) {
 }
 
 func TestTimeFields(t *testing.T) {
-	s := newTestStore(t, nil)
+	s, _ := newTestStore(t, nil)
 	// 默认空（未配置时不展示）
 	if got := s.Get(KeyCeremonyTime); got != "" {
 		t.Errorf("默认仪式时间 = %q, 期望空", got)
@@ -163,7 +188,7 @@ func TestTimeFields(t *testing.T) {
 }
 
 func TestMapLinkAndMusicURL(t *testing.T) {
-	s := newTestStore(t, nil)
+	s, _ := newTestStore(t, nil)
 	// 默认值
 	if got := s.Get(KeyMapLink); got != "" {
 		t.Errorf("默认导航链接 = %q, 期望空", got)
@@ -188,7 +213,7 @@ func TestMapLinkAndMusicURL(t *testing.T) {
 }
 
 func TestValidateURLLinks(t *testing.T) {
-	s := newTestStore(t, nil)
+	s, _ := newTestStore(t, nil)
 	valid := []struct{ key, val string }{
 		{KeyMapLink, ""},
 		{KeyMapLink, "https://uri.amap.com/search?keyword=x"},
