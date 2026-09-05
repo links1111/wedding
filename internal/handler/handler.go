@@ -740,7 +740,7 @@ func (h *Handler) createWedding(c *gin.Context) {
 	if err := store.Set(settings.KeyMusicURL, "/static/"+tok+"/music/bgm.mp3"); err != nil {
 		log.Printf("预填音乐地址失败: %v", err)
 	}
-	log.Printf("系统管理员创建婚礼: %s (token=%s)", w.Name, w.Token)
+	log.Printf("系统管理员创建婚礼: %s (id=%d)", w.Name, w.ID)
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{
 		"id": w.ID, "name": w.Name, "token": w.Token,
 		"invite_url": "/w/" + w.Token, "admin_url": "/admin/" + w.Token,
