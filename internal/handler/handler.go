@@ -17,26 +17,72 @@ import (
 
 	"wedding-invitation/internal/audio"
 	"wedding-invitation/internal/auth"
+	"wedding-invitation/internal/config"
 	"wedding-invitation/internal/images"
 	"wedding-invitation/internal/models"
 	"wedding-invitation/internal/settings"
+	"wedding-invitation/internal/weddings"
 )
 
 // Handler 聚合所有 HTTP 处理器依赖
 type Handler struct {
 	DB        *gorm.DB
 	Sessions  *auth.TokenStore
-	Settings  *settings.Store
 	StaticDir string
 }
 
 // New 创建 Handler
-func New(db *gorm.DB, sessions *auth.TokenStore, store *settings.Store, staticDir string) *Handler {
+func New(db *gorm.DB, sessions *auth.TokenStore, staticDir string) *Handler {
 	return &Handler{
 		DB:        db,
 		Sessions:  sessions,
-		Settings:  store,
 		StaticDir: staticDir,
+	}
+}
+
+// settingsFor 构造指定婚礼的设置存储（默认值来自婚礼初始信息+代码常量）
+func (h *Handler) settingsFor(weddingID int64) *settings.Store {
+	return settings.New(h.DB, weddingID, config.WeddingConfig{})
+}
+
+// weddingDir 某 token 的媒体根目录（staticDir/{token}）
+func (h *Handler) weddingDir(token string) string {
+	return filepath.Join(h.StaticDir, token)
+}
+
+// imagesDirFor 某 token 的静态图片目录
+func (h *Handler) imagesDirFor(token string) string {
+	return filepath.Join(h.weddingDir(token), "images")
+}
+
+// musicDirFor 某 token 的背景音乐目录
+func (h *Handler) musicDirFor(token string) string {
+	return filepath.Join(h.weddingDir(token), "music")
+}
+
+// weddingFrom 从上下文取当前婚礼
+func weddingFrom(c *gin.Context) *models.Wedding {
+	if v, ok := c.Get("wedding"); ok {
+		return v.(*models.Wedding)
+	}
+	return nil
+}
+
+// weddingContext 校验 token 并加载 Wedding，注入上下文
+func (h *Handler) weddingContext() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tok := c.Param("token")
+		if !weddings.IsValidToken(tok) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		var w models.Wedding
+		if err := h.DB.Where("token = ?", tok).First(&w).Error; err != nil {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		c.Set("wedding", &w)
+		c.Next()
 	}
 }
 
@@ -45,8 +91,8 @@ const maxUploadBytes = 20 << 20 // 20MB
 
 // 压缩参数：长边上限与 JPEG 质量
 const (
-	maxImageDim  = 1920
-	jpegQuality  = 82
+	maxImageDim = 1920
+	jpegQuality = 82
 )
 
 // RegisterRoutes 在 Gin 引擎上注册所有路由
@@ -81,7 +127,12 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 
 // getInvitation 返回请柬信息（文案、样式、背景图列表）
 func (h *Handler) getInvitation(c *gin.Context) {
-	all := h.Settings.All()
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	all := h.settingsFor(w.ID).All()
 	c.JSON(http.StatusOK, gin.H{
 		"ok": true,
 		"data": gin.H{
@@ -100,7 +151,7 @@ func (h *Handler) getInvitation(c *gin.Context) {
 			"footer":    []string{all[settings.KeyFooter1], all[settings.KeyFooter2], all[settings.KeyFooter3]},
 			"handwrite": all[settings.KeyHandwrite],
 			"countdown": h.calcCountdown(all[settings.KeyWeddingDate]),
-			"slides":    h.slides(),
+			"slides":    h.slidesFor(w.Token),
 			"map_link":  all[settings.KeyMapLink],
 			"music_url": all[settings.KeyMusicURL],
 			"style": gin.H{
@@ -114,21 +165,37 @@ func (h *Handler) getInvitation(c *gin.Context) {
 	})
 }
 
-// slides 列出静态目录 images 下所有图片的访问 URL
-func (h *Handler) slides() []string {
-	names, err := images.List(filepath.Join(h.StaticDir, "images"))
+// getWeddingMeta 返回当前婚礼的元信息（名称、token）
+func (h *Handler) getWeddingMeta(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": w.Name, "token": w.Token}})
+}
+
+// slidesFor 列出某婚礼静态目录 images 下所有图片的访问 URL
+func (h *Handler) slidesFor(token string) []string {
+	names, err := images.List(h.imagesDirFor(token))
 	if err != nil {
 		return nil
 	}
 	urls := make([]string, 0, len(names))
 	for _, n := range names {
-		urls = append(urls, "/static/images/"+n)
+		urls = append(urls, "/static/"+token+"/images/"+n)
 	}
 	return urls
 }
 
 // recordVisit 记录访问
 func (h *Handler) recordVisit(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
 	var req struct {
 		VisitorName string `json:"visitor_name"`
 	}
@@ -151,6 +218,7 @@ func (h *Handler) recordVisit(c *gin.Context) {
 	}
 
 	if err := h.DB.Create(&models.Visit{
+		WeddingID:   w.ID,
 		IP:          ip,
 		UserAgent:   ua,
 		Referer:     referer,
@@ -194,6 +262,12 @@ func validateGuestInput(in *guestInput) error {
 
 // submitRSVP 提交 RSVP
 func (h *Handler) submitRSVP(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
 	var req guestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
@@ -207,6 +281,7 @@ func (h *Handler) submitRSVP(c *gin.Context) {
 	ip := clientIP(c)
 
 	if err := h.DB.Create(&models.Guest{
+		WeddingID: w.ID,
 		Name:      req.Name,
 		Phone:     req.Phone,
 		Attending: req.Attending,
@@ -275,41 +350,46 @@ func (h *Handler) adminLogout(c *gin.Context) {
 
 // getStats 获取统计数据
 func (h *Handler) getStats(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	stats := gin.H{}
 
 	// 总访问数
 	var totalVisits int64
-	h.DB.Model(&models.Visit{}).Count(&totalVisits)
+	h.DB.Model(&models.Visit{}).Where("wedding_id = ?", w.ID).Count(&totalVisits)
 	stats["total_visits"] = totalVisits
 
 	// 今日访问
 	var todayVisits int64
-	h.DB.Model(&models.Visit{}).Where("date(visited_at) = date('now')").Count(&todayVisits)
+	h.DB.Model(&models.Visit{}).Where("wedding_id = ? AND date(visited_at) = date('now')", w.ID).Count(&todayVisits)
 	stats["today_visits"] = todayVisits
 
 	// 独立 IP 数
 	var uniqueIPs int64
-	h.DB.Model(&models.Visit{}).Distinct("ip").Count(&uniqueIPs)
+	h.DB.Model(&models.Visit{}).Where("wedding_id = ?", w.ID).Distinct("ip").Count(&uniqueIPs)
 	stats["unique_visitors"] = uniqueIPs
 
 	// 总 RSVP 数
 	var totalRSVP int64
-	h.DB.Model(&models.Guest{}).Count(&totalRSVP)
+	h.DB.Model(&models.Guest{}).Where("wedding_id = ?", w.ID).Count(&totalRSVP)
 	stats["total_rsvp"] = totalRSVP
 
 	// 出席人数
 	var attendingCount int64
-	h.DB.Model(&models.Guest{}).Where("attending = 1").Count(&attendingCount)
+	h.DB.Model(&models.Guest{}).Where("wedding_id = ? AND attending = 1", w.ID).Count(&attendingCount)
 	stats["attending_count"] = attendingCount
 
 	// 出席总人数
 	var totalHeadcount int64
-	h.DB.Model(&models.Guest{}).Where("attending = 1").Select("COALESCE(SUM(headcount), 0)").Scan(&totalHeadcount)
+	h.DB.Model(&models.Guest{}).Where("wedding_id = ? AND attending = 1", w.ID).Select("COALESCE(SUM(headcount), 0)").Scan(&totalHeadcount)
 	stats["total_headcount"] = totalHeadcount
 
 	// 缺席人数
 	var notAttending int64
-	h.DB.Model(&models.Guest{}).Where("attending = 2").Count(&notAttending)
+	h.DB.Model(&models.Guest{}).Where("wedding_id = ? AND attending = 2", w.ID).Count(&notAttending)
 	stats["not_attending_count"] = notAttending
 
 	// 最近7天访问趋势
@@ -320,7 +400,7 @@ func (h *Handler) getStats(c *gin.Context) {
 	var trend []trendItem
 	h.DB.Model(&models.Visit{}).
 		Select("date(visited_at) as date, COUNT(*) as count").
-		Where("visited_at >= datetime('now', '-7 days')").
+		Where("wedding_id = ? AND visited_at >= datetime('now', '-7 days')", w.ID).
 		Group("date(visited_at)").
 		Order("date(visited_at)").
 		Scan(&trend)
@@ -336,8 +416,13 @@ func (h *Handler) getStats(c *gin.Context) {
 
 // getGuests 获取来宾列表
 func (h *Handler) getGuests(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	var guests []models.Guest
-	if err := h.DB.Order("created_at DESC").Limit(500).Find(&guests).Error; err != nil {
+	if err := h.DB.Where("wedding_id = ?", w.ID).Order("created_at DESC").Limit(500).Find(&guests).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "查询失败"})
 		return
 	}
@@ -347,6 +432,11 @@ func (h *Handler) getGuests(c *gin.Context) {
 
 // createGuest 后台新增来宾
 func (h *Handler) createGuest(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	var req guestInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
@@ -358,6 +448,7 @@ func (h *Handler) createGuest(c *gin.Context) {
 	}
 
 	guest := models.Guest{
+		WeddingID: w.ID,
 		Name:      req.Name,
 		Phone:     req.Phone,
 		Attending: req.Attending,
@@ -376,6 +467,11 @@ func (h *Handler) createGuest(c *gin.Context) {
 
 // updateGuest 更新来宾记录
 func (h *Handler) updateGuest(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "无效的 ID"})
@@ -392,7 +488,7 @@ func (h *Handler) updateGuest(c *gin.Context) {
 	}
 
 	var guest models.Guest
-	if err := h.DB.First(&guest, id).Error; err != nil {
+	if err := h.DB.Where("id = ? AND wedding_id = ?", id, w.ID).First(&guest).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "记录不存在"})
 		return
 	}
@@ -414,13 +510,18 @@ func (h *Handler) updateGuest(c *gin.Context) {
 
 // deleteGuest 删除来宾记录
 func (h *Handler) deleteGuest(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "无效的 ID"})
 		return
 	}
 	var guest models.Guest
-	if err := h.DB.First(&guest, id).Error; err != nil {
+	if err := h.DB.Where("id = ? AND wedding_id = ?", id, w.ID).First(&guest).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "记录不存在"})
 		return
 	}
@@ -436,8 +537,13 @@ func (h *Handler) deleteGuest(c *gin.Context) {
 
 // getVisits 获取访问记录
 func (h *Handler) getVisits(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	var visits []models.Visit
-	if err := h.DB.Order("visited_at DESC").Limit(500).Find(&visits).Error; err != nil {
+	if err := h.DB.Where("wedding_id = ?", w.ID).Order("visited_at DESC").Limit(500).Find(&visits).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "查询失败"})
 		return
 	}
@@ -447,6 +553,11 @@ func (h *Handler) getVisits(c *gin.Context) {
 
 // exportGuests 导出来宾 CSV
 func (h *Handler) exportGuests(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	c.Header("Content-Type", "text/csv; charset=utf-8")
 	c.Header("Content-Disposition", "attachment; filename=guests.csv")
 	// BOM for Excel
@@ -455,6 +566,7 @@ func (h *Handler) exportGuests(c *gin.Context) {
 
 	rows, err := h.DB.Model(&models.Guest{}).
 		Select("name, phone, attending, headcount, message, created_at").
+		Where("wedding_id = ?", w.ID).
 		Order("created_at DESC").
 		Rows()
 	if err != nil {
@@ -478,11 +590,21 @@ func (h *Handler) exportGuests(c *gin.Context) {
 
 // getSettings 返回全部可配置设置（默认值 + DB 覆盖）
 func (h *Handler) getSettings(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"ok": true, "data": h.Settings.All()})
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": h.settingsFor(w.ID).All()})
 }
 
 // updateSettings 批量更新设置（先全量校验，再写入）
 func (h *Handler) updateSettings(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	var req map[string]string
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
@@ -498,38 +620,44 @@ func (h *Handler) updateSettings(c *gin.Context) {
 			return
 		}
 	}
+	st := h.settingsFor(w.ID)
 	for key, val := range req {
-		if err := h.Settings.Set(key, val); err != nil {
+		if err := st.Set(key, val); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存设置失败"})
 			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"ok": true, "data": h.Settings.All()})
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": st.All()})
 }
 
 // --- 背景图片管理 ---
 
-// imagesDir 静态图片目录
-func (h *Handler) imagesDir() string {
-	return filepath.Join(h.StaticDir, "images")
-}
-
 // listImages 列出背景图片
 func (h *Handler) listImages(c *gin.Context) {
-	names, err := images.List(h.imagesDir())
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	names, err := images.List(h.imagesDirFor(w.Token))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取图片目录失败"})
 		return
 	}
 	items := make([]gin.H, 0, len(names))
 	for _, n := range names {
-		items = append(items, gin.H{"name": n, "url": "/static/images/" + n})
+		items = append(items, gin.H{"name": n, "url": "/static/" + w.Token + "/images/" + n})
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": items})
 }
 
-// uploadImage 上传背景图片到 static/images；compress=true 时压缩到最佳大小后保存
+// uploadImage 上传背景图片到 static/{token}/images；compress=true 时压缩到最佳大小后保存
 func (h *Handler) uploadImage(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	// 限制请求体大小，防止超大文件
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
 
@@ -567,7 +695,7 @@ func (h *Handler) uploadImage(c *gin.Context) {
 		}
 	}
 
-	dir := h.imagesDir()
+	dir := h.imagesDirFor(w.Token)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建图片目录失败"})
 		return
@@ -606,18 +734,23 @@ func (h *Handler) uploadImage(c *gin.Context) {
 	}
 
 	log.Printf("管理员上传背景图片: %s (compress=%v)", dst, compress)
-	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/images/" + dst}})
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/" + w.Token + "/images/" + dst}})
 }
 
 // deleteImage 删除背景图片
 func (h *Handler) deleteImage(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	name := c.Param("name")
 	// 仅允许删除图片文件，且必须为 images 目录的直接子项
 	if !images.IsAllowedImage(name) {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
 		return
 	}
-	p, err := images.SafeJoin(h.imagesDir(), name)
+	p, err := images.SafeJoin(h.imagesDirFor(w.Token), name)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
 		return
@@ -636,27 +769,32 @@ func (h *Handler) deleteImage(c *gin.Context) {
 
 // --- 背景音乐管理 ---
 
-// musicDir 背景音乐目录
-func (h *Handler) musicDir() string {
-	return filepath.Join(h.StaticDir, "music")
-}
-
 // listAudio 列出背景音乐文件
 func (h *Handler) listAudio(c *gin.Context) {
-	names, err := audio.List(h.musicDir())
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	names, err := audio.List(h.musicDirFor(w.Token))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取音乐目录失败"})
 		return
 	}
 	items := make([]gin.H, 0, len(names))
 	for _, n := range names {
-		items = append(items, gin.H{"name": n, "url": "/static/music/" + n})
+		items = append(items, gin.H{"name": n, "url": "/static/" + w.Token + "/music/" + n})
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": items})
 }
 
-// uploadAudio 上传背景音乐到 static/music
+// uploadAudio 上传背景音乐到 static/{token}/music
 func (h *Handler) uploadAudio(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
@@ -675,7 +813,7 @@ func (h *Handler) uploadAudio(c *gin.Context) {
 		return
 	}
 
-	dir := h.musicDir()
+	dir := h.musicDirFor(w.Token)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建音乐目录失败"})
 		return
@@ -714,17 +852,22 @@ func (h *Handler) uploadAudio(c *gin.Context) {
 	}
 
 	log.Printf("管理员上传背景音乐: %s", dst)
-	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/music/" + dst}})
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/" + w.Token + "/music/" + dst}})
 }
 
 // deleteAudio 删除背景音乐
 func (h *Handler) deleteAudio(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 	name := c.Param("name")
 	if !audio.IsAllowedAudio(name) {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
 		return
 	}
-	p, err := audio.SafeJoin(h.musicDir(), name)
+	p, err := audio.SafeJoin(h.musicDirFor(w.Token), name)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
 		return

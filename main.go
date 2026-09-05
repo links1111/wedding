@@ -22,7 +22,6 @@ import (
 	"wedding-invitation/internal/config"
 	"wedding-invitation/internal/db"
 	"wedding-invitation/internal/handler"
-	"wedding-invitation/internal/settings"
 )
 
 func main() {
@@ -80,8 +79,7 @@ func main() {
 	}
 
 	// API 处理器
-	settingsStore := settings.New(db.DB, cfg.Wedding)
-	h := handler.New(db.DB, sessions, settingsStore, cfg.Paths.StaticDir)
+	h := handler.New(db.DB, sessions, cfg.Paths.StaticDir)
 	h.RegisterRoutes(r)
 
 	// 静态资源（图片等），从 STATIC_DIR 提供，Docker 可挂载映射
