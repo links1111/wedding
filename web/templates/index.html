@@ -806,49 +806,60 @@
                 }
             }
 
-            // ===== 背景音乐（默认自动播放） =====
+            // ===== 背景音乐 =====
             function setupMusic(url) {
                 const bgm = document.getElementById('bgm');
                 const btn = document.getElementById('musicBtn');
                 if (!bgm || !btn || !url) return;
                 bgm.src = url;
                 bgm.load();
-                // 音频加载失败（文件缺失等）时隐藏按钮
-                bgm.addEventListener('error', function() { btn.style.display = 'none'; });
-                btn.addEventListener('click', function() {
-                    if (bgm.paused) {
-                        bgm.muted = false;
-                        bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function(){});
-                    } else {
-                        bgm.pause();
-                        btn.classList.remove('playing');
-                    }
-                });
 
-                function ok() { btn.classList.add('playing'); }
-                function noop() {}
-                function play() { return bgm.play().then(ok).catch(noop); }
-                // 恢复声音：首次手势触发（静音自动播放时）
-                function enableSound() {
+                let userInteracted = false;
+
+                function playAudible() {
                     bgm.muted = false;
-                    play();
-                    document.removeEventListener('touchstart', enableSound);
-                    document.removeEventListener('click', enableSound);
+                    const p = bgm.play();
+                    if (p) p.then(function(){ btn.classList.add('playing'); }).catch(function(){});
+                }
+                function stop() {
+                    bgm.pause();
+                    btn.classList.remove('playing');
                 }
 
-                // 等媒体可播放后再尝试自动播放：先有声，被拦截则静音播放，首次手势恢复声音
+                // 仅当音频在用户操作前就加载失败（文件缺失等）才隐藏按钮；
+                // 播放过程中的错误不隐藏，避免"点击后按钮消失"
+                bgm.addEventListener('error', function() {
+                    if (!userInteracted) btn.style.display = 'none';
+                });
+
+                // 音乐按钮：播放/暂停（用户手势内播放，微信放行）
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userInteracted = true;
+                    if (bgm.paused) playAudible(); else stop();
+                });
+
+                // 尝试自动播放（桌面/浏览器放行时直接出声）
+                // 被拦截时：等首次用户手势启动（微信要求），但不抢占音乐按钮
                 bgm.addEventListener('canplay', function() {
-                    bgm.play().then(ok).catch(function() {
-                        bgm.muted = true;
-                        play();
-                        document.addEventListener('touchstart', enableSound);
-                        document.addEventListener('click', enableSound);
+                    bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function() {
+                        const firstGesture = function(ev) {
+                            if (ev.target.closest && ev.target.closest('#musicBtn')) return;
+                            document.removeEventListener('touchstart', firstGesture);
+                            document.removeEventListener('click', firstGesture);
+                            if (!bgm.paused) return;
+                            playAudible();
+                        };
+                        document.addEventListener('touchstart', firstGesture);
+                        document.addEventListener('click', firstGesture);
                     });
                 });
 
-                // 微信 X5 内核：JSBridge 就绪后重试自动播放
+                // 微信 X5 内核：JSBridge 就绪后尝试自动播放
                 if (typeof WeixinJSBridge !== 'undefined') {
-                    document.addEventListener('WeixinJSBridgeReady', function(){ play(); });
+                    document.addEventListener('WeixinJSBridgeReady', function() {
+                        bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function(){});
+                    });
                 }
             }
 
