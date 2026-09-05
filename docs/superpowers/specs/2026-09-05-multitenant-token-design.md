@@ -32,12 +32,15 @@
 新增 `Wedding`：
 ```go
 type Wedding struct {
-    ID        int64     `gorm:"primaryKey;autoIncrement"`
-    Token     string    `gorm:"uniqueIndex;not null;size:64"`
-    Name      string    `gorm:"not null;size:100"`   // 展示名，如「李祥 & 王羚羚 的婚礼」
-    CreatedAt time.Time `gorm:"autoCreateTime"`
+    ID         int64     `gorm:"primaryKey;autoIncrement"`
+    Token      string    `gorm:"uniqueIndex;not null;size:64"`  // 公开请柬 token
+    AdminToken string    `gorm:"uniqueIndex;not null;size:64"`  // 新人后台 token（仅系统总览可见）
+    Name       string    `gorm:"not null;size:100"`   // 展示名，如「李祥 & 王羚羚 的婚礼」
+    CreatedAt  time.Time `gorm:"autoCreateTime"`
 }
 ```
+
+> 修订（用户裁决，2026-09-05）：原"单 token 同时作请柬与后台凭证"会令持请柬链接者可进后台读取全部来宾 PII/改内容（安全审查 HIGH）。改为**双 Token**：公开请柬 token（随链接发给宾客）+ 独立后台 admin token（仅系统总览对新人生成，供其进 `/admin/{adminToken}`）。二者互不可推导。
 
 改动：
 - `Setting`：主键由 `Key` 改为复合主键 `(WeddingID int64, Key string)`；`Value` 不变。查询/写入全部带 `wedding_id`。
@@ -49,18 +52,21 @@ type Wedding struct {
 
 ## Token
 
-- 生成：`crypto/rand` 读 32 字节 → `base64.RawURLEncoding`（43 字符，字符集 `[A-Za-z0-9_-]`）。
+- 生成：`crypto/rand` 读 32 字节 → `base64.RawURLEncoding`（43 字符，字符集 `[A-Za-z0-9_-]`）。请柬 token 与 admin token 各自独立生成，互不可推导。
 - 校验：任意 `:token` 路径参数先过 `^[A-Za-z0-9_-]{20,64}$`，不匹配直接 404/400（防路径遍历与无谓查询），再查库取 Wedding。
-- 凭证语义：token 即该婚礼的完整能力——可访问请柬公开数据，也可访问该婚礼后台（settings/guests/images 等）。链接持有者可改后台。属本模型固有权衡，建议仅 HTTPS 传播；系统管理员可删除婚礼重建以作废 token。
+- 凭证语义（双 Token）：
+  - **请柬 token**（公开）：持有者只能读取该婚礼请柬数据并提交 RSVP，**不能**进入后台或读取来宾明细。
+  - **admin token**（新人/私密）：持有者可进入该婚礼后台（settings/guests/visits/images/audio 等）。只通过系统总览生成/展示给新人，勿与宾客共享。
+  - 两个 token 均可被系统管理员删除婚礼作废。
 
 ## 路由与页面
 
 | 路径 | 页面 | 说明 |
 |------|------|------|
 | `/` | — | 301 重定向到 `/admin` |
-| `/admin` | 系统后台（新 `system.html`） | 登录 + 婚礼总览表格 +「创建新婚礼」+ 每行删除 |
-| `/w/:token` | 请柬（`index.html`） | 公开访问，URL 带 token |
-| `/admin/:token` | 婚礼后台（`admin.html`） | 顶部显示当前婚礼名；Token 授权 |
+| `/admin` | 系统后台（新 `system.html`） | 登录 + 婚礼总览表格 +「创建新婚礼」+ 每行删除 + 复制两条链接 |
+| `/w/:token` | 请柬（`index.html`） | 公开访问，URL 带**请柬 token** |
+| `/admin/:adminToken` | 婚礼后台（`admin.html`） | 顶部显示当前婚礼名；凭 **admin token** 授权 |
 
 前端统一从 `location.pathname.split('/')[2]` 取 token（`/w/x` 与 `/admin/x` 均为第 2 段）。
 
@@ -76,22 +82,27 @@ type Wedding struct {
 
 旧的单婚礼 `/api/admin/stats|guests|visits` 从系统后台移除（其能力迁入 per-wedding API）。
 
-### 该婚礼公开
+### 该婚礼公开（请柬 token）
 - `GET /api/w/:token/invitation` —— 原 `getInvitation`，返回该婚礼 settings 合并的文案/样式、`slides`（该 token 的 images 目录）、`music_url`、`map_link`
+- `GET /api/w/:token/meta` —— 名称
 - `POST /api/w/:token/visit` —— 记录访问（带 wedding_id）
 - `POST /api/w/:token/rsvp` —— 提交回执（带 wedding_id）
 
-### 该婚礼管理（token 授权，与公开同命名空间）
-- `GET|PUT /api/w/:token/settings`
-- `GET /api/w/:token/guests`、`POST|PUT|DELETE /api/w/:token/guests/:id`、`GET /api/w/:token/guests/export`
-- `GET /api/w/:token/visits`
-- `GET|POST /api/w/:token/images`、`DELETE /api/w/:token/images/:name`
-- `GET|POST /api/w/:token/audio`、`DELETE /api/w/:token/audio/:name`
+### 该婚礼管理（admin token，独立命名空间）
+- `GET|PUT /api/a/:adminToken/settings`
+- `GET /api/a/:adminToken/meta` —— {name, admin_token}
+- `GET /api/a/:adminToken/guests`、`POST|PUT|DELETE /api/a/:adminToken/guests/:id`、`GET /api/a/:adminToken/guests/export`
+- `GET /api/a/:adminToken/visits`
+- `GET /api/a/:adminToken/stats`
+- `GET|POST /api/a/:adminToken/images`、`DELETE /api/a/:adminToken/images/:name`
+- `GET|POST /api/a/:adminToken/audio`、`DELETE /api/a/:adminToken/audio/:name`
 
-所有查询按 `wedding_id` 过滤（GORM 参数化）。上传/删除的目录 = `staticDir/{token}/images|music`（沿用 images/audio 包的安全校验，含扩展名白名单、防路径穿越、去重、大小限制）。
+所有查询按 `wedding_id` 过滤（GORM 参数化）。上传/删除的目录 = `staticDir/{inviteToken}/images|music`（用该婚礼的**请柬 token** 作目录名；沿用 images/audio 包的安全校验，含扩展名白名单、防路径穿越、去重、大小限制）。
 
 ### 作用域解析
-新增中间件 `weddingContext`：对 `/w/:token` 与 `/api/w/:token` 校验 token 格式并加载 Wedding，注入 context；404 处理不存在的 token。
+- `weddingContext`：对公开 `/api/w/:token` 与 `/w/:token` 校验**请柬 token** 格式并 `WHERE token = ?` 加载 Wedding。
+- `adminContext`：对管理 `/api/a/:token` 与 `/admin/:token` 校验**admin token** 格式并 `WHERE admin_token = ?` 加载 Wedding。
+- 两者都注入同一 `c.Set("wedding", &w)`，handler 主体无需区分；404 处理不存在的 token。
 
 ## 媒体按 token 分目录
 
@@ -103,10 +114,10 @@ type Wedding struct {
 
 ## 前端改动
 
-- `index.html`：JS 读取 token → 请求改为 `/api/w/{token}/…`；其余样式/手势/音乐逻辑不变。
-- `admin.html`：读取 token → 请求 `/api/w/{token}/…`；顶部 header 增加当前婚礼名（由 invitation/婚礼信息接口或注入给出）；登录 UI 移除（改为 Token 授权），若 token 无效跳 `/admin`。
-- 新增 `system.html`：系统管理员登录 + 婚礼总览表格（名称/创建时间/统计）、「创建新婚礼」表单、删除按钮（confirm）。
-- 后台媒体上传控件：上传路径按当前 token。
+- `index.html`（`/w/{token}`）：JS 读取**请柬 token** → 请求 `/api/w/{token}/…`（仅公开接口）；其余样式/手势/音乐逻辑不变。
+- `admin.html`（`/admin/{adminToken}`）：JS 读取 **admin token** → 请求 `/api/a/{adminToken}/…`；顶部 header 增加当前婚礼名；无登录 UI，token 无效跳 `/admin`。
+- 新增 `system.html`：系统管理员登录 + 婚礼总览表格（名称/创建时间/统计）、「创建新婚礼」、删除按钮、并为每场提供**请柬链接（公开）**与**后台链接（私密，勿外发）**的复制按钮。
+- 后台媒体上传控件：上传路径指向 `/api/a/{adminToken}`，落盘目录为该婚礼请柬 token 目录。
 
 ## 错误处理与安全
 
