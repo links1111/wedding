@@ -696,6 +696,7 @@ func (h *Handler) updateSettings(c *gin.Context) {
 // --- 系统管理员：婚礼管理 ---
 
 // listWeddings 系统管理员：列出全部婚礼（含统计）
+// 显式构造返回对象：admin_token 只在此处（系统总览需要）返回，不随模型自动序列化
 func (h *Handler) listWeddings(c *gin.Context) {
 	type row struct {
 		models.Wedding
@@ -712,7 +713,19 @@ func (h *Handler) listWeddings(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "查询失败"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"ok": true, "data": rows})
+	data := make([]gin.H, 0, len(rows))
+	for _, r := range rows {
+		data = append(data, gin.H{
+			"id":              r.ID,
+			"name":            r.Name,
+			"token":           r.Token,
+			"admin_token":     r.AdminToken,
+			"created_at":      r.CreatedAt,
+			"rsvp_count":      r.RsvpCount,
+			"attending_count": r.AttendingCount,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": data})
 }
 
 // createWedding 系统管理员：创建婚礼并生成 token，可选预填新人信息

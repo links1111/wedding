@@ -5,8 +5,8 @@ import "time"
 // Wedding 一场婚礼（多租户），双 token：公开请柬 token + 私密后台 admin token
 type Wedding struct {
 	ID         int64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	Token      string    `json:"token" gorm:"uniqueIndex;not null;size:64"`       // 公开请柬 token
-	AdminToken string    `json:"admin_token" gorm:"uniqueIndex;not null;size:64"` // 新人后台 token（仅系统总览可见）
+	Token      string    `json:"token" gorm:"uniqueIndex;not null;size:64"`  // 公开请柬 token
+	AdminToken string    `json:"-" gorm:"uniqueIndex;not null;size:64"`      // 新人后台 token（仅系统总览可见，不随模型序列化）
 	Name       string    `json:"name" gorm:"not null;size:100"`
 	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
 }
