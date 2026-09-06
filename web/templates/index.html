@@ -809,7 +809,7 @@
                 }
             }
 
-            // ===== 背景音乐 =====
+            // ===== 背景音乐（尽量自动播放） =====
             function setupMusic(url) {
                 const bgm = document.getElementById('bgm');
                 const btn = document.getElementById('musicBtn');
@@ -819,39 +819,49 @@
 
                 let userInteracted = false;
 
+                function markPlaying() { btn.classList.add('playing'); }
+                // 有声播放（需用户手势或浏览器放行自动播放）
                 function playAudible() {
                     bgm.muted = false;
                     const p = bgm.play();
-                    if (p) p.then(function(){ btn.classList.add('playing'); }).catch(function(){});
+                    if (p) p.then(markPlaying).catch(function(){});
+                }
+                // 静音播放：浏览器普遍放行，用于“一打开就在播”，首笔手势即恢复声音
+                function playMuted() {
+                    bgm.muted = true;
+                    const p = bgm.play();
+                    if (p) p.then(markPlaying).catch(function(){});
                 }
                 function stop() {
                     bgm.pause();
                     btn.classList.remove('playing');
                 }
 
-                // 仅当音频在用户操作前就加载失败（文件缺失等）才隐藏按钮；
-                // 播放过程中的错误不隐藏，避免"点击后按钮消失"
+                // 仅当音频在用户操作前就加载失败（文件缺失等）才隐藏按钮；播放错误不隐藏
                 bgm.addEventListener('error', function() {
                     if (!userInteracted) btn.style.display = 'none';
                 });
 
-                // 音乐按钮：播放/暂停（用户手势内播放，微信放行）
+                // 音乐按钮：暂停中→播放；静音播放中→恢复声音；有声播放中→暂停
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     userInteracted = true;
-                    if (bgm.paused) playAudible(); else stop();
+                    if (bgm.paused) playAudible();
+                    else if (bgm.muted) playAudible();
+                    else stop();
                 });
 
-                // 尝试自动播放（桌面/浏览器放行时直接出声）
-                // 被拦截时：等首次用户手势启动（微信要求），但不抢占音乐按钮
+                // 尝试自动播放：先有声；被浏览器拦截则静音自动播放（静音放行），首次手势恢复声音
                 bgm.addEventListener('canplay', function() {
-                    bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function() {
+                    const p = bgm.play();
+                    if (p) p.then(markPlaying).catch(function() {
+                        playMuted();
                         const firstGesture = function(ev) {
+                            // 音乐按钮自身由上面的点击处理，避免冲突
                             if (ev.target.closest && ev.target.closest('#musicBtn')) return;
                             document.removeEventListener('touchstart', firstGesture);
                             document.removeEventListener('click', firstGesture);
-                            if (!bgm.paused) return;
-                            playAudible();
+                            if (bgm.paused || bgm.muted) playAudible();
                         };
                         document.addEventListener('touchstart', firstGesture);
                         document.addEventListener('click', firstGesture);
@@ -861,7 +871,8 @@
                 // 微信 X5 内核：JSBridge 就绪后尝试自动播放
                 if (typeof WeixinJSBridge !== 'undefined') {
                     document.addEventListener('WeixinJSBridgeReady', function() {
-                        bgm.play().then(function(){ btn.classList.add('playing'); }).catch(function(){});
+                        const p = bgm.play();
+                        if (p) p.then(markPlaying).catch(function(){});
                     });
                 }
             }

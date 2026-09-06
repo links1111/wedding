@@ -210,7 +210,13 @@ func (h *Handler) getWeddingMeta(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": w.Name, "token": w.Token}})
+	all := h.settingsFor(w.ID).All()
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{
+		"name":  w.Name,
+		"token": w.Token,
+		"groom": all[settings.KeyGroomName],
+		"bride": all[settings.KeyBrideName],
+	}})
 }
 
 // weddingPage 请柬页：校验 token 后渲染 index.html

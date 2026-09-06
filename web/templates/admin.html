@@ -808,6 +808,11 @@
             }
             if (json && json.ok) {
                 document.getElementById('weddingName').textContent = json.data.name || '';
+                // 网页标题前缀加新人名，如「李祥 & 王羚羚 · 婚礼请柬 · 管理后台」
+                var groom = json.data.groom || '';
+                var bride = json.data.bride || '';
+                var couple = groom && bride ? groom + ' & ' + bride : (groom || bride);
+                if (couple) document.title = couple + ' · 婚礼请柬 · 管理后台';
             }
             document.getElementById('inviteLink').href = '/w/' + WEDDING_TOKEN;
             document.getElementById('exportLink').href = API + '/guests/export';
