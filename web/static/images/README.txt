@@ -1,12 +1,8 @@
-# 静态资源目录
-# 此目录下的所有图片（jpg/jpeg/png/gif/webp/bmp）都会作为请柬页的背景轮播图，
-# 按文件名排序展示，无需修改前端代码即可增删图片。
+# 背景图片目录（多租户）
+# 每个婚礼一个子目录：web/static/images/{婚礼请柬token}/，例如：
+#   web/static/images/abcdef.../slide1.jpg
+# 该婚礼的轮播图会展示其 token 目录下的所有图片（jpg/jpeg/png/gif/webp/bmp）。
+# 正常使用请通过管理后台「复制请柬链接」对应的婚礼后台 → 设置 → 背景图片 上传，会自动落到对应目录。
 #
-# 也可以通过管理后台（"设置" Tab）上传 / 删除背景图片。
-#
-# Docker 部署时，通过 volume 映射覆盖此目录：
-#   -v /宿主机图片路径:/app/web/static/images
-#
-# 或在 docker-compose.yml 中配置：
-#   volumes:
-#     - ./my-photos:/app/web/static/images
+# Docker 部署时通过 volume 映射整个静态目录：
+#   -v /宿主机目录:/app/web/static
