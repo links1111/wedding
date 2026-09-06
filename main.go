@@ -211,7 +211,7 @@ func securityHeaders() gin.HandlerFunc {
 func adminHTTPSRedirect(httpsPort, publicHost string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		path := c.Request.URL.Path
-		isAdmin := path == "/admin" || strings.HasPrefix(path, "/admin/") || strings.HasPrefix(path, "/api/admin")
+		isAdmin := path == "/admin" || strings.HasPrefix(path, "/admin/") || strings.HasPrefix(path, "/api/admin") || strings.HasPrefix(path, "/api/a/")
 		if c.Request.TLS == nil && isAdmin {
 			if publicHost != "" {
 				target := "https://" + publicHost

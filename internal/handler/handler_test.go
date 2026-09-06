@@ -99,6 +99,12 @@ func TestWeddingsTokenSeeding(t *testing.T) {
 	if w.Token == "" {
 		t.Fatal("token 为空")
 	}
+	if w.AdminToken == "" {
+		t.Fatal("admin_token 为空")
+	}
+	if w.AdminToken == w.Token {
+		t.Fatal("admin_token 不应与请柬 token 相同")
+	}
 
 	all := h.settingsFor(w.ID).All()
 	if got := all[settings.KeyGroomName]; got != "张三" {

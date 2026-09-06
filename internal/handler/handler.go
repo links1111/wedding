@@ -68,7 +68,7 @@ func weddingFrom(c *gin.Context) *models.Wedding {
 	return nil
 }
 
-// weddingContext 校验 token 并加载 Wedding，注入上下文
+// weddingContext 校验请柬 token 并加载 Wedding，注入上下文（公开命名空间）
 func (h *Handler) weddingContext() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tok := c.Param("token")
@@ -78,6 +78,24 @@ func (h *Handler) weddingContext() gin.HandlerFunc {
 		}
 		var w models.Wedding
 		if err := h.DB.Where("token = ?", tok).First(&w).Error; err != nil {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		c.Set("wedding", &w)
+		c.Next()
+	}
+}
+
+// adminContext 校验 admin token 并加载 Wedding，注入上下文（管理命名空间）
+func (h *Handler) adminContext() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tok := c.Param("token")
+		if !weddings.IsValidToken(tok) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		var w models.Wedding
+		if err := h.DB.Where("admin_token = ?", tok).First(&w).Error; err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
@@ -111,27 +129,31 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	sys.POST("/weddings", h.createWedding)
 	sys.DELETE("/weddings/:id", h.deleteWedding)
 
-	// 某婚礼（公开+后台共用 token 命名空间）
+	// 某婚礼公开命名空间（请柬 token）：仅公开接口
 	w := r.Group("/api/w/:token", h.weddingContext())
 	w.GET("/invitation", h.getInvitation)
 	w.GET("/meta", h.getWeddingMeta)
-	w.GET("/stats", h.getWeddingStats)
 	w.POST("/visit", h.recordVisit)
 	w.POST("/rsvp", h.submitRSVP)
-	w.GET("/settings", h.getSettings)
-	w.PUT("/settings", h.updateSettings)
-	w.GET("/guests", h.getGuests)
-	w.POST("/guests", h.createGuest)
-	w.PUT("/guests/:id", h.updateGuest)
-	w.DELETE("/guests/:id", h.deleteGuest)
-	w.GET("/guests/export", h.exportGuests)
-	w.GET("/visits", h.getVisits)
-	w.GET("/images", h.listImages)
-	w.POST("/images", h.uploadImage)
-	w.DELETE("/images/:name", h.deleteImage)
-	w.GET("/audio", h.listAudio)
-	w.POST("/audio", h.uploadAudio)
-	w.DELETE("/audio/:name", h.deleteAudio)
+
+	// 某婚礼管理命名空间（admin token）：settings/guests/visits/stats/images/audio
+	a := r.Group("/api/a/:token", h.adminContext())
+	a.GET("/meta", h.getWeddingMeta)
+	a.GET("/settings", h.getSettings)
+	a.PUT("/settings", h.updateSettings)
+	a.GET("/guests", h.getGuests)
+	a.POST("/guests", h.createGuest)
+	a.PUT("/guests/:id", h.updateGuest)
+	a.DELETE("/guests/:id", h.deleteGuest)
+	a.GET("/guests/export", h.exportGuests)
+	a.GET("/visits", h.getVisits)
+	a.GET("/stats", h.getWeddingStats)
+	a.GET("/images", h.listImages)
+	a.POST("/images", h.uploadImage)
+	a.DELETE("/images/:name", h.deleteImage)
+	a.GET("/audio", h.listAudio)
+	a.POST("/audio", h.uploadAudio)
+	a.DELETE("/audio/:name", h.deleteAudio)
 }
 
 // --- 公开 API ---
@@ -201,7 +223,7 @@ func (h *Handler) weddingPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{"Token": tok})
 }
 
-// adminPage 婚礼后台页：校验 token 后渲染 admin.html
+// adminPage 婚礼后台页：校验 admin token 后渲染 admin.html
 func (h *Handler) adminPage(c *gin.Context) {
 	tok := c.Param("token")
 	if !weddings.IsValidToken(tok) {
@@ -209,7 +231,7 @@ func (h *Handler) adminPage(c *gin.Context) {
 		return
 	}
 	var w models.Wedding
-	if err := h.DB.Where("token = ?", tok).First(&w).Error; err != nil {
+	if err := h.DB.Where("admin_token = ?", tok).First(&w).Error; err != nil {
 		c.Redirect(http.StatusFound, "/admin")
 		return
 	}
@@ -716,7 +738,12 @@ func (h *Handler) createWedding(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "生成 token 失败"})
 		return
 	}
-	w := models.Wedding{Token: tok, Name: req.Name}
+	adminTok, err := weddings.GenerateToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "生成 token 失败"})
+		return
+	}
+	w := models.Wedding{Token: tok, AdminToken: adminTok, Name: req.Name}
 	if err := h.DB.Create(&w).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建失败"})
 		return
@@ -742,8 +769,8 @@ func (h *Handler) createWedding(c *gin.Context) {
 	}
 	log.Printf("系统管理员创建婚礼: %s (id=%d)", w.Name, w.ID)
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{
-		"id": w.ID, "name": w.Name, "token": w.Token,
-		"invite_url": "/w/" + w.Token, "admin_url": "/admin/" + w.Token,
+		"id": w.ID, "name": w.Name, "token": w.Token, "admin_token": w.AdminToken,
+		"invite_url": "/w/" + w.Token, "admin_url": "/admin/" + w.AdminToken,
 	}})
 }
 

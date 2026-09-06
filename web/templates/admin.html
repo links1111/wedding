@@ -791,7 +791,7 @@
     <script>
         // ===== token 解析与后台初始化（无登录，token 即访问凭证） =====
         var WEDDING_TOKEN = (location.pathname.split('/')[2] || '');
-        var API = '/api/w/' + WEDDING_TOKEN;
+        var API = '/api/a/' + WEDDING_TOKEN;
 
         async function initAdmin() {
             let json;
