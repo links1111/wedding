@@ -13,7 +13,6 @@ type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 	Admin    AdminConfig    `yaml:"admin"`
-	Wedding  WeddingConfig  `yaml:"wedding"`
 	Paths    PathsConfig    `yaml:"paths"`
 	Log      LogConfig      `yaml:"log"`
 	TLS      TLSConfig      `yaml:"tls"`
@@ -48,14 +47,6 @@ type AdminConfig struct {
 	JWTSecret string `yaml:"jwt_secret"`
 }
 
-// WeddingConfig 婚礼信息配置
-type WeddingConfig struct {
-	GroomName    string `yaml:"groom_name"`
-	BrideName    string `yaml:"bride_name"`
-	WeddingDate  string `yaml:"wedding_date"`
-	WeddingVenue string `yaml:"wedding_venue"`
-}
-
 // PathsConfig 路径配置
 type PathsConfig struct {
 	StaticDir   string `yaml:"static_dir"`
@@ -77,12 +68,6 @@ func Load() *Config {
 		Server:   ServerConfig{Port: "8080"},
 		Database: DatabaseConfig{Path: "./data/wedding.db"},
 		Admin:    AdminConfig{User: "admin"},
-		Wedding: WeddingConfig{
-			GroomName:    "新郎",
-			BrideName:    "新娘",
-			WeddingDate:  "2025-10-01",
-			WeddingVenue: "婚礼殿堂",
-		},
 		Paths: PathsConfig{
 			StaticDir:   "./web/static",
 			TemplateDir: "./web/templates",
@@ -113,10 +98,6 @@ func Load() *Config {
 	cfg.Admin.User = getEnv("ADMIN_USER", cfg.Admin.User)
 	cfg.Admin.Pass = getEnv("ADMIN_PASS", cfg.Admin.Pass)
 	cfg.Admin.JWTSecret = getEnv("JWT_SECRET", cfg.Admin.JWTSecret)
-	cfg.Wedding.GroomName = getEnv("GROOM_NAME", cfg.Wedding.GroomName)
-	cfg.Wedding.BrideName = getEnv("BRIDE_NAME", cfg.Wedding.BrideName)
-	cfg.Wedding.WeddingDate = getEnv("WEDDING_DATE", cfg.Wedding.WeddingDate)
-	cfg.Wedding.WeddingVenue = getEnv("WEDDING_VENUE", cfg.Wedding.WeddingVenue)
 	cfg.Paths.StaticDir = getEnv("STATIC_DIR", cfg.Paths.StaticDir)
 	cfg.Paths.TemplateDir = getEnv("TEMPLATE_DIR", cfg.Paths.TemplateDir)
 	cfg.Log.File = getEnv("LOG_FILE", cfg.Log.File)

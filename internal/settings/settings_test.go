@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"wedding-invitation/internal/config"
 	"wedding-invitation/internal/models"
 )
 
@@ -36,22 +35,19 @@ func newTestStore(t *testing.T, seed map[string]string) (*Store, *gorm.DB) {
 			t.Fatalf("写入种子失败: %v", err)
 		}
 	}
-	return New(db, 1, config.WeddingConfig{
-		GroomName:    "李祥",
-		BrideName:    "王羚羚",
-		WeddingDate:  "2026-10-03",
-		WeddingVenue: "麓湖·云栖草坪",
-	}), db
+	return New(db, 1), db
 }
 
 func TestDefaults(t *testing.T) {
 	s, _ := newTestStore(t, nil)
 	all := s.All()
+	// 婚礼身份字段默认空（由创建/后台填写）
+	for _, key := range []string{KeyGroomName, KeyBrideName, KeyWeddingDate, KeyVenue} {
+		if got := all[key]; got != "" {
+			t.Errorf("身份字段默认应为空: %s = %q", key, got)
+		}
+	}
 	cases := map[string]string{
-		KeyGroomName:        "李祥",
-		KeyBrideName:        "王羚羚",
-		KeyWeddingDate:      "2026-10-03",
-		KeyVenue:            "麓湖·云栖草坪",
 		KeyCardTransparency: "15",
 		KeyGlassEnabled:     "true",
 		KeyGlassBlur:        "16",
@@ -67,8 +63,8 @@ func TestDefaults(t *testing.T) {
 
 func TestIsolationBetweenWeddings(t *testing.T) {
 	db := newDB(t)
-	s1 := New(db, 1, config.WeddingConfig{GroomName: "A"})
-	s2 := New(db, 2, config.WeddingConfig{GroomName: "B"})
+	s1 := New(db, 1)
+	s2 := New(db, 2)
 	if err := s1.Set(KeyVenue, "场地A"); err != nil {
 		t.Fatal(err)
 	}
@@ -77,9 +73,6 @@ func TestIsolationBetweenWeddings(t *testing.T) {
 	}
 	if got := s1.Get(KeyVenue); got != "场地A" {
 		t.Errorf("婚礼1 丢失设置: %q", got)
-	}
-	if got := s2.Get(KeyGroomName); got != "B" {
-		t.Errorf("婚礼2 默认值应来自自身 defaults: %q", got)
 	}
 }
 
@@ -95,9 +88,9 @@ func TestDBOverridesDefault(t *testing.T) {
 	if got := all[KeyCardColor]; got != "#ffffff" {
 		t.Errorf("DB 覆盖后的颜色 = %q, 期望 %q", got, "#ffffff")
 	}
-	// 未覆盖的键仍返回默认值
-	if got := all[KeyBrideName]; got != "王羚羚" {
-		t.Errorf("未覆盖的新娘名 = %q, 期望 %q", got, "王羚羚")
+	// 未覆盖的键返回默认值（新娘名默认空）
+	if got := all[KeyBrideName]; got != "" {
+		t.Errorf("未覆盖的新娘名应为空, 实际 %q", got)
 	}
 }
 
@@ -110,7 +103,7 @@ func TestSetAndGet(t *testing.T) {
 		t.Errorf("Get = %q, 期望 %q", got, "星期六 · 下午五时")
 	}
 	// 已保存的值从新 Store 也应读到（持久化）
-	s2 := New(s.db, 1, config.WeddingConfig{BrideName: "王羚羚"})
+	s2 := New(s.db, 1)
 	if got := s2.Get(KeyDateSub); got != "星期六 · 下午五时" {
 		t.Errorf("重启后 Get = %q, 期望 %q", got, "星期六 · 下午五时")
 	}

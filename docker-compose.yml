@@ -11,10 +11,6 @@ services:
       ADMIN_USER: admin
       ADMIN_PASS: "请修改为强密码"
       JWT_SECRET: "请修改为随机长字符串"
-      GROOM_NAME: "林予"
-      BRIDE_NAME: "沈漾"
-      WEDDING_DATE: "2026-08-30"
-      WEDDING_VENUE: "麓湖·云栖草坪"
       PORT: "8080"
       TZ: "Asia/Shanghai"
     volumes:

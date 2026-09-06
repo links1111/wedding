@@ -9,7 +9,6 @@ import (
 
 	"gorm.io/gorm"
 
-	"wedding-invitation/internal/config"
 	"wedding-invitation/internal/models"
 )
 
@@ -94,17 +93,18 @@ type Store struct {
 	defaults  map[string]string
 }
 
-// New 创建 Store，defaults 以 config 中的婚礼信息 + 代码常量为种子，并按 weddingID 隔离
-func New(db *gorm.DB, weddingID int64, wedding config.WeddingConfig) *Store {
-	return &Store{db: db, weddingID: weddingID, defaults: defaultSettings(wedding)}
+// New 创建 Store，defaults 以代码常量为种子，并按 weddingID 隔离。
+// 婚礼身份字段（groom/bride/date/venue）默认空，由婚礼创建或后台填写。
+func New(db *gorm.DB, weddingID int64) *Store {
+	return &Store{db: db, weddingID: weddingID, defaults: defaultSettings()}
 }
 
-func defaultSettings(w config.WeddingConfig) map[string]string {
+func defaultSettings() map[string]string {
 	return map[string]string{
-		KeyGroomName:     w.GroomName,
-		KeyBrideName:     w.BrideName,
-		KeyWeddingDate:   w.WeddingDate,
-		KeyVenue:         w.WeddingVenue,
+		KeyGroomName:     "",
+		KeyBrideName:     "",
+		KeyWeddingDate:   "",
+		KeyVenue:         "",
 		KeyDateMain:      "2026 · 十月 · 三日",
 		KeyDateSub:       "星期日 · 傍晚六时",
 		KeyCeremonyTitle: "仪式",

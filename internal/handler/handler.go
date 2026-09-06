@@ -17,7 +17,6 @@ import (
 
 	"wedding-invitation/internal/audio"
 	"wedding-invitation/internal/auth"
-	"wedding-invitation/internal/config"
 	"wedding-invitation/internal/images"
 	"wedding-invitation/internal/models"
 	"wedding-invitation/internal/settings"
@@ -40,9 +39,9 @@ func New(db *gorm.DB, sessions *auth.TokenStore, staticDir string) *Handler {
 	}
 }
 
-// settingsFor 构造指定婚礼的设置存储（默认值来自婚礼初始信息+代码常量）
+// settingsFor 构造指定婚礼的设置存储（婚礼身份字段由创建/后台填写，其余为代码默认）
 func (h *Handler) settingsFor(weddingID int64) *settings.Store {
-	return settings.New(h.DB, weddingID, config.WeddingConfig{})
+	return settings.New(h.DB, weddingID)
 }
 
 // weddingDir 某 token 的媒体根目录（staticDir/{token}）

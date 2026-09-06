@@ -97,13 +97,9 @@ go build -o wedding-invitation .
 
 ### 自定义配置
 
-通过环境变量配置新人信息和婚礼详情：
+> ℹ️ 多租户下，**每场婚礼的信息（新人、日期、地点等）在系统后台按婚礼分别配置**，不再通过 config 或环境变量设置。config 与环境变量仅配置服务器/管理员/证书等全局项。
 
 ```bash
-export GROOM_NAME="张三"
-export BRIDE_NAME="李四"
-export WEDDING_DATE="2025-10-01"
-export WEDDING_VENUE="北京·国贸大酒店"
 export ADMIN_USER="admin"
 export ADMIN_PASS="your-secure-password"
 export JWT_SECRET="your-jwt-secret"
@@ -119,18 +115,20 @@ export DB_PATH="./data/wedding.db"
 
 | 页面 | 地址 |
 |------|------|
-| 请柬页面 | `http://localhost:8080/` |
-| 管理后台 | `http://localhost:8080/admin` |
+| 系统后台（总览/创建婚礼） | `http://localhost:8080/admin` |
+| 请柬页 | `http://localhost:8080/w/{请柬token}`（系统后台复制） |
+| 婚礼后台 | `http://localhost:8080/admin/{后台token}`（仅新人私密持有） |
 
 ## 📡 API 接口
 
-### 公开接口
+### 公开接口（请柬 token，宾客可用）
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| `GET` | `/api/invitation` | 获取请柬信息（新人、日期、场地、倒计时） |
-| `POST` | `/api/visit` | 记录访客访问 |
-| `POST` | `/api/rsvp` | 提交 RSVP 回复 |
+| `GET` | `/api/w/{token}/invitation` | 获取该婚礼请柬信息 |
+| `GET` | `/api/w/{token}/meta` | 婚礼名称 |
+| `POST` | `/api/w/{token}/visit` | 记录访客访问 |
+| `POST` | `/api/w/{token}/rsvp` | 提交 RSVP 回复 |
 
 **RSVP 请求示例：**
 
@@ -146,16 +144,26 @@ export DB_PATH="./data/wedding.db"
 
 > `attending`: `1` = 出席，`2` = 缺席
 
-### 管理接口（需登录）
+### 系统管理接口（系统管理员登录）
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | `POST` | `/api/admin/login` | 管理员登录 |
 | `POST` | `/api/admin/logout` | 退出登录 |
-| `GET` | `/api/admin/stats` | 统计数据 |
-| `GET` | `/api/admin/guests` | 来宾列表 |
-| `GET` | `/api/admin/visits` | 访问记录 |
-| `GET` | `/api/admin/guests/export` | 导出来宾 CSV |
+| `GET` | `/api/admin/weddings` | 婚礼总览 |
+| `POST` | `/api/admin/weddings` | 创建婚礼 |
+| `DELETE` | `/api/admin/weddings/:id` | 删除婚礼 |
+
+### 婚礼管理接口（后台 token，仅新人）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET/PUT` | `/api/a/{token}/settings` | 读取/保存婚礼配置 |
+| `GET` | `/api/a/{token}/guests` | 来宾列表 |
+| `POST/PUT/DELETE` | `/api/a/{token}/guests[/:id]` | 新增/修改/删除来宾 |
+| `GET` | `/api/a/{token}/guests/export` | 导出来宾 CSV |
+| `GET` | `/api/a/{token}/visits` · `stats` | 访问记录 / 统计 |
+| `GET/POST/DELETE` | `/api/a/{token}/images` · `audio` | 背景图 / 音乐管理 |
 
 ## 🗄 数据库表结构
 
@@ -229,10 +237,6 @@ CMD ["./wedding-invitation"]
 ```bash
 docker build -t wedding-invitation .
 docker run -d -p 8080:8080 \
-  -e GROOM_NAME="张三" \
-  -e BRIDE_NAME="李四" \
-  -e WEDDING_DATE="2025-10-01" \
-  -e WEDDING_VENUE="北京·国贸大酒店" \
   -e ADMIN_PASS="your-secure-password" \
   -v wedding-data:/app/data \
   wedding-invitation
@@ -267,10 +271,6 @@ Type=simple
 User=www
 WorkingDirectory=/opt/wedding
 ExecStart=/opt/wedding/wedding-invitation
-Environment=GROOM_NAME=张三
-Environment=BRIDE_NAME=李四
-Environment=WEDDING_DATE=2025-10-01
-Environment=WEDDING_VENUE=北京·国贸大酒店
 Environment=ADMIN_PASS=your-secure-password
 Environment=JWT_SECRET=your-jwt-secret
 Restart=always
@@ -289,10 +289,8 @@ WantedBy=multi-user.target
 | `ADMIN_USER` | `admin` | 管理员用户名 |
 | `ADMIN_PASS` | 随机生成 | 管理员密码（建议显式设置） |
 | `JWT_SECRET` | 随机生成 | 会话签名密钥（建议显式设置） |
-| `GROOM_NAME` | `新郎` | 新郎姓名 |
-| `BRIDE_NAME` | `新娘` | 新娘姓名 |
-| `WEDDING_DATE` | `2025-10-01` | 婚礼日期（YYYY-MM-DD） |
-| `WEDDING_VENUE` | `婚礼殿堂` | 婚礼场地 |
+
+> 婚礼信息（新人、日期、地点、样式等）不再通过环境变量或 config 配置——每场婚礼在系统后台 `/admin` 创建后，由新人凭**后台链接**在自己的婚礼后台分别配置。其余全局环境变量（`STATIC_DIR`/`TEMPLATE_DIR`/`LOG_FILE`/`LOG_LEVEL`/`TLS_CERT_FILE`/`TLS_KEY_FILE`/`HTTPS_PORT`/`PUBLIC_HOST`/`CONFIG_FILE`）见 `config.yml` 内注释。
 
 ## 📝 License
 
