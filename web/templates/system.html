@@ -71,9 +71,10 @@
         td { padding:12px 16px; font-size:14px; border-bottom:1px solid rgba(255,255,255,.04); }
         tr:hover td { background:rgba(255,255,255,.02); }
         .empty { text-align:center; padding:40px; color:var(--text-dim); }
-        .link-btn { background:none; border:1px solid var(--border); color:var(--text-muted); padding:4px 10px;
-            border-radius:4px; font-size:12px; cursor:pointer; margin-right:6px; white-space:nowrap; }
-        .link-btn:hover { border-color:var(--gold); color:var(--gold-light); }
+        .link-btn, .open-btn { background:none; border:1px solid var(--border); color:var(--text-muted); padding:4px 10px;
+            border-radius:4px; font-size:12px; cursor:pointer; margin-right:6px; white-space:nowrap;
+            display:inline-block; text-decoration:none; }
+        .link-btn:hover, .open-btn:hover { border-color:var(--gold); color:var(--gold-light); }
         .del-btn { background:none; border:1px solid var(--border); color:var(--red); padding:4px 10px;
             border-radius:4px; font-size:12px; cursor:pointer; }
         .del-btn:hover { background:rgba(255,107,107,.1); }
@@ -211,8 +212,10 @@
                                 '<td>' + (w.rsvp_count || 0) + '</td>' +
                                 '<td>' + (w.attending_count || 0) + '</td>' +
                                 '<td>' +
+                                    '<a class="open-btn" href="' + esc(invite) + '" target="_blank" rel="noopener">打开请柬</a>' +
+                                    '<a class="open-btn" href="' + esc(admin) + '" target="_blank" rel="noopener" title="此链接可进后台，请私发新人勿外传">打开后台</a>' +
                                     '<button class="link-btn" data-copy="' + esc(invite) + '">复制请柬</button>' +
-                                    '<button class="link-btn" data-copy="' + esc(admin) + '" title="此链接可进后台，请私发新人勿外传">复制后台</button>' +
+                                    '<button class="link-btn" data-copy="' + esc(admin) + '">复制后台</button>' +
                                 '</td>' +
                                 '<td><button class="del-btn" data-id="' + w.id + '" data-name="' + esc(w.name) + '">删除</button></td>' +
                             '</tr>';
