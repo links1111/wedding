@@ -290,6 +290,32 @@
         }
         .music-btn:active { transform: scale(0.92); }
         .music-btn.playing { animation: musicPulse 2s ease-in-out infinite; }
+        /* 开场手势提示 */
+        .gesture-hint {
+            position: fixed;
+            bottom: 34px;
+            left: 50%;
+            transform: translate(-50%, 8px);
+            z-index: 60;
+            background: rgba(15,12,10,0.74);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,245,235,0.25);
+            color: #f5ede4;
+            border-radius: 14px;
+            padding: 10px 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            text-align: center;
+            line-height: 1.5;
+            opacity: 0;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none;
+            max-width: 84vw;
+        }
+        .gesture-hint .gh-main { font-size: 13px; letter-spacing: 2px; color: #fff; }
+        .gesture-hint .gh-sub { font-size: 12px; letter-spacing: 1px; color: rgba(255,245,235,0.72); }
+        .gesture-hint.show { opacity: 1; transform: translate(-50%, 0); }
+        .gesture-hint.hide { opacity: 0; transform: translate(-50%, 8px); }
         @keyframes musicPulse {
             0%, 100% { text-shadow: 0 2px 10px rgba(0,0,0,0.55); }
             50% { text-shadow: 0 2px 16px rgba(0,0,0,0.55), 0 0 14px rgba(255,255,255,0.4); }
@@ -587,6 +613,12 @@
     <!-- ===== 背景音乐 ===== -->
     <audio id="bgm" loop preload="auto"></audio>
     <button class="music-btn" id="musicBtn" aria-label="背景音乐">♪</button>
+
+    <!-- ===== 手势演示提示（显示几秒后自动消失） ===== -->
+    <div class="gesture-hint" id="gestureHint">
+        <div class="gh-main">↕️ 上下滑动</div>
+        <div class="gh-sub">上滑 · 文字更清晰　下滑 · 看清照片</div>
+    </div>
 
     <!-- ===== 轮播 & API 对接 ===== -->
     <script>
@@ -1038,6 +1070,30 @@
                 touchStartY = null;
                 restoreCardState();
             });
+
+            // ===== 手势演示提示：开场显示约 5 秒，或用户首次触摸即消失 =====
+            (function showGestureHint() {
+                const hint = document.getElementById('gestureHint');
+                if (!hint) return;
+                requestAnimationFrame(function() { hint.classList.add('show'); });
+                let hidden = false;
+                function hide() {
+                    if (hidden) return;
+                    hidden = true;
+                    hint.classList.remove('show');
+                    hint.classList.add('hide');
+                    setTimeout(function() {
+                        if (hint.parentNode) hint.parentNode.removeChild(hint);
+                    }, 700);
+                    document.removeEventListener('touchstart', hide);
+                    document.removeEventListener('click', hide);
+                    document.removeEventListener('wheel', hide);
+                }
+                document.addEventListener('touchstart', hide);
+                document.addEventListener('click', hide);
+                document.addEventListener('wheel', hide);
+                setTimeout(hide, 5000);
+            })();
 
             console.log('✨ 婚礼请柬 · 磨砂透明 · API 已对接');
         })();
