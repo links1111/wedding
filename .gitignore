@@ -6,3 +6,7 @@ web/static/images/*
 !web/static/images/README.txt
 web/static/music/*
 !web/static/music/README.txt
+# 运行时数据库与日志，不纳入版本库（避免误还原覆盖真实数据）
+data/*.db
+data/*.db-*
+logs/*.log
