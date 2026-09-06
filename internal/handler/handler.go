@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -165,6 +166,11 @@ func (h *Handler) getInvitation(c *gin.Context) {
 		return
 	}
 	all := h.settingsFor(w.ID).All()
+	// 若婚礼上传了背景音乐，每次打开随机选一首；否则回退到配置的 music_url
+	musicURL := all[settings.KeyMusicURL]
+	if names := h.musicListFor(w.Token); len(names) > 0 {
+		musicURL = "/static/" + w.Token + "/music/" + names[rand.Intn(len(names))]
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"ok": true,
 		"data": gin.H{
@@ -185,7 +191,7 @@ func (h *Handler) getInvitation(c *gin.Context) {
 			"countdown": h.calcCountdown(all[settings.KeyWeddingDate]),
 			"slides":    h.slidesFor(w.Token),
 			"map_link":  all[settings.KeyMapLink],
-			"music_url": all[settings.KeyMusicURL],
+			"music_url": musicURL,
 			"style": gin.H{
 				"card_transparency": all[settings.KeyCardTransparency],
 				"glass_enabled":     all[settings.KeyGlassEnabled],
@@ -248,6 +254,15 @@ func (h *Handler) slidesFor(token string) []string {
 		urls = append(urls, "/static/"+token+"/images/"+n)
 	}
 	return urls
+}
+
+// musicListFor 列出某婚礼音乐目录中的音频文件名（用于随机播放）
+func (h *Handler) musicListFor(token string) []string {
+	names, err := audio.List(h.musicDirFor(token))
+	if err != nil {
+		return nil
+	}
+	return names
 }
 
 // recordVisit 记录访问
