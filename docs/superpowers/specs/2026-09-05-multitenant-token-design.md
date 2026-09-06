@@ -52,8 +52,8 @@ type Wedding struct {
 
 ## Token
 
-- 生成：`crypto/rand` 读 32 字节 → `base64.RawURLEncoding`（43 字符，字符集 `[A-Za-z0-9_-]`）。请柬 token 与 admin token 各自独立生成，互不可推导。
-- 校验：任意 `:token` 路径参数先过 `^[A-Za-z0-9_-]{20,64}$`，不匹配直接 404/400（防路径遍历与无谓查询），再查库取 Wedding。
+- 生成：`crypto/rand` 生成 **10 位随机小写字母**（26^10 ≈ 1.4e14，约 47 bit 熵；字符集 `[a-z]`，无取模偏差）。请柬 token 与 admin token 各自独立生成，互不可推导。（2026-09-06 用户调整：由 43 字符 base64url 改为 10 位小写字母，便于分享且大小写无歧义。）
+- 校验：任意 `:token` 路径参数先过 `^[a-z]{10}$`，不匹配直接 404/400（防路径遍历与无谓查询），再查库取 Wedding。
 - 凭证语义（双 Token）：
   - **请柬 token**（公开）：持有者只能读取该婚礼请柬数据并提交 RSVP，**不能**进入后台或读取来宾明细。
   - **admin token**（新人/私密）：持有者可进入该婚礼后台（settings/guests/visits/images/audio 等）。只通过系统总览生成/展示给新人，勿与宾客共享。
