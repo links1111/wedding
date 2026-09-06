@@ -1,2 +1,277 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>系统管理</title></head>
-<body style="background:#0f0f1a;color:#f5f5f5;font-family:sans-serif;text-align:center;padding-top:20vh">系统后台建设中…</body></html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统管理 · 婚礼总览</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #c9a96e;
+            --gold-light: #e0c896;
+            --gold-dark: #a8895a;
+            --bg: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --text: #f5f5f5;
+            --text-muted: #8892b0;
+            --text-dim: #495670;
+            --border: rgba(201,169,110,0.15);
+            --red: #ff6b6b;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter','Noto Serif SC',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+        /* 登录 */
+        .login-page { display:flex; align-items:center; justify-content:center; min-height:100vh;
+            background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%); }
+        .login-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px;
+            padding:40px 35px; width:360px; max-width:90vw; }
+        .login-title { text-align:center; font-family:'Noto Serif SC',serif; font-size:22px; color:var(--gold-light);
+            margin-bottom:8px; letter-spacing:4px; }
+        .login-sub { text-align:center; font-size:12px; color:var(--text-muted); letter-spacing:2px; margin-bottom:30px; }
+        .login-input { width:100%; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:4px;
+            padding:12px 16px; color:var(--text); font-size:14px; margin-bottom:16px; outline:none; }
+        .login-input:focus { border-color:var(--gold); }
+        .login-btn { width:100%; padding:13px; background:linear-gradient(135deg,var(--gold-dark),var(--gold)); border:none;
+            border-radius:4px; color:#0f0f1a; font-size:15px; font-weight:600; cursor:pointer; letter-spacing:2px; }
+        .login-btn:hover { box-shadow:0 4px 20px rgba(201,169,110,.3); }
+        .login-error { color:var(--red); font-size:13px; text-align:center; margin-bottom:16px; display:none; }
+        .login-error.show { display:block; }
+
+        /* 主界面 */
+        .admin-layout { display:none; }
+        .admin-layout.show { display:block; }
+        .header { background:var(--bg-card); border-bottom:1px solid var(--border); padding:0 30px; height:60px;
+            display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
+        .header-title { font-family:'Noto Serif SC',serif; font-size:18px; color:var(--gold-light); letter-spacing:3px; }
+        .logout-btn { background:none; border:1px solid var(--border); color:var(--text-muted); padding:6px 16px;
+            border-radius:4px; cursor:pointer; font-size:13px; }
+        .logout-btn:hover { border-color:var(--red); color:var(--red); }
+        .content { padding:30px; max-width:1100px; margin:0 auto; }
+
+        /* 创建表单 */
+        .create-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:24px; margin-bottom:24px; }
+        .create-title { font-size:15px; color:var(--text); margin-bottom:16px; font-weight:500; }
+        .create-form { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+        .create-form input { background:rgba(255,255,255,.04); border:1px solid var(--border); color:var(--text);
+            padding:10px 14px; font-size:14px; border-radius:4px; outline:none; flex:1 1 200px; }
+        .create-form input:focus { border-color:var(--gold); }
+        .create-form input::placeholder { color:var(--text-dim); }
+        .create-btn { background:linear-gradient(135deg,var(--gold-dark),var(--gold)); border:none; color:#0f0f1a;
+            padding:10px 20px; font-size:14px; border-radius:4px; font-weight:600; cursor:pointer; letter-spacing:2px; }
+        .create-btn:hover { box-shadow:0 4px 20px rgba(201,169,110,.3); }
+        .create-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+        /* 表格 */
+        .table-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+        table { width:100%; border-collapse:collapse; }
+        th { text-align:left; padding:12px 16px; font-size:12px; color:var(--text-muted); font-weight:500;
+            text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); background:rgba(255,255,255,.02); }
+        td { padding:12px 16px; font-size:14px; border-bottom:1px solid rgba(255,255,255,.04); }
+        tr:hover td { background:rgba(255,255,255,.02); }
+        .empty { text-align:center; padding:40px; color:var(--text-dim); }
+        .link-btn { background:none; border:1px solid var(--border); color:var(--text-muted); padding:4px 10px;
+            border-radius:4px; font-size:12px; cursor:pointer; margin-right:6px; white-space:nowrap; }
+        .link-btn:hover { border-color:var(--gold); color:var(--gold-light); }
+        .del-btn { background:none; border:1px solid var(--border); color:var(--red); padding:4px 10px;
+            border-radius:4px; font-size:12px; cursor:pointer; }
+        .del-btn:hover { background:rgba(255,107,107,.1); }
+        .copy-tip { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--bg-card);
+            border:1px solid var(--gold); color:var(--gold-light); padding:10px 18px; border-radius:6px;
+            font-size:13px; z-index:100; display:none; max-width:90vw; }
+        @media (max-width:768px) { .content{padding:16px;} th,td{padding:8px 10px;font-size:12px;} }
+    </style>
+</head>
+<body>
+    <!-- 登录 -->
+    <div class="login-page" id="loginPage">
+        <div class="login-card">
+            <div class="login-title">系统管理</div>
+            <div class="login-sub">Wedding System Admin</div>
+            <div class="login-error" id="loginError">用户名或密码错误</div>
+            <input type="text" class="login-input" id="loginUser" placeholder="用户名" autocomplete="username">
+            <input type="password" class="login-input" id="loginPass" placeholder="密码" autocomplete="current-password">
+            <button class="login-btn" id="loginBtn">登 录</button>
+        </div>
+    </div>
+
+    <!-- 总览 -->
+    <div class="admin-layout" id="adminLayout">
+        <div class="header">
+            <div class="header-title">婚礼总览</div>
+            <button class="logout-btn" id="logoutBtn">退出登录</button>
+        </div>
+        <div class="content">
+            <div class="create-card">
+                <div class="create-title">创建新婚礼</div>
+                <div class="create-form">
+                    <input type="text" id="cfName" placeholder="婚礼名称（如：李祥 &amp; 王羚羚 的婚礼）" required maxlength="100">
+                    <input type="text" id="cfGroom" placeholder="新郎（选填）" maxlength="50">
+                    <input type="text" id="cfBride" placeholder="新娘（选填）" maxlength="50">
+                    <input type="date" id="cfDate">
+                    <input type="text" id="cfVenue" placeholder="地点（选填）" maxlength="100">
+                    <button class="create-btn" id="createBtn">创建</button>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>创建时间</th>
+                            <th>RSVP</th>
+                            <th>出席</th>
+                            <th>链接</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wedBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-tip" id="copyTip"></div>
+
+    <script>
+        (function() {
+            var tipTimer = null;
+            function toast(msg) {
+                var tip = document.getElementById('copyTip');
+                tip.textContent = msg;
+                tip.style.display = 'block';
+                if (tipTimer) clearTimeout(tipTimer);
+                tipTimer = setTimeout(function(){ tip.style.display = 'none'; }, 2800);
+            }
+            function copyText(text, msg) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text).then(function(){ toast(msg); })
+                        .catch(function(){ fallbackCopy(text, msg); });
+                } else { fallbackCopy(text, msg); }
+            }
+            function fallbackCopy(text, msg) {
+                prompt('复制链接（Ctrl/Cmd+C）：', text);
+            }
+            function showAdmin() {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('adminLayout').classList.add('show');
+                loadWeddings();
+            }
+            function checkAuth() {
+                fetch('/api/admin/weddings')
+                    .then(function(r){ if (r.status === 200) showAdmin(); })
+                    .catch(function(){});
+            }
+            checkAuth();
+
+            document.getElementById('loginBtn').addEventListener('click', doLogin);
+            document.getElementById('loginPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+            function doLogin() {
+                var username = document.getElementById('loginUser').value.trim();
+                var password = document.getElementById('loginPass').value;
+                if (!username || !password) return;
+                var btn = document.getElementById('loginBtn');
+                btn.disabled = true; btn.textContent = '登录中...';
+                fetch('/api/admin/login', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({username: username, password: password})
+                }).then(function(r){ return r.json(); }).then(function(json) {
+                    if (json.ok) { document.getElementById('loginError').classList.remove('show'); showAdmin(); }
+                    else { document.getElementById('loginError').classList.add('show'); btn.disabled = false; btn.textContent = '登 录'; }
+                }).catch(function(){
+                    document.getElementById('loginError').textContent = '网络错误';
+                    document.getElementById('loginError').classList.add('show');
+                    btn.disabled = false; btn.textContent = '登 录';
+                });
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                fetch('/api/admin/logout', { method: 'POST' }).then(function(){ location.reload(); });
+            });
+
+            function fmtTime(t) { return t ? t.replace('T',' ').replace('Z','').substring(0,19) : '—'; }
+            function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+            function loadWeddings() {
+                fetch('/api/admin/weddings')
+                    .then(function(r){ return r.json(); })
+                    .then(function(json) {
+                        var body = document.getElementById('wedBody');
+                        var list = (json.data || []);
+                        if (!list.length) { body.innerHTML = '<tr><td colspan="6" class="empty">暂无婚礼，请先创建</td></tr>'; return; }
+                        body.innerHTML = list.map(function(w) {
+                            var origin = location.origin;
+                            var invite = origin + '/w/' + w.token;
+                            var admin = origin + '/admin/' + w.admin_token;
+                            return '<tr>' +
+                                '<td>' + esc(w.name) + '</td>' +
+                                '<td style="color:var(--text-muted);font-size:12px">' + fmtTime(w.created_at) + '</td>' +
+                                '<td>' + (w.rsvp_count || 0) + '</td>' +
+                                '<td>' + (w.attending_count || 0) + '</td>' +
+                                '<td>' +
+                                    '<button class="link-btn" data-copy="' + esc(invite) + '">复制请柬</button>' +
+                                    '<button class="link-btn" data-copy="' + esc(admin) + '" title="此链接可进后台，请私发新人勿外传">复制后台</button>' +
+                                '</td>' +
+                                '<td><button class="del-btn" data-id="' + w.id + '" data-name="' + esc(w.name) + '">删除</button></td>' +
+                            '</tr>';
+                        }).join('');
+                    }).catch(function(){});
+            }
+
+            document.getElementById('createBtn').addEventListener('click', createWedding);
+            document.getElementById('cfName').addEventListener('keydown', function(e){ if (e.key === 'Enter') createWedding(); });
+            function createWedding() {
+                var name = document.getElementById('cfName').value.trim();
+                if (!name) { toast('请填写婚礼名称'); return; }
+                var btn = document.getElementById('createBtn');
+                btn.disabled = true; btn.textContent = '创建中...';
+                fetch('/api/admin/weddings', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        name: name,
+                        groom_name: document.getElementById('cfGroom').value.trim(),
+                        bride_name: document.getElementById('cfBride').value.trim(),
+                        wedding_date: document.getElementById('cfDate').value,
+                        venue: document.getElementById('cfVenue').value.trim()
+                    })
+                }).then(function(r){ return r.json(); }).then(function(json) {
+                    if (json.ok) {
+                        var adminLink = location.origin + json.data.admin_url;
+                        document.getElementById('cfName').value = '';
+                        document.getElementById('cfGroom').value = '';
+                        document.getElementById('cfBride').value = '';
+                        document.getElementById('cfDate').value = '';
+                        document.getElementById('cfVenue').value = '';
+                        copyText(adminLink, '已复制「后台链接」— 请私发给新人，勿随请柬公开！');
+                        loadWeddings();
+                    } else {
+                        toast(json.error || '创建失败');
+                    }
+                    btn.disabled = false; btn.textContent = '创建';
+                }).catch(function(){ toast('网络错误'); btn.disabled = false; btn.textContent = '创建'; });
+            }
+
+            document.getElementById('wedBody').addEventListener('click', function(e) {
+                var link = e.target.closest('.link-btn');
+                if (link) {
+                    var tip = link.textContent.indexOf('请柬') !== -1 ? '已复制请柬链接' : '已复制后台链接（请私发新人）';
+                    copyText(link.dataset.copy, tip);
+                    return;
+                }
+                var del = e.target.closest('.del-btn');
+                if (del) {
+                    if (!confirm('确定删除婚礼「' + del.dataset.name + '」？将同时删除其来宾/访问数据与媒体。')) return;
+                    fetch('/api/admin/weddings/' + del.dataset.id, { method: 'DELETE' })
+                        .then(function(r){ return r.json(); })
+                        .then(function(json) { if (json.ok) { toast('已删除'); loadWeddings(); } else toast(json.error || '删除失败'); })
+                        .catch(function(){ toast('网络错误'); });
+                }
+            });
+
+            console.log('✨ 婚礼总览 · 双链接（请柬/后台）');
+        })();
+    </script>
+</body>
+</html>
