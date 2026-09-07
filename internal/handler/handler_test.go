@@ -66,7 +66,7 @@ func newHandlerDB(t *testing.T) *gorm.DB {
 	if err != nil {
 		t.Fatalf("打开测试数据库失败: %v", err)
 	}
-	if err := db.AutoMigrate(&models.Wedding{}, &models.Setting{}, &models.Guest{}, &models.Visit{}); err != nil {
+	if err := db.AutoMigrate(&models.Wedding{}, &models.Setting{}, &models.Guest{}, &models.Visit{}, &models.Card{}); err != nil {
 		t.Fatalf("迁移失败: %v", err)
 	}
 	return db

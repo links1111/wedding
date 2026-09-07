@@ -11,6 +11,29 @@ type Wedding struct {
 	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
 }
 
+// 子卡片预设类型 key
+const (
+	CardTypeFirstMeet  = "first_meet"
+	CardTypeTravel     = "travel"
+	CardTypeProposal   = "proposal"
+	CardTypeEngagement = "engagement"
+	CardTypeCustom     = "custom"
+)
+
+// Card 子卡片（我们的故事）：主请柬由 settings 驱动，卡片表只存子卡片
+type Card struct {
+	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	WeddingID int64     `json:"-" gorm:"index;not null"`
+	Sort      int       `json:"sort" gorm:"not null;default:0"`
+	Type      string    `json:"type" gorm:"size:32;not null;default:'custom'"`
+	Title     string    `json:"title" gorm:"size:100;not null;default:''"`
+	Date      string    `json:"date" gorm:"size:50;not null;default:''"`
+	Content   string    `json:"content" gorm:"size:2000;not null;default:''"`
+	Images    string    `json:"images" gorm:"size:2000;not null;default:''"` // 本卡背景图文件名，逗号分隔
+	Enabled   bool      `json:"enabled" gorm:"not null"`                     // 不设 DB default，避免 GORM 省略 false
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+}
+
 // Visit 访问记录
 type Visit struct {
 	ID          int64     `json:"id" gorm:"primaryKey;autoIncrement"`

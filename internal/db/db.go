@@ -43,7 +43,7 @@ func InitDB(dbPath string) error {
 	sqlDB.SetMaxIdleConns(1)
 
 	// 自动迁移表结构
-	if err := db.AutoMigrate(&models.Visit{}, &models.Guest{}, &models.AdminUser{}, &models.Setting{}, &models.Wedding{}); err != nil {
+	if err := db.AutoMigrate(&models.Visit{}, &models.Guest{}, &models.AdminUser{}, &models.Setting{}, &models.Wedding{}, &models.Card{}); err != nil {
 		return fmt.Errorf("数据库迁移失败: %w", err)
 	}
 

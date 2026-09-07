@@ -154,6 +154,11 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	a.GET("/audio", h.listAudio)
 	a.POST("/audio", h.uploadAudio)
 	a.DELETE("/audio/:name", h.deleteAudio)
+	a.GET("/cards", h.listCards)
+	a.POST("/cards", h.createCard)
+	a.PUT("/cards/:id", h.updateCard)
+	a.DELETE("/cards/:id", h.deleteCard)
+	a.POST("/cards/reorder", h.reorderCards)
 }
 
 // --- 公开 API ---
@@ -199,8 +204,30 @@ func (h *Handler) getInvitation(c *gin.Context) {
 				"glass_saturate":    all[settings.KeyGlassSaturate],
 				"card_color":        all[settings.KeyCardColor],
 			},
+			"cards": h.publicCards(w.ID, w.Token),
 		},
 	})
+}
+
+// publicCards 该婚礼启用且按序的子卡片，背景图转为访问 URL
+func (h *Handler) publicCards(weddingID int64, token string) []gin.H {
+	var cards []models.Card
+	if err := h.DB.Where("wedding_id = ? AND enabled = ?", weddingID, true).
+		Order("sort ASC, id ASC").Find(&cards).Error; err != nil {
+		return nil
+	}
+	out := make([]gin.H, 0, len(cards))
+	for _, cd := range cards {
+		urls := make([]string, 0, len(cd.Images))
+		for _, n := range splitImageNames(cd.Images) {
+			urls = append(urls, "/static/"+token+"/images/"+n)
+		}
+		out = append(out, gin.H{
+			"id": cd.ID, "type": cd.Type, "title": cd.Title,
+			"date": cd.Date, "content": cd.Content, "images": urls,
+		})
+	}
+	return out
 }
 
 // getWeddingMeta 返回当前婚礼的元信息（名称、token）
@@ -821,7 +848,7 @@ func (h *Handler) deleteWedding(c *gin.Context) {
 	}
 	tx := h.DB.Begin()
 	for _, m := range []interface{}{
-		&models.Setting{}, &models.Guest{}, &models.Visit{},
+		&models.Setting{}, &models.Guest{}, &models.Visit{}, &models.Card{},
 	} {
 		if err := tx.Where("wedding_id = ?", w.ID).Delete(m).Error; err != nil {
 			tx.Rollback()
@@ -842,6 +869,258 @@ func (h *Handler) deleteWedding(c *gin.Context) {
 		}
 	}
 	log.Printf("系统管理员删除婚礼: %s (id=%d)", w.Name, w.ID)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
+// --- 故事卡片 ---
+
+// cardTypePresets 预设卡片类型的默认标题/文案占位（可编辑）
+var cardTypePresets = map[string]struct{ Title, Content string }{
+	models.CardTypeFirstMeet:  {"第一次相遇", "写下你们相遇的那一刻……"},
+	models.CardTypeTravel:     {"旅行", "一起走过的风景，都值得被纪念……"},
+	models.CardTypeProposal:   {"求婚", "那一天，单膝跪地，说出「嫁给我」……"},
+	models.CardTypeEngagement: {"订婚", "共同的决定，属于彼此的新开始……"},
+}
+
+// cardInput 卡片编辑入参
+type cardInput struct {
+	Type    string   `json:"type"`
+	Title   string   `json:"title"`
+	Date    string   `json:"date"`
+	Content string   `json:"content"`
+	Images  []string `json:"images"`
+	Enabled *bool    `json:"enabled"`
+}
+
+func splitImageNames(s string) []string {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// cardJSON 卡片返回（images 以数组给出）
+func cardJSON(cd models.Card) gin.H {
+	return gin.H{
+		"id": cd.ID, "sort": cd.Sort, "type": cd.Type,
+		"title": cd.Title, "date": cd.Date, "content": cd.Content,
+		"images": splitImageNames(cd.Images), "enabled": cd.Enabled,
+		"created_at": cd.CreatedAt,
+	}
+}
+
+// validateCardImages 校验图片文件名存在且位于该婚礼 images 目录内（防任意路径）
+func (h *Handler) validateCardImages(token string, names []string) ([]string, error) {
+	dir := h.imagesDirFor(token)
+	out := []string{}
+	seen := map[string]bool{}
+	for _, n := range names {
+		n = strings.TrimSpace(n)
+		if n == "" {
+			continue
+		}
+		if !images.IsAllowedImage(n) {
+			return nil, errors.New("包含不支持的图片文件名")
+		}
+		if seen[n] {
+			continue
+		}
+		p, err := images.SafeJoin(dir, n)
+		if err != nil {
+			return nil, errors.New("非法的图片文件名")
+		}
+		if _, statErr := os.Stat(p); statErr != nil {
+			return nil, errors.New("图片不存在: " + n)
+		}
+		seen[n] = true
+		out = append(out, n)
+	}
+	return out, nil
+}
+
+// normalizeCardType 归一化卡片类型；未知类型归为 custom
+func normalizeCardType(t string) string {
+	switch strings.TrimSpace(t) {
+	case models.CardTypeFirstMeet, models.CardTypeTravel, models.CardTypeProposal, models.CardTypeEngagement, models.CardTypeCustom:
+		return strings.TrimSpace(t)
+	default:
+		return models.CardTypeCustom
+	}
+}
+
+func (h *Handler) listCards(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	var cards []models.Card
+	if err := h.DB.Where("wedding_id = ?", w.ID).Order("sort ASC, id ASC").Find(&cards).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "查询失败"})
+		return
+	}
+	data := make([]gin.H, 0, len(cards))
+	for _, cd := range cards {
+		data = append(data, cardJSON(cd))
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": data})
+}
+
+func (h *Handler) createCard(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	var req cardInput
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
+		return
+	}
+	ctype := normalizeCardType(req.Type)
+	title := strings.TrimSpace(req.Title)
+	content := strings.TrimSpace(req.Content)
+	if title == "" {
+		if p, ok := cardTypePresets[ctype]; ok {
+			title = p.Title
+		}
+	}
+	if title == "" || len(title) > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "卡片标题不能为空且不超过100字"})
+		return
+	}
+	date := strings.TrimSpace(req.Date)
+	if len(date) > 50 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "日期过长"})
+		return
+	}
+	if len(content) > 2000 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "内容过长（≤2000字）"})
+		return
+	}
+	// 预设类型且未填内容时给占位
+	if content == "" {
+		if p, ok := cardTypePresets[ctype]; ok && ctype != models.CardTypeCustom {
+			content = p.Content
+		}
+	}
+	imgs, err := h.validateCardImages(w.Token, req.Images)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	var maxSort int
+	h.DB.Model(&models.Card{}).Where("wedding_id = ?", w.ID).Select("COALESCE(MAX(sort),0)").Scan(&maxSort)
+	enabled := true
+	if req.Enabled != nil {
+		enabled = *req.Enabled
+	}
+	cd := models.Card{
+		WeddingID: w.ID, Sort: maxSort + 1, Type: ctype,
+		Title: title, Date: date, Content: content,
+		Images: strings.Join(imgs, ","), Enabled: enabled,
+	}
+	if err := h.DB.Create(&cd).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": cardJSON(cd)})
+}
+
+func (h *Handler) updateCard(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "无效的 ID"})
+		return
+	}
+	var cd models.Card
+	if err := h.DB.Where("id = ? AND wedding_id = ?", id, w.ID).First(&cd).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "卡片不存在"})
+		return
+	}
+	var req cardInput
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
+		return
+	}
+	title := strings.TrimSpace(req.Title)
+	if title == "" || len(title) > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "卡片标题不能为空且不超过100字"})
+		return
+	}
+	date := strings.TrimSpace(req.Date)
+	if len(date) > 50 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "日期过长"})
+		return
+	}
+	content := strings.TrimSpace(req.Content)
+	if len(content) > 2000 {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "内容过长（≤2000字）"})
+		return
+	}
+	imgs, err := h.validateCardImages(w.Token, req.Images)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	cd.Title = title
+	cd.Date = date
+	cd.Content = content
+	cd.Images = strings.Join(imgs, ",")
+	if req.Enabled != nil {
+		cd.Enabled = *req.Enabled
+	}
+	if err := h.DB.Save(&cd).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": cardJSON(cd)})
+}
+
+func (h *Handler) deleteCard(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "无效的 ID"})
+		return
+	}
+	if err := h.DB.Where("id = ? AND wedding_id = ?", id, w.ID).Delete(&models.Card{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
+// reorderCards 按提供的 id 顺序重排 sort
+func (h *Handler) reorderCards(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	var req struct {
+		IDs []int64 `json:"ids"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请求格式错误"})
+		return
+	}
+	for i, id := range req.IDs {
+		h.DB.Model(&models.Card{}).Where("id = ? AND wedding_id = ?", id, w.ID).Update("sort", i)
+	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
 }
 
