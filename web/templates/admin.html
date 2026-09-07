@@ -403,17 +403,23 @@
             margin-bottom: 18px;
             letter-spacing: 1px;
         }
-        /* 卡片 tab */
+        /* 卡片菜单栏：单行横向滚动，主请柬 + 各子卡 + 末尾下拉添加 */
         .cards-tabs {
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 22px;
             border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
+            padding: 0 2px 12px;
+            overflow-x: auto;
+            scrollbar-width: thin;
         }
+        .cards-tabs::-webkit-scrollbar { height: 4px; }
+        .cards-tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
         .cards-tab {
-            padding: 6px 14px;
+            flex: 0 0 auto;
+            padding: 7px 16px;
             cursor: pointer;
             color: var(--text-muted);
             font-size: 13px;
@@ -426,18 +432,26 @@
         }
         .cards-tab:hover { color: var(--text); border-color: var(--gold); }
         .cards-tab.active { background: var(--gold); color: #0f0f1a; font-weight: 600; border-color: var(--gold); }
-        .cards-add { color: var(--gold); border-style: dashed; }
-        .cards-add:hover { border-color: var(--gold); color: var(--gold-light); }
-        .add-card-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .add-card-row select {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 6px 10px;
-            color: var(--text);
+        /* 添加卡片：下拉直选类型即建 */
+        .cards-add-select {
+            flex: 0 0 auto;
+            padding: 7px 12px;
+            color: var(--gold);
             font-size: 13px;
+            border: 1px dashed var(--gold);
+            border-radius: 20px;
+            background: none;
             font-family: inherit;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23c9a962' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 26px;
+            max-width: 170px;
         }
+        .cards-add-select option { background: #1b1626; color: var(--text); }
         .img-pick { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
         .img-pick.picked { border-color: var(--gold); }
         /* 子卡类型版式预览 */
@@ -711,27 +725,8 @@
 
                 <div class="view" id="view-settings">
                 <div class="table-card" style="padding: 24px;">
-                <!-- 卡片 tab：主请柬 + 各子卡 -->
-                <div class="cards-tabs" id="cardsTabs">
-                    <button class="cards-tab active" data-card="main">主请柬</button>
-                    <button class="cards-add" id="cardsAddBtn">＋ 添加卡片</button>
-                </div>
-                <div id="addCardRow" style="display:none; margin-bottom:16px;">
-                    <div class="add-card-row">
-                        <select id="addCardType">
-                            <option value="meet">相遇</option>
-                            <option value="heartbeat">心动瞬间</option>
-                            <option value="date">约会</option>
-                            <option value="confess">表白</option>
-                            <option value="together">在一起</option>
-                            <option value="travel">旅行</option>
-                            <option value="propose">求婚</option>
-                            <option value="engage">订婚</option>
-                        </select>
-                        <button class="upload-btn" id="addCardConfirm">添加</button>
-                        <button class="upload-btn" id="addCardCancel" style="color:var(--text-muted)">取消</button>
-                    </div>
-                </div>
+                <!-- 卡片菜单栏：主请柬 + 各子卡 + 下拉直选添加（JS 动态构建） -->
+                <div class="cards-tabs" id="cardsTabs"></div>
                 <div id="mainPane">
                 <!-- 请柬内容 -->
                 <div class="form-card">
@@ -1237,29 +1232,50 @@
 
         function renderCardsTabs() {
             var bar = document.getElementById('cardsTabs');
-            var mainTab = bar.querySelector('[data-card="main"]');
-            var addBtn = document.getElementById('cardsAddBtn');
             bar.innerHTML = '';
-            bar.appendChild(mainTab);
+            // 主请柬
+            var main = document.createElement('button');
+            main.type = 'button';
+            main.className = 'cards-tab' + (currentCardId == null ? ' active' : '');
+            main.dataset.card = 'main';
+            main.textContent = '✉ 主请柬';
+            bar.appendChild(main);
+            // 各子卡（图标 + 标题）
             cardsData.forEach(function(cd) {
+                var meta = TYPE_META[cd.type] || TYPE_META.meet;
                 var b = document.createElement('button');
+                b.type = 'button';
                 b.className = 'cards-tab' + (currentCardId === cd.id ? ' active' : '');
                 b.dataset.card = cd.id;
-                b.textContent = cd.title || '未命名';
+                b.title = cd.title || '未命名';
+                b.textContent = (meta.g ? meta.g + ' ' : '') + (cd.title || '未命名');
                 bar.appendChild(b);
             });
-            bar.appendChild(addBtn);
+            // 添加卡片：下拉直选类型即创建
+            var sel = document.createElement('select');
+            sel.id = 'cardsAddType';
+            sel.className = 'cards-add-select';
+            sel.title = '添加卡片';
+            var ph = document.createElement('option');
+            ph.value = '';
+            ph.textContent = '＋ 添加卡片';
+            ph.disabled = true;
+            ph.selected = true;
+            sel.appendChild(ph);
+            Object.keys(TYPE_META).forEach(function(t) {
+                var o = document.createElement('option');
+                o.value = t;
+                o.textContent = TYPE_META[t].g + ' 添加「' + TYPE_META[t].label + '」';
+                sel.appendChild(o);
+            });
+            bar.appendChild(sel);
         }
 
         function switchMainCard() {
             currentCardId = null;
             document.getElementById('mainPane').style.display = '';
             document.getElementById('cardPane').style.display = 'none';
-            document.getElementById('addCardRow').style.display = 'none';
-            var tabs = document.querySelectorAll('#cardsTabs .cards-tab');
-            for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
-            var main = document.querySelector('#cardsTabs .cards-tab[data-card="main"]');
-            if (main) main.classList.add('active');
+            renderCardsTabs();
         }
 
         function openCard(id) {
@@ -1269,7 +1285,6 @@
             currentCardType = cd.type || 'meet';
             document.getElementById('mainPane').style.display = 'none';
             document.getElementById('cardPane').style.display = '';
-            document.getElementById('addCardRow').style.display = 'none';
             document.getElementById('cardEditorTitle').textContent = (cd.title || '编辑卡片');
             document.getElementById('cTitle').value = cd.title || '';
             document.getElementById('cDate').value = cd.date || '';
@@ -1351,24 +1366,25 @@
             if (fail) alert(ok + ' 张成功，' + fail + ' 张失败');
         }
 
-        // 卡片 tab 切换（事件委托）
+        // 卡片菜单栏：点击切换主请柬 / 子卡（事件委托）
         document.getElementById('cardsTabs').addEventListener('click', function(e) {
             var tab = e.target.closest('.cards-tab');
             if (!tab) return;
-            if (tab.id === 'cardsAddBtn') return;
             if (tab.dataset.card === 'main') switchMainCard();
             else openCard(parseInt(tab.dataset.card, 10));
         });
 
-        // 添加卡片（选类型）
-        document.getElementById('cardsAddBtn').addEventListener('click', function() {
-            document.getElementById('addCardRow').style.display = '';
+        // 添加卡片：下拉直选类型，选中立即创建并进入编辑
+        document.getElementById('cardsTabs').addEventListener('change', function(e) {
+            var sel = e.target;
+            if (!sel || sel.id !== 'cardsAddType') return;
+            var type = sel.value;
+            sel.value = ''; // 复位回占位提示
+            if (!type) return;
+            addCardByType(type);
         });
-        document.getElementById('addCardCancel').addEventListener('click', function() {
-            document.getElementById('addCardRow').style.display = 'none';
-        });
-        document.getElementById('addCardConfirm').addEventListener('click', async function() {
-            var type = document.getElementById('addCardType').value;
+
+        async function addCardByType(type) {
             try {
                 var res = await fetch(API + '/cards', {
                     method: 'POST', headers: {'Content-Type':'application/json'},
@@ -1376,13 +1392,12 @@
                 });
                 var json = await res.json();
                 if (json.ok) {
-                    document.getElementById('addCardRow').style.display = 'none';
                     cardsData.push(json.data);
                     openCard(json.data.id);
                     loadCards();
                 } else alert(json.error || '添加失败');
             } catch(e) { alert('网络错误'); }
-        });
+        }
 
         // 保存 / 删除 / 排序
         document.getElementById('cardSaveBtn').addEventListener('click', saveCard);
