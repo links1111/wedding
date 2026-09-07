@@ -20,14 +20,16 @@
         /* 全屏翻页场景：上下滑只切换卡片，吸附一屏 */
         .scene {
             position: relative;
-            min-height: 100vh;
-            min-height: 100dvh;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 16px;
-            scroll-snap-align: center;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
         }
         /* 顶部常驻“长按看清文字”提示 */
         .gesture-top {
@@ -112,6 +114,15 @@
             text-shadow: 0 2px 12px var(--glow);
         }
         .invitation-card * { text-shadow: 0 2px 12px var(--glow); }
+        /* 卡片内容超高时卡片内部滚动，保证整页固定、一次翻一卡 */
+        .invitation-card, .sub-card {
+            max-height: calc(100dvh - 40px);
+            overflow-y: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .invitation-card::-webkit-scrollbar,
+        .sub-card::-webkit-scrollbar { display: none; }
         /* 亮背景 → 深色文字，始终保持最佳对比度 */
         .invitation-card.light-bg {
             --text-strong: #1f1a15;
@@ -129,21 +140,32 @@
             --btn-bg-hover: rgba(42,36,30,0.16);
             --btn-border-hover: rgba(42,36,30,0.55);
         }
-        /* 子卡片内容：淡色磨砂，文字颜色随自身背景亮度自适应 */
+        /* 子卡片内容：与主请柬同款磨砂玻璃面（尺寸/圆角/内边距一致，
+           透明度/模糊强度/饱和度沿用后台「卡片样式」设置） */
         .sub-card {
+            --card-rgb: 247, 242, 235;
+            --card-alpha: 0.15;
+            --glass-blur: 16px;
+            --glass-saturate: 1.8;
+            /* 文字与装饰色默认（深底），随背景亮度切换 .light-bg */
             --text-strong: #ffffff; --text-body: #faf5ee;
             --text-muted: rgba(255,248,240,0.9); --text-dim: rgba(255,248,240,0.65);
+            --line: rgba(255,245,235,0.18);
+            --line-soft: rgba(255,245,235,0.12);
+            --line-strong: rgba(255,245,235,0.3);
+            --card-inset: rgba(255,245,235,0.15);
             --glow: rgba(0,0,0,0.4);
             position: relative;
-            z-index: 2;
+            z-index: 10;
             max-width: 460px;
             width: 100%;
-            background: rgba(245, 240, 232, 0.14);
-            backdrop-filter: blur(18px) saturate(1.6);
-            -webkit-backdrop-filter: blur(18px) saturate(1.6);
-            border-radius: 32px;
-            padding: 30px 26px 28px;
-            border: 1px solid rgba(255,245,235,0.28);
+            background: rgba(var(--card-rgb), var(--card-alpha));
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border-radius: 48px;
+            padding: 26px 26px 22px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--card-inset) inset;
+            border: 1px solid var(--line-strong);
             color: var(--text-body);
             text-shadow: 0 2px 12px var(--glow);
             text-align: center;
@@ -151,19 +173,12 @@
         .sub-card.light-bg {
             --text-strong: #1f1a15; --text-body: #2a241e;
             --text-muted: rgba(30,25,20,0.85); --text-dim: rgba(30,25,20,0.65);
+            --line: rgba(42,36,30,0.22);
+            --line-soft: rgba(42,36,30,0.14);
+            --line-strong: rgba(42,36,30,0.3);
+            --card-inset: rgba(42,36,30,0.08);
             --glow: rgba(255,255,255,0.4);
             border-color: rgba(42,36,30,0.3);
-            background: rgba(245,240,232,0.22);
-        }
-        .sub-card .sub-date { font-size: 14px; letter-spacing: 3px; color: var(--text-muted); margin-bottom: 12px; font-weight: 400; }
-        .sub-card .sub-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 30px; line-height: 1.2; color: var(--text-strong);
-            letter-spacing: 3px; margin-bottom: 14px;
-        }
-        .sub-card .sub-content {
-            font-size: 15px; font-weight: 400; color: var(--text-body);
-            line-height: 1.8; letter-spacing: 0.5px; white-space: pre-line;
         }
         /* 类型专属版式：徽记 + 类型标 + 差异化点缀 */
         .sub-card .emblem {
@@ -779,6 +794,19 @@
                 .catch(err => console.error('加载请柬信息失败:', err));
 
             // ===== 卡片透明度 / 毛玻璃样式 =====
+            let glassConfig = null;      // 最近一次「卡片样式」参数；供故事子卡沿用同一套磨砂
+            function applyGlassTo(el) {
+                if (!el || !glassConfig) return;
+                const g = glassConfig;
+                el.style.setProperty('--card-rgb', g.rgb);
+                el.style.setProperty('--card-alpha', g.alpha);
+                el.style.setProperty('--glass-blur', g.blur);
+                el.style.setProperty('--glass-saturate', g.sat);
+                if (!g.enabled) {
+                    el.style.backdropFilter = 'none';
+                    el.style.webkitBackdropFilter = 'none';
+                }
+            }
             function applyStyle(style) {
                 if (!style) return;
                 const card = document.querySelector('.invitation-card');
@@ -788,16 +816,15 @@
                 const glass = style.glass_enabled !== 'false';
                 const blur = clamp(parseInt(style.glass_blur, 10) || 0, 0, 50);
                 const sat = clamp(parseInt(style.glass_saturate, 10) || 100, 100, 300);
-                card.style.setProperty('--card-rgb', hexToRgb(color));
-                card.style.setProperty('--card-alpha', alpha.toFixed(2));
-                card.style.setProperty('--glass-blur', (glass ? blur : 0) + 'px');
-                card.style.setProperty('--glass-saturate', (glass ? sat / 100 : 1).toFixed(2));
-                if (!glass) {
-                    card.style.backdropFilter = 'none';
-                    card.style.webkitBackdropFilter = 'none';
-                }
+                glassConfig = {
+                    rgb: hexToRgb(color),
+                    alpha: alpha.toFixed(2),
+                    blur: (glass ? blur : 0) + 'px',
+                    sat: (glass ? sat / 100 : 1).toFixed(2),
+                    enabled: glass
+                };
+                applyGlassTo(card);
             }
-
             // ===== 背景轮播（动态生成 + 按背景亮度自适应文字颜色） =====
             const slideBrightness = [];
 
@@ -1084,10 +1111,11 @@
                     const meta = TYPE_META[card.type] || TYPE_META.meet;
                     const sec = document.createElement('section');
                     sec.className = 'scene';
-                    // 该页轮播图列表：本卡有图用本卡，无图沿用主图库背景
-                    sec.__slideList = (urls && urls.length) ? urls.slice() : mainSlideList.slice();
+                    // 该页轮播图列表：本卡有图用本卡；无图保持上一页列表（不空屏）
+                    sec.__slideList = (urls || []).slice();
                     const box = document.createElement('div');
                     box.className = 'sub-card t-' + (TYPE_META[card.type] ? card.type : 'meet');
+                    applyGlassTo(box); // 沿用主请柬的透明度/模糊强度/饱和度
                     const em = document.createElement('div');
                     em.className = 'emblem';
                     em.textContent = meta.g;
@@ -1310,6 +1338,8 @@
                         const target = scenes[activeIdx];
                         if (!target) return;
                         const list = target.__slideList || [];
+                        // 该页没有专属图片：保持上一页的列表继续轮播，不空屏
+                        if (!list.length) return;
                         if (list.join('|') !== carList.join('|')) renderCarousel(list);
                     }, { threshold: [0.55, 0.75, 0.95] });
                     scenes.forEach(function(s) { io.observe(s); });
@@ -1321,14 +1351,19 @@
             // ===== 长按：毛玻璃随时间逐渐增强（文字更清晰）；松手平滑恢复 =====
             let lastStyle = null;      // 最近一次 applyStyle 的配置，用于恢复
             let baseBlurPx = 16;
+            let holdCard = null;       // 当前长按作用的卡片（主请柬/故事子卡共用）
             let holdTimeout = null;
             let blurTimer = null;
             let blurAnim = null;
             let holdStartX = 0;
             let holdStartY = 0;
 
-            function readBaseBlur() {
-                const card = document.querySelector('.invitation-card');
+            function cardUnderPointer(node) {
+                if (!node || !node.closest) return null;
+                return node.closest('.invitation-card, .sub-card') || null;
+            }
+
+            function readBaseBlur(card) {
                 const v = card ? parseFloat(getComputedStyle(card).getPropertyValue('--glass-blur')) : NaN;
                 return isNaN(v) ? 16 : v;
             }
@@ -1340,9 +1375,10 @@
             }
 
             function restoreBlur() {
-                if (blurAnim) cancelAnimationFrame(blurAnim);
-                const card = document.querySelector('.invitation-card');
+                const card = holdCard;
+                holdCard = null;
                 if (!card) return;
+                if (blurAnim) cancelAnimationFrame(blurAnim);
                 const bNow = parseFloat(card.style.getPropertyValue('--glass-blur'));
                 const b0 = isNaN(bNow) ? baseBlurPx : bNow;
                 const t0 = performance.now();
@@ -1351,16 +1387,16 @@
                     const e = 1 - Math.pow(1 - t, 3);
                     card.style.setProperty('--glass-blur', (b0 + (baseBlurPx - b0) * e).toFixed(1) + 'px');
                     if (t < 1) blurAnim = requestAnimationFrame(frame);
-                    else if (lastStyle) applyStyle(lastStyle);
                 }
                 blurAnim = requestAnimationFrame(frame);
             }
 
             document.addEventListener('pointerdown', function(e) {
-                if (e.target.closest && (e.target.closest('.rsvp-end') || e.target.closest('#musicBtn'))) return;
-                const card = document.querySelector('.invitation-card');
+                if (e.target.closest && (e.target.closest('#musicBtn') || e.target.closest('.rsvp-end'))) return;
+                const card = cardUnderPointer(e.target);
                 if (!card) return;
-                baseBlurPx = readBaseBlur();
+                baseBlurPx = readBaseBlur(card);
+                holdCard = card;
                 holdStartX = e.clientX;
                 holdStartY = e.clientY;
                 cancelHold(false);
@@ -1379,7 +1415,6 @@
                     }, 40);
                 }, 450);
             });
-
             document.addEventListener('pointermove', function(e) {
                 if (!holdTimeout && !blurTimer) return;
                 if (Math.abs(e.clientX - holdStartX) > 10 || Math.abs(e.clientY - holdStartY) > 10) {
