@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-snap-type: y mandatory; }
         body {
             min-height: 100vh;
             min-height: 100dvh;
@@ -140,26 +141,32 @@
             --btn-bg-hover: rgba(42,36,30,0.16);
             --btn-border-hover: rgba(42,36,30,0.55);
         }
-        /* 子卡片内容：与主请柬同款磨砂玻璃面（尺寸/圆角/内边距一致，
-           透明度/模糊强度/饱和度沿用后台「卡片样式」设置） */
+        /* 子卡片：与主请柬同款磨砂玻璃面；宽一致、高与主卡逐屏相等(JS 同步)。
+           版式向主请柬看齐：徽记 / 章节眉 / 衬线大字标题 / 正文排版 / 落款点缀 */
         .sub-card {
             --card-rgb: 247, 242, 235;
-            --card-alpha: 0.15;
+            --card-alpha: 0.16;
             --glass-blur: 16px;
             --glass-saturate: 1.8;
             /* 文字与装饰色默认（深底），随背景亮度切换 .light-bg */
-            --text-strong: #ffffff; --text-body: #faf5ee;
-            --text-muted: rgba(255,248,240,0.9); --text-dim: rgba(255,248,240,0.65);
-            --line: rgba(255,245,235,0.18);
-            --line-soft: rgba(255,245,235,0.12);
+            --text-strong: #ffffff; --text-body: #fbf6ef;
+            --text-muted: rgba(255,248,240,0.92); --text-dim: rgba(255,248,240,0.7);
+            --line: rgba(255,245,235,0.16);
+            --line-soft: rgba(255,245,235,0.1);
             --line-strong: rgba(255,245,235,0.3);
-            --card-inset: rgba(255,245,235,0.15);
-            --glow: rgba(0,0,0,0.4);
+            --card-inset: rgba(255,245,235,0.16);
+            --glow: rgba(0,0,0,0.42);
             position: relative;
             z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
             max-width: 460px;
             width: 100%;
-            background: rgba(var(--card-rgb), var(--card-alpha));
+            background:
+                radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.10), transparent 52%),
+                rgba(var(--card-rgb), var(--card-alpha));
             backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
             -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
             border-radius: 48px;
@@ -167,33 +174,72 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--card-inset) inset;
             border: 1px solid var(--line-strong);
             color: var(--text-body);
-            text-shadow: 0 2px 12px var(--glow);
             text-align: center;
+        }
+        /* 安全居中：内容超高时也能完整滚动（首尾元素用 auto 外边距平衡垂直空间） */
+        .sub-card > :first-child { margin-top: auto; }
+        .sub-card > :last-child  { margin-bottom: auto; }
+        .sub-card * { text-shadow: 0 2px 12px var(--glow); }
+        .sub-card .emblem {
+            position: relative;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 58px; height: 58px; border-radius: 50%;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-size: 24px; line-height: 1;
+            margin-bottom: 18px;
+            background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.12), transparent 68%);
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2);
+        }
+        .sub-card .emblem::after {
+            content: ''; position: absolute; inset: -7px; border-radius: 50%;
+            border: 1px solid var(--accent); opacity: 0.35;
+        }
+        .sub-card .type-label {
+            font-family: 'Cormorant Garamond', 'Songti SC', 'Noto Serif SC', serif;
+            font-size: 13px; letter-spacing: 6px; text-transform: uppercase;
+            color: var(--accent); font-weight: 500;
+            margin-bottom: 6px; padding-left: 5px;
+        }
+        .sub-card .sub-date {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 17px; font-weight: 500; letter-spacing: 3px;
+            color: var(--accent);
+            margin: 8px 0 14px;
+        }
+        .sub-card .sub-title {
+            font-family: 'Cormorant Garamond', 'Songti SC', 'Noto Serif SC', 'SimSun', serif;
+            font-weight: 600;
+            font-size: 30px; line-height: 1.3; letter-spacing: 3px; padding-left: 3px;
+            color: var(--text-strong);
+            margin: 0 0 16px;
+        }
+        .sub-card .sub-content {
+            font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            font-size: 14px; font-weight: 400; line-height: 2.0;
+            letter-spacing: 1px; color: var(--text-body);
+            width: 100%;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+        }
+        .sub-card .sub-flourish {
+            font-size: 9px; letter-spacing: 7px; color: var(--text-dim);
+            margin-top: 18px; padding-left: 6px;
         }
         .sub-card.light-bg {
             --text-strong: #1f1a15; --text-body: #2a241e;
-            --text-muted: rgba(30,25,20,0.85); --text-dim: rgba(30,25,20,0.65);
-            --line: rgba(42,36,30,0.22);
-            --line-soft: rgba(42,36,30,0.14);
+            --text-muted: rgba(30,25,20,0.85); --text-dim: rgba(30,25,20,0.62);
+            --line: rgba(42,36,30,0.2);
+            --line-soft: rgba(42,36,30,0.12);
             --line-strong: rgba(42,36,30,0.3);
             --card-inset: rgba(42,36,30,0.08);
-            --glow: rgba(255,255,255,0.4);
+            --glow: rgba(255,255,255,0.5);
             border-color: rgba(42,36,30,0.3);
+            background:
+                radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.55), transparent 52%),
+                rgba(var(--card-rgb), var(--card-alpha));
         }
-        /* 类型专属版式：徽记 + 类型标 + 差异化点缀 */
-        .sub-card .emblem {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 52px; height: 52px; border-radius: 50%;
-            border: 1px solid var(--accent);
-            font-size: 24px; color: var(--accent); line-height: 1;
-            margin-bottom: 14px;
-            box-shadow: 0 0 18px rgba(0,0,0,0.15);
-            text-shadow: 0 0 10px rgba(255,255,255,0.3);
-        }
-        .sub-card .type-label {
-            font-size: 11px; letter-spacing: 5px; text-transform: uppercase;
-            color: var(--accent); margin-bottom: 16px; font-weight: 400;
-        }
+        /* 类型专属点缀色 */
         .sub-card.t-meet      { --accent: #d7b26e; }
         .sub-card.t-heartbeat { --accent: #e39aa0; }
         .sub-card.t-date      { --accent: #a9c0d8; }
@@ -202,8 +248,19 @@
         .sub-card.t-travel    { --accent: #7fb6a8; }
         .sub-card.t-propose   { --accent: #e2b07a; }
         .sub-card.t-engage    { --accent: #b99a72; }
-        .sub-card.light-bg .emblem { border-color: rgba(42,36,30,0.35); }
-        .sub-card.light-bg .type-label { color: rgba(42,36,30,0.8); }
+        /* 亮底：同色相加深保证可读（无 color-mix 时退回原点缀色） */
+        .sub-card.light-bg .emblem {
+            color: color-mix(in srgb, var(--accent) 55%, #241f18);
+            border-color: color-mix(in srgb, var(--accent) 45%, #2a241e);
+        }
+        .sub-card.light-bg .emblem::after {
+            border-color: color-mix(in srgb, var(--accent) 30%, #2a241e);
+        }
+        .sub-card.light-bg .type-label,
+        .sub-card.light-bg .sub-date {
+            color: color-mix(in srgb, var(--accent) 50%, #241f18);
+        }
+        .sub-card.light-bg .sub-content { border-top-color: rgba(42,36,30,0.16); }
         /* 末尾回执场景：精致磨砂收尾卡（内嵌完整回执表单） */
 .rsvp-end {
     --re-gold: #e2c186;
@@ -1102,6 +1159,42 @@
                 engage: { g: '❁', label: '订婚' }
             };
 
+            // 子卡与主请柬等高：以主请柬当前实际高度为准，令所有故事子卡高度一致且与主卡相等
+            function syncStoryHeights() {
+                const main = document.querySelector('.invitation-card');
+                if (!main) return;
+                const h = main.getBoundingClientRect().height;
+                if (!h || h < 40) return;
+                const boxes = document.querySelectorAll('.sub-card');
+                for (let i = 0; i < boxes.length; i++) boxes[i].style.height = Math.round(h) + 'px';
+            }
+            let _rszTimer = null;
+            function scheduleHeightSync() {
+                syncStoryHeights();
+                if (document.fonts && document.fonts.ready) {
+                    document.fonts.ready.then(function() { syncStoryHeights(); });
+                }
+                if (!_rszTimer) {
+                    window.addEventListener('resize', function() {
+                        clearTimeout(_rszTimer);
+                        _rszTimer = setTimeout(syncStoryHeights, 150);
+                    });
+                }
+            }
+
+            // 兜底对齐：滚动停止后若停在两张卡中间，平滑吸附到最近的整卡
+            function snapCorrectToScene() {
+                const sc = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+                if (!sc.length) return;
+                const y = window.scrollY;
+                let best = 0, bd = Infinity;
+                for (let i = 0; i < sc.length; i++) {
+                    const d = Math.abs(sc[i].offsetTop - y);
+                    if (d < bd) { bd = d; best = i; }
+                }
+                if (bd > 4 && bd < 640) sc[best].scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }
+
             function buildStoryScenes(cards) {
                 const holder = document.getElementById('storyScenes');
                 if (!holder) return;
@@ -1134,10 +1227,16 @@
                     t.className = 'sub-title';
                     t.textContent = card.title || '';
                     box.appendChild(t);
-                    const ct = document.createElement('div');
-                    ct.className = 'sub-content';
-                    ct.textContent = card.content || '';
-                    box.appendChild(ct);
+                    if (card.content && String(card.content).trim()) {
+                        const ct = document.createElement('div');
+                        ct.className = 'sub-content';
+                        ct.textContent = card.content;
+                        box.appendChild(ct);
+                    }
+                    const fl = document.createElement('div');
+                    fl.className = 'sub-flourish';
+                    fl.textContent = '✦  ✧  ✦';
+                    box.appendChild(fl);
                     sec.appendChild(box);
                     holder.appendChild(sec);
                     // 该卡文字颜色随其首图亮度自适应
@@ -1317,7 +1416,14 @@
                         });
                 });
 
+                scheduleHeightSync();
                 initCarouselSync();
+                // 滚动停止即校对吸附（兼容不同浏览器/系统的 snap 差异）
+                let _corr = null;
+                window.addEventListener('scroll', function() {
+                    clearTimeout(_corr);
+                    _corr = setTimeout(snapCorrectToScene, 120);
+                }, { passive: true });
             }
 
             // 轮播图列表随当前可见页面切换（平滑淡入）
