@@ -165,6 +165,30 @@
             font-size: 15px; font-weight: 400; color: var(--text-body);
             line-height: 1.8; letter-spacing: 0.5px; white-space: pre-line;
         }
+        /* 类型专属版式：徽记 + 类型标 + 差异化点缀 */
+        .sub-card .emblem {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 52px; height: 52px; border-radius: 50%;
+            border: 1px solid var(--accent);
+            font-size: 24px; color: var(--accent); line-height: 1;
+            margin-bottom: 14px;
+            box-shadow: 0 0 18px rgba(0,0,0,0.15);
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+        .sub-card .type-label {
+            font-size: 11px; letter-spacing: 5px; text-transform: uppercase;
+            color: var(--accent); margin-bottom: 16px; font-weight: 400;
+        }
+        .sub-card.t-meet      { --accent: #d7b26e; }
+        .sub-card.t-heartbeat { --accent: #e39aa0; }
+        .sub-card.t-date      { --accent: #a9c0d8; }
+        .sub-card.t-confess   { --accent: #dfa6d2; }
+        .sub-card.t-together  { --accent: #c9a9d0; }
+        .sub-card.t-travel    { --accent: #7fb6a8; }
+        .sub-card.t-propose   { --accent: #e2b07a; }
+        .sub-card.t-engage    { --accent: #b99a72; }
+        .sub-card.light-bg .emblem { border-color: rgba(42,36,30,0.35); }
+        .sub-card.light-bg .type-label { color: rgba(42,36,30,0.8); }
         /* 末尾回执场景 */
         .rsvp-end { text-align: center; color: var(--text-body); }
         .rsvp-end-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; color: #fff; letter-spacing: 6px; margin-bottom: 10px; text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
@@ -1098,17 +1122,38 @@
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
+            // 8 种类型：徽记符号 + 中文标
+            var TYPE_META = {
+                meet: { g: '✧', label: '相遇' },
+                heartbeat: { g: '♡', label: '心动瞬间' },
+                date: { g: '✿', label: '约会' },
+                confess: { g: '✎', label: '表白' },
+                together: { g: '∞', label: '在一起' },
+                travel: { g: '✈', label: '旅行' },
+                propose: { g: '♥', label: '求婚' },
+                engage: { g: '❁', label: '订婚' }
+            };
+
             function buildStoryScenes(cards) {
                 const holder = document.getElementById('storyScenes');
                 if (!holder) return;
                 holder.innerHTML = '';
                 (cards || []).forEach(function(card) {
                     const urls = (card.images || []);
+                    const meta = TYPE_META[card.type] || TYPE_META.meet;
                     const sec = document.createElement('section');
                     sec.className = 'scene';
                     sec.__slideList = urls; // 该页轮播图列表
                     const box = document.createElement('div');
-                    box.className = 'sub-card';
+                    box.className = 'sub-card t-' + (TYPE_META[card.type] ? card.type : 'meet');
+                    const em = document.createElement('div');
+                    em.className = 'emblem';
+                    em.textContent = meta.g;
+                    box.appendChild(em);
+                    const lb = document.createElement('div');
+                    lb.className = 'type-label';
+                    lb.textContent = '— ' + meta.label + ' —';
+                    box.appendChild(lb);
                     if (card.date) {
                         const d = document.createElement('div');
                         d.className = 'sub-date';
