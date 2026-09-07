@@ -403,6 +403,43 @@
             margin-bottom: 18px;
             letter-spacing: 1px;
         }
+        /* 卡片 tab */
+        .cards-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+        .cards-tab {
+            padding: 6px 14px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 13px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            transition: all 0.3s;
+            white-space: nowrap;
+            background: none;
+            font-family: inherit;
+        }
+        .cards-tab:hover { color: var(--text); border-color: var(--gold); }
+        .cards-tab.active { background: var(--gold); color: #0f0f1a; font-weight: 600; border-color: var(--gold); }
+        .cards-add { color: var(--gold); border-style: dashed; }
+        .cards-add:hover { border-color: var(--gold); color: var(--gold-light); }
+        .add-card-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .add-card-row select {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 10px;
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .img-pick { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+        .img-pick.picked { border-color: var(--gold); }
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -656,6 +693,25 @@
 
                 <div class="view" id="view-settings">
                 <div class="table-card" style="padding: 24px;">
+                <!-- 卡片 tab：主请柬 + 各子卡 -->
+                <div class="cards-tabs" id="cardsTabs">
+                    <button class="cards-tab active" data-card="main">主请柬</button>
+                    <button class="cards-add" id="cardsAddBtn">＋ 添加卡片</button>
+                </div>
+                <div id="addCardRow" style="display:none; margin-bottom:16px;">
+                    <div class="add-card-row">
+                        <select id="addCardType">
+                            <option value="first_meet">第一次相遇</option>
+                            <option value="travel">旅行</option>
+                            <option value="proposal">求婚</option>
+                            <option value="engagement">订婚</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                        <button class="upload-btn" id="addCardConfirm">添加</button>
+                        <button class="upload-btn" id="addCardCancel" style="color:var(--text-muted)">取消</button>
+                    </div>
+                </div>
+                <div id="mainPane">
                 <!-- 请柬内容 -->
                 <div class="form-card">
                     <h3>请柬内容</h3>
@@ -756,6 +812,39 @@
                         <div class="img-grid" id="audioGrid"></div>
                         <div class="empty-tip" id="audioEmpty" style="display:none;">暂无上传的音乐文件</div>
                     </div><!-- /背景音乐 form-card -->
+                </div><!-- /mainPane -->
+
+                <!-- 子卡片编辑区 -->
+                <div id="cardPane" style="display:none">
+                <div class="form-card" style="margin-bottom:0">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                        <h3 id="cardEditorTitle" style="margin:0">编辑子卡片</h3>
+                        <span>
+                            <button class="upload-btn" id="cardUpBtn">↑上移</button>
+                            <button class="upload-btn" id="cardDownBtn">↓下移</button>
+                        </span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-field"><label>标题</label><input type="text" id="cTitle" maxlength="100"></div>
+                        <div class="form-field"><label>日期</label><input type="text" id="cDate" maxlength="50" placeholder="如 2020-05-20 / 2019 年夏"></div>
+                        <div class="form-field" style="grid-column:1/-1"><label>正文（≤2000 字）</label><textarea id="cContent" maxlength="2000" style="min-height:100px"></textarea></div>
+                        <div class="form-field">
+                            <label>是否启用</label>
+                            <div class="checkbox-row"><input type="checkbox" id="cEnabled" checked><span style="font-size:13px;color:var(--text-muted)">在请柬中展示此卡</span></div>
+                        </div>
+                    </div>
+                    <div class="form-card" style="margin-top:8px">
+                        <h3 style="margin-bottom:10px">背景图片（可多选作本卡轮播）</h3>
+                        <div class="img-grid" id="cImagePick"></div>
+                        <div class="empty-tip" id="cImageEmpty" style="display:none">先到上方「背景图片」上传图片，再回来为卡片选择</div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="save-btn" id="cardSaveBtn">保存卡片</button>
+                        <button class="upload-btn" id="cardDelBtn" style="color:var(--red);border-color:var(--red)">删除卡片</button>
+                        <span class="save-msg" id="cardMsg"></span>
+                    </div>
+                </div>
+                </div><!-- /cardPane -->
                 </div><!-- /table-card -->
             </div><!-- /view-settings -->
             </div><!-- /main-content -->
@@ -949,6 +1038,7 @@
                     loadSettings();
                     loadImages();
                     loadAudio();
+                    loadCards();
                 }
             });
         });
@@ -1062,6 +1152,183 @@
         bindRange('setTransparency', 'setTransparencyVal', '%');
         bindRange('setGlassBlur', 'setGlassBlurVal', 'px');
         bindRange('setGlassSaturate', 'setGlassSaturateVal', '%');
+
+        // ===== 故事子卡片（设置页顶部 tab + 独立编辑） =====
+        var cardsData = [];
+        var currentCardId = null;
+
+        async function loadCards() {
+            try {
+                var res = await fetch(API + '/cards');
+                var json = await res.json();
+                if (!json.ok) return;
+                cardsData = json.data || [];
+                if (currentCardId && !cardsData.some(function(c){ return c.id === currentCardId; })) {
+                    switchMainCard();
+                } else if (currentCardId) {
+                    openCard(currentCardId);
+                } else {
+                    switchMainCard();
+                }
+                renderCardsTabs();
+            } catch(e) {}
+        }
+
+        function renderCardsTabs() {
+            var bar = document.getElementById('cardsTabs');
+            var mainTab = bar.querySelector('[data-card="main"]');
+            var addBtn = document.getElementById('cardsAddBtn');
+            bar.innerHTML = '';
+            bar.appendChild(mainTab);
+            cardsData.forEach(function(cd) {
+                var b = document.createElement('button');
+                b.className = 'cards-tab' + (currentCardId === cd.id ? ' active' : '');
+                b.dataset.card = cd.id;
+                b.textContent = cd.title || '未命名';
+                bar.appendChild(b);
+            });
+            bar.appendChild(addBtn);
+        }
+
+        function switchMainCard() {
+            currentCardId = null;
+            document.getElementById('mainPane').style.display = '';
+            document.getElementById('cardPane').style.display = 'none';
+            document.getElementById('addCardRow').style.display = 'none';
+            var tabs = document.querySelectorAll('#cardsTabs .cards-tab');
+            for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+            var main = document.querySelector('#cardsTabs .cards-tab[data-card="main"]');
+            if (main) main.classList.add('active');
+        }
+
+        function openCard(id) {
+            var cd = cardsData.find(function(c){ return c.id === id; });
+            if (!cd) return;
+            currentCardId = id;
+            document.getElementById('mainPane').style.display = 'none';
+            document.getElementById('cardPane').style.display = '';
+            document.getElementById('addCardRow').style.display = 'none';
+            document.getElementById('cardEditorTitle').textContent = (cd.title || '编辑卡片');
+            document.getElementById('cTitle').value = cd.title || '';
+            document.getElementById('cDate').value = cd.date || '';
+            document.getElementById('cContent').value = cd.content || '';
+            document.getElementById('cEnabled').checked = !!cd.enabled;
+            document.getElementById('cardMsg').textContent = '';
+            document.getElementById('cardMsg').className = 'save-msg';
+            loadCardImagePicker(id);
+            renderCardsTabs();
+        }
+
+        // 本卡背景图选择（勾选婚礼图片库中的图）
+        function loadCardImagePicker(cardId) {
+            fetch(API + '/images').then(function(r){ return r.json(); }).then(function(json) {
+                var cd = cardsData.find(function(c){ return c.id === cardId; });
+                var names = (cd && cd.images) || [];
+                var items = json.data || [];
+                document.getElementById('cImageEmpty').style.display = items.length ? 'none' : 'block';
+                var grid = document.getElementById('cImagePick');
+                grid.innerHTML = items.map(function(img) {
+                    var picked = names.indexOf(img.name) !== -1;
+                    return '<div class="img-pick' + (picked ? ' picked' : '') + '" data-img="' + escapeHtml(img.name) + '">' +
+                        '<img src="' + img.url + '" alt="' + escapeHtml(img.name) + '" style="width:100%;height:90px;object-fit:cover;display:block">' +
+                        '<div class="img-name" style="padding:4px 6px;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(img.name) + '</div>' +
+                    '</div>';
+                }).join('');
+            }).catch(function(){});
+        }
+
+        document.getElementById('cImagePick').addEventListener('click', function(e) {
+            var pick = e.target.closest('.img-pick');
+            if (pick) pick.classList.toggle('picked');
+        });
+
+        // 卡片 tab 切换（事件委托）
+        document.getElementById('cardsTabs').addEventListener('click', function(e) {
+            var tab = e.target.closest('.cards-tab');
+            if (!tab) return;
+            if (tab.id === 'cardsAddBtn') return;
+            if (tab.dataset.card === 'main') switchMainCard();
+            else openCard(parseInt(tab.dataset.card, 10));
+        });
+
+        // 添加卡片（选类型）
+        document.getElementById('cardsAddBtn').addEventListener('click', function() {
+            document.getElementById('addCardRow').style.display = '';
+        });
+        document.getElementById('addCardCancel').addEventListener('click', function() {
+            document.getElementById('addCardRow').style.display = 'none';
+        });
+        document.getElementById('addCardConfirm').addEventListener('click', async function() {
+            var type = document.getElementById('addCardType').value;
+            try {
+                var res = await fetch(API + '/cards', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ type: type })
+                });
+                var json = await res.json();
+                if (json.ok) {
+                    document.getElementById('addCardRow').style.display = 'none';
+                    cardsData.push(json.data);
+                    openCard(json.data.id);
+                    loadCards();
+                } else alert(json.error || '添加失败');
+            } catch(e) { alert('网络错误'); }
+        });
+
+        // 保存 / 删除 / 排序
+        document.getElementById('cardSaveBtn').addEventListener('click', saveCard);
+        async function saveCard() {
+            var msg = document.getElementById('cardMsg');
+            var picks = document.querySelectorAll('#cImagePick .img-pick.picked');
+            var images = Array.prototype.map.call(picks, function(p){ return p.dataset.img; });
+            var payload = {
+                title: document.getElementById('cTitle').value.trim(),
+                date: document.getElementById('cDate').value.trim(),
+                content: document.getElementById('cContent').value.trim(),
+                images: images,
+                enabled: document.getElementById('cEnabled').checked
+            };
+            if (!payload.title) { msg.textContent = '请填写标题'; msg.className = 'save-msg error'; return; }
+            var btn = document.getElementById('cardSaveBtn');
+            btn.disabled = true;
+            try {
+                var res = await fetch(API + '/cards/' + currentCardId, {
+                    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+                });
+                var json = await res.json();
+                if (json.ok) { msg.textContent = '已保存'; msg.className = 'save-msg success'; loadCards(); }
+                else { msg.textContent = json.error || '保存失败'; msg.className = 'save-msg error'; }
+            } catch(e) { msg.textContent = '网络错误'; msg.className = 'save-msg error'; }
+            btn.disabled = false;
+        }
+
+        document.getElementById('cardUpBtn').addEventListener('click', function(){ moveCard(-1); });
+        document.getElementById('cardDownBtn').addEventListener('click', function(){ moveCard(1); });
+        async function moveCard(dir) {
+            if (currentCardId == null) return;
+            var idx = cardsData.findIndex(function(c){ return c.id === currentCardId; });
+            var j = idx + dir;
+            if (idx < 0 || j < 0 || j >= cardsData.length) return;
+            var arr = cardsData.slice();
+            var t = arr[idx]; arr[idx] = arr[j]; arr[j] = t;
+            try {
+                await fetch(API + '/cards/reorder', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({ ids: arr.map(function(c){ return c.id; }) })
+                });
+                loadCards();
+            } catch(e) {}
+        }
+
+        document.getElementById('cardDelBtn').addEventListener('click', async function() {
+            if (currentCardId == null) return;
+            if (!confirm('确定删除这张子卡片？')) return;
+            try {
+                var res = await fetch(API + '/cards/' + currentCardId, { method: 'DELETE' });
+                var json = await res.json();
+                if (json.ok) { switchMainCard(); loadCards(); } else alert(json.error || '删除失败');
+            } catch(e) { alert('网络错误'); }
+        });
 
         // ===== 背景图片管理（多文件 + 可选压缩） =====
         document.getElementById('uploadBtn').addEventListener('click', uploadImages);
