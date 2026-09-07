@@ -1219,7 +1219,7 @@
             renderCardsTabs();
         }
 
-        // 本卡背景图选择（勾选婚礼图片库中的图）
+        // 本卡背景图选择（勾选婚礼图片库中的图；用 DOM API 构建避免注入）
         function loadCardImagePicker(cardId) {
             fetch(API + '/images').then(function(r){ return r.json(); }).then(function(json) {
                 var cd = cardsData.find(function(c){ return c.id === cardId; });
@@ -1227,13 +1227,25 @@
                 var items = json.data || [];
                 document.getElementById('cImageEmpty').style.display = items.length ? 'none' : 'block';
                 var grid = document.getElementById('cImagePick');
-                grid.innerHTML = items.map(function(img) {
+                grid.innerHTML = '';
+                items.forEach(function(img) {
                     var picked = names.indexOf(img.name) !== -1;
-                    return '<div class="img-pick' + (picked ? ' picked' : '') + '" data-img="' + escapeHtml(img.name) + '">' +
-                        '<img src="' + img.url + '" alt="' + escapeHtml(img.name) + '" style="width:100%;height:90px;object-fit:cover;display:block">' +
-                        '<div class="img-name" style="padding:4px 6px;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(img.name) + '</div>' +
-                    '</div>';
-                }).join('');
+                    var div = document.createElement('div');
+                    div.className = 'img-pick' + (picked ? ' picked' : '');
+                    div.dataset.img = img.name;
+                    var pic = document.createElement('img');
+                    pic.src = img.url;
+                    pic.alt = img.name;
+                    pic.style.width = '100%'; pic.style.height = '90px';
+                    pic.style.objectFit = 'cover'; pic.style.display = 'block';
+                    div.appendChild(pic);
+                    var nm = document.createElement('div');
+                    nm.className = 'img-name';
+                    nm.style.cssText = 'padding:4px 6px;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+                    nm.textContent = img.name;
+                    div.appendChild(nm);
+                    grid.appendChild(div);
+                });
             }).catch(function(){});
         }
 
