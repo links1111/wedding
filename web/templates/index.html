@@ -189,10 +189,59 @@
         .sub-card.t-engage    { --accent: #b99a72; }
         .sub-card.light-bg .emblem { border-color: rgba(42,36,30,0.35); }
         .sub-card.light-bg .type-label { color: rgba(42,36,30,0.8); }
-        /* 末尾回执场景 */
-        .rsvp-end { text-align: center; color: var(--text-body); }
-        .rsvp-end-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; color: #fff; letter-spacing: 6px; margin-bottom: 10px; text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
-        .rsvp-end-sub { font-size: 14px; color: rgba(255,245,235,0.75); letter-spacing: 3px; margin-bottom: 22px; }
+        /* 末尾回执场景：精致磨砂收尾卡（内嵌完整回执表单） */
+.rsvp-end {
+    --re-gold: #e2c186;
+    --re-dim: rgba(246,239,227,0.68);
+    max-width: 440px; width: 100%;
+    text-align: center;
+    background:
+        radial-gradient(120% 130% at 50% -10%, rgba(150,112,70,0.20), transparent 55%),
+        linear-gradient(168deg, rgba(48,37,28,0.88), rgba(22,16,12,0.92));
+    backdrop-filter: blur(24px) saturate(1.35);
+    -webkit-backdrop-filter: blur(24px) saturate(1.35);
+    border: 1px solid rgba(255,236,210,0.2);
+    border-radius: 36px;
+    padding: 42px 30px 36px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,240,220,0.04);
+    color: #f6efe3;
+    max-height: 94dvh;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+.rsvp-end::-webkit-scrollbar { display: none; }
+.rsvp-end .re-emblem {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 58px; height: 58px; border-radius: 50%;
+    border: 1px solid var(--re-gold);
+    color: var(--re-gold); font-size: 26px;
+    margin-bottom: 16px; position: relative;
+    box-shadow: 0 0 24px rgba(226,193,134,0.2);
+}
+.rsvp-end .re-emblem::after {
+    content: ''; position: absolute; inset: -6px; border-radius: 50%;
+    border: 1px solid rgba(226,193,134,0.26);
+}
+.rsvp-end .re-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 27px; font-weight: 500; letter-spacing: 10px;
+    color: #fff7ea; margin-bottom: 12px; padding-left: 6px;
+}
+.rsvp-end .ornament {
+    font-size: 11px; letter-spacing: 10px; color: rgba(226,193,134,0.62);
+    margin-bottom: 14px; padding-left: 4px;
+}
+.rsvp-end .re-sub {
+    font-size: 13px; letter-spacing: 3px; color: var(--re-dim);
+    line-height: 1.9; margin-bottom: 20px;
+}
+.rsvp-end .re-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px; color: rgba(226,193,134,0.72);
+    font-size: 10px; letter-spacing: 6px; white-space: nowrap;
+}
+.rsvp-end .re-divider::before,
+.rsvp-end .re-divider::after { content: ''; height: 1px; flex: 1; background: rgba(255,236,210,0.16); }
         .ornament-line {
             display: flex;
             align-items: center;
@@ -471,105 +520,81 @@
             color: var(--text-muted);
             margin-left: 4px;
         }
-        .rsvp-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            height: 100dvh;
-            touch-action: pan-y;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+        .rsvp-end .rsvp-form {
+            display: flex; flex-direction: column; gap: 13px;
+            text-align: left; margin-bottom: 6px;
         }
-        .rsvp-overlay.show { display: flex; }
-        .rsvp-modal {
-            max-width: 420px;
-            width: 100%;
-            background: rgba(30, 24, 20, 0.92);
-            backdrop-filter: blur(20px) saturate(1.5);
-            border-radius: 32px;
-            border: 1px solid rgba(255,245,235,0.2);
-            padding: 36px 28px 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-            color: #f5ede4;
-            position: relative;
+        .rsvp-end .re-field label {
+            display: block; font-size: 11px; letter-spacing: 2px;
+            color: rgba(226,193,134,0.72); margin-bottom: 6px;
         }
-        .rsvp-modal .close-btn {
-            position: absolute;
-            top: 16px; right: 20px;
-            font-size: 22px;
-            color: rgba(255,245,235,0.5);
-            cursor: pointer;
-            background: none;
-            border: none;
-            line-height: 1;
+        .rsvp-end .re-field input,
+        .rsvp-end .re-field textarea {
+            width: 100%; padding: 11px 15px; box-sizing: border-box;
+            background: rgba(255,245,235,0.06);
+            border: 1px solid rgba(255,240,220,0.18);
+            border-radius: 13px; color: #f6efe3; font-size: 15px;
+            font-family: 'Inter', sans-serif; outline: none;
+            transition: border-color .3s;
+            -webkit-appearance: none; appearance: none;
         }
-        .rsvp-modal .modal-title {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 22px;
-            letter-spacing: 3px;
-            text-align: center;
-            margin-bottom: 24px;
-            color: #fffbf7;
+        .rsvp-end .re-field input::-webkit-outer-spin-button,
+        .rsvp-end .re-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .rsvp-end .re-field input[type=number] { -moz-appearance: textfield; }
+        .rsvp-end .re-field textarea { resize: none; min-height: 54px; }
+        .rsvp-end .re-field input::placeholder,
+        .rsvp-end .re-field textarea::placeholder { color: rgba(246,239,227,0.3); }
+        .rsvp-end .re-field input:focus,
+        .rsvp-end .re-field textarea:focus { border-color: rgba(226,193,134,0.6); }
+        .rsvp-end .rsvp-form [hidden] { display: none !important; }
+        .rsvp-end .re-seg {
+            display: flex; background: rgba(255,245,235,0.06);
+            border: 1px solid rgba(255,240,220,0.16);
+            border-radius: 13px; padding: 3px; gap: 3px;
         }
-        .rsvp-form { display: flex; flex-direction: column; gap: 14px; }
-        .rsvp-form label {
-            font-size: 12px;
-            letter-spacing: 2px;
-            color: rgba(255,245,235,0.6);
-            margin-bottom: -6px;
+        .rsvp-end .re-seg button {
+            flex: 1; padding: 9px 0; border: none; border-radius: 10px;
+            background: transparent; color: rgba(246,239,227,0.55);
+            font-size: 13px; letter-spacing: 2px; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all .25s;
         }
-        .rsvp-form input,
-        .rsvp-form select,
-        .rsvp-form textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(255,245,235,0.08);
-            border: 1px solid rgba(255,245,235,0.2);
-            border-radius: 14px;
-            color: #f5ede4;
-            font-size: 15px;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            transition: border-color 0.3s;
+        .rsvp-end .re-seg button.on {
+            background: linear-gradient(135deg, #e2c186, #c8a66c);
+            color: #1a1410; font-weight: 600;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
         }
-        .rsvp-form input::placeholder,
-        .rsvp-form textarea::placeholder { color: rgba(255,245,235,0.3); }
-        .rsvp-form input:focus,
-        .rsvp-form select:focus,
-        .rsvp-form textarea:focus { border-color: rgba(255,245,235,0.5); }
-        .rsvp-form textarea { resize: none; min-height: 60px; }
-        .rsvp-form select option { background: #2a2018; color: #f5ede4; }
-        .rsvp-submit {
-            margin-top: 6px;
-            padding: 14px;
-            background: rgba(255,245,235,0.15);
-            border: 1px solid rgba(255,245,235,0.3);
-            border-radius: 50px;
-            color: #f5ede4;
-            font-size: 15px;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
+        .rsvp-end .rsvp-submit {
+            margin-top: 8px; padding: 13px; border: none;
+            border-radius: 50px; cursor: pointer;
+            background: linear-gradient(135deg, #e2c186, #c9a66c);
+            color: #1a1410; font-size: 15px; letter-spacing: 5px;
+            font-weight: 600; font-family: 'Inter', sans-serif;
+            box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+            transition: all .3s ease;
         }
-        .rsvp-submit:hover {
-            background: rgba(255,245,235,0.3);
-            border-color: rgba(255,245,235,0.6);
+        .rsvp-end .rsvp-submit:hover { transform: translateY(-1px) scale(1.02); }
+        .rsvp-end .rsvp-submit:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+        .rsvp-end .rsvp-message {
+            text-align: center; font-size: 13px; letter-spacing: 1px;
+            min-height: 0; margin-top: 0;
         }
-        .rsvp-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-        .rsvp-message {
-            text-align: center;
-            font-size: 13px;
-            margin-top: 8px;
-            min-height: 18px;
-            letter-spacing: 1px;
+        .rsvp-end .rsvp-message.success { color: #b8d8a8; }
+        .rsvp-end .rsvp-message.error { color: #e8b0a0; }
+        .rsvp-end .re-done { text-align: center; padding: 12px 4px 6px; }
+        .rsvp-end .re-done .done-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 52px; height: 52px; border-radius: 50%;
+            border: 1px solid rgba(226,193,134,0.7); color: var(--re-gold);
+            font-size: 22px; margin-bottom: 14px;
         }
-        .rsvp-message.success { color: #a8d8a8; }
-        .rsvp-message.error { color: #e8a8a8; }
+        .rsvp-end .re-done .done-title {
+            font-size: 18px; letter-spacing: 6px; color: #fff7ea;
+            margin-bottom: 12px; padding-left: 3px;
+        }
+        .rsvp-end .re-done .done-sub {
+            font-size: 13px; letter-spacing: 2px; line-height: 1.9;
+            color: var(--re-dim);
+        }
         @keyframes softGlow {
             0% { opacity: 0.4; }
             50% { opacity: 1; }
@@ -590,7 +615,8 @@
             .rsvp-btn { padding: 11px 28px; font-size: 14px; }
             .footer-note { margin-top: 10px; padding-top: 8px; }
             .handwrite { margin-top: 6px; }
-            .rsvp-modal { padding: 28px 20px 24px; border-radius: 24px; }
+            .rsvp-end { padding: 30px 18px 24px; }
+            .rsvp-end .re-title { font-size: 23px; letter-spacing: 6px; }
         }
         @media (max-width: 380px) {
             .invitation-card { padding: 14px 14px 14px; }
@@ -681,31 +707,6 @@
 
     <!-- ===== 故事子卡与末尾回执场景（JS 动态构建） ===== -->
     <div id="storyScenes"></div>
-
-    <!-- ===== RSVP 弹窗 ===== -->
-    <div class="rsvp-overlay" id="rsvpOverlay">
-        <div class="rsvp-modal">
-            <button class="close-btn" id="rsvpCloseBtn">&times;</button>
-            <div class="modal-title">出席回执</div>
-            <form class="rsvp-form" id="rsvpForm">
-                <label>姓名</label>
-                <input type="text" name="name" placeholder="您的姓名" required maxlength="50">
-                <label>电话</label>
-                <input type="tel" name="phone" placeholder="联系电话（选填）" maxlength="20">
-                <label>是否出席</label>
-                <select name="attending">
-                    <option value="1">出席</option>
-                    <option value="2">缺席</option>
-                </select>
-                <label>出席人数</label>
-                <input type="number" name="headcount" value="1" min="1" max="20">
-                <label>留言祝福</label>
-                <textarea name="message" placeholder="给新人的祝福（选填）" maxlength="500"></textarea>
-                <button type="submit" class="rsvp-submit" id="rsvpSubmit">提 交</button>
-                <div class="rsvp-message" id="rsvpMessage"></div>
-            </form>
-        </div>
-    </div>
 
     <!-- ===== 背景音乐 ===== -->
     <audio id="bgm" loop preload="auto"></audio>
@@ -1054,74 +1055,14 @@
                 body: JSON.stringify({})
             }).catch(err => console.error('记录访问失败:', err));
 
-            // ===== RSVP 弹窗 =====
-            const rsvpBtn = document.getElementById('rsvpBtn');
-            const rsvpOverlay = document.getElementById('rsvpOverlay');
-            const rsvpCloseBtn = document.getElementById('rsvpCloseBtn');
-            const rsvpForm = document.getElementById('rsvpForm');
-            const rsvpSubmit = document.getElementById('rsvpSubmit');
-            const rsvpMessage = document.getElementById('rsvpMessage');
-
-            function openRSVP() { rsvpOverlay.classList.add('show'); }
-            function closeRSVP() {
-                rsvpOverlay.classList.remove('show');
-                rsvpMessage.textContent = '';
-                rsvpMessage.className = 'rsvp-message';
-            }
-
-            // 主卡/末尾"回执"按钮 → 直接打开填写回执页（弹层），不切翻页
-            rsvpBtn.addEventListener('click', openRSVP);
-            rsvpCloseBtn.addEventListener('click', closeRSVP);
-            rsvpOverlay.addEventListener('click', function(e) {
-                if (e.target === rsvpOverlay) closeRSVP();
-            });
-
-            rsvpForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const formData = new FormData(rsvpForm);
-                const payload = {
-                    name: formData.get('name').trim(),
-                    phone: formData.get('phone').trim(),
-                    attending: parseInt(formData.get('attending'), 10),
-                    headcount: parseInt(formData.get('headcount'), 10) || 1,
-                    message: formData.get('message').trim()
-                };
-
-                rsvpSubmit.disabled = true;
-                rsvpMessage.textContent = '提交中...';
-                rsvpMessage.className = 'rsvp-message';
-
-                fetch(API + '/rsvp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                })
-                    .then(r => r.json())
-                    .then(res => {
-                        if (res.ok) {
-                            rsvpMessage.textContent = '回执提交成功，期待您的到来！';
-                            rsvpMessage.className = 'rsvp-message success';
-                            rsvpForm.reset();
-                            setTimeout(closeRSVP, 2000);
-                        } else {
-                            rsvpMessage.textContent = res.error || '提交失败，请稍后重试';
-                            rsvpMessage.className = 'rsvp-message error';
-                        }
-                    })
-                    .catch(err => {
-                        rsvpMessage.textContent = '网络错误，请稍后重试';
-                        rsvpMessage.className = 'rsvp-message error';
-                        console.error('RSVP 提交失败:', err);
-                    })
-                    .finally(() => { rsvpSubmit.disabled = false; });
+            // ===== 主卡"回执"按钮 → 滚动到末尾回执卡（不弹层） =====
+            const rsvpNavBtn = document.getElementById('rsvpBtn');
+            if (rsvpNavBtn) rsvpNavBtn.addEventListener('click', function() {
+                const el = document.getElementById('rsvpScene');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
 
             // ===== 构建故事子卡与末尾回执场景 =====
-            function scrollToScene(id) {
-                const el = document.getElementById(id);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-
             // 8 种类型：徽记符号 + 中文标
             var TYPE_META = {
                 meet: { g: '✧', label: '相遇' },
@@ -1143,7 +1084,8 @@
                     const meta = TYPE_META[card.type] || TYPE_META.meet;
                     const sec = document.createElement('section');
                     sec.className = 'scene';
-                    sec.__slideList = urls; // 该页轮播图列表
+                    // 该页轮播图列表：本卡有图用本卡，无图沿用主图库背景
+                    sec.__slideList = (urls && urls.length) ? urls.slice() : mainSlideList.slice();
                     const box = document.createElement('div');
                     box.className = 'sub-card t-' + (TYPE_META[card.type] ? card.type : 'meet');
                     const em = document.createElement('div');
@@ -1178,17 +1120,174 @@
                     }
                 });
 
-                // 末尾回执场景（高级版式占位，背景复用主图）
+                // 末尾回执场景：暗色磨砂卡内嵌完整回执表单（背景沿用主图）
                 const rsvp = document.createElement('section');
                 rsvp.className = 'scene';
                 rsvp.id = 'rsvpScene';
-                rsvp.__slideList = mainSlideList;
-                rsvp.innerHTML = '<div class="rsvp-end">' +
-                    '<div class="rsvp-end-title">诚邀见证</div>' +
-                    '<div class="rsvp-end-sub">敬候您的光临与祝福</div>' +
-                    '<button class="rsvp-btn" id="rsvpEndBtn">填写回执</button></div>';
+                rsvp.__slideList = mainSlideList.slice();
+                const wrap = document.createElement('div');
+                wrap.className = 'rsvp-end';
+                const emblemEl = document.createElement('div');
+                emblemEl.className = 're-emblem';
+                emblemEl.textContent = '❁';
+                wrap.appendChild(emblemEl);
+                const rtEl = document.createElement('div');
+                rtEl.className = 're-title';
+                rtEl.textContent = '诚邀见证';
+                wrap.appendChild(rtEl);
+                const ornEl = document.createElement('div');
+                ornEl.className = 'ornament';
+                ornEl.textContent = '✦ · ✦ · ✦';
+                wrap.appendChild(ornEl);
+                const rsubEl = document.createElement('div');
+                rsubEl.className = 're-sub';
+                rsubEl.textContent = '敬候您的光临与祝福';
+                wrap.appendChild(rsubEl);
+                const rdivEl = document.createElement('div');
+                rdivEl.className = 're-divider';
+                rdivEl.textContent = '— 回 执 —';
+                wrap.appendChild(rdivEl);
+
+                // 回执表单（纯 DOM 构建，杜绝字符串注入）
+                const form = document.createElement('form');
+                form.className = 'rsvp-form';
+                form.noValidate = true;
+                function reField(lbText) {
+                    const f = document.createElement('div');
+                    f.className = 're-field';
+                    const lb = document.createElement('label');
+                    lb.textContent = lbText;
+                    f.appendChild(lb);
+                    return f;
+                }
+                function reText(name, ph, max) {
+                    const inp = document.createElement('input');
+                    inp.type = 'text';
+                    inp.name = name;
+                    inp.placeholder = ph;
+                    if (max) inp.maxLength = max;
+                    return inp;
+                }
+                const nameF = reField('姓名');
+                const nameI = reText('name', '您的姓名', 50);
+                nameF.appendChild(nameI);
+                form.appendChild(nameF);
+                const phoneF = reField('电话（选填）');
+                const phoneI = reText('phone', '联系电话', 20);
+                phoneI.type = 'tel';
+                phoneF.appendChild(phoneI);
+                form.appendChild(phoneF);
+                const segF = reField('是否出席');
+                const seg = document.createElement('div');
+                seg.className = 're-seg';
+                const segYes = document.createElement('button');
+                segYes.type = 'button';
+                segYes.textContent = '出席';
+                const segNo = document.createElement('button');
+                segNo.type = 'button';
+                segNo.textContent = '暂无法出席';
+                segYes.classList.add('on');
+                seg.appendChild(segYes);
+                seg.appendChild(segNo);
+                segF.appendChild(seg);
+                form.appendChild(segF);
+                const countF = reField('出席人数');
+                const countI = document.createElement('input');
+                countI.type = 'number';
+                countI.name = 'headcount';
+                countI.value = '1';
+                countI.min = '1';
+                countI.max = '20';
+                countF.appendChild(countI);
+                form.appendChild(countF);
+                const msgF = reField('留言祝福（选填）');
+                const msgI = document.createElement('textarea');
+                msgI.name = 'message';
+                msgI.placeholder = '给新人的祝福';
+                msgI.maxLength = 500;
+                msgF.appendChild(msgI);
+                form.appendChild(msgF);
+                const submitBtn = document.createElement('button');
+                submitBtn.type = 'submit';
+                submitBtn.className = 'rsvp-submit';
+                submitBtn.textContent = '提交回执';
+                form.appendChild(submitBtn);
+                const fbMsg = document.createElement('div');
+                fbMsg.className = 'rsvp-message';
+                form.appendChild(fbMsg);
+                wrap.appendChild(form);
+                rsvp.appendChild(wrap);
                 holder.appendChild(rsvp);
-                document.getElementById('rsvpEndBtn').addEventListener('click', openRSVP);
+
+                // 出席/暂无法出席 切换：缺席时隐藏人数栏
+                function setAttend(v) {
+                    segYes.classList.toggle('on', v === 1);
+                    segNo.classList.toggle('on', v === 2);
+                    countF.hidden = v === 2;
+                }
+                segYes.addEventListener('click', function() { setAttend(1); });
+                segNo.addEventListener('click', function() { setAttend(2); });
+                setAttend(1);
+
+                // 提交回执
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const nm = nameI.value.trim();
+                    if (!nm) {
+                        fbMsg.textContent = '请填写您的姓名';
+                        fbMsg.className = 'rsvp-message error';
+                        nameI.focus();
+                        return;
+                    }
+                    const attending = segYes.classList.contains('on') ? 1 : 2;
+                    const payload = {
+                        name: nm,
+                        phone: phoneI.value.trim(),
+                        attending: attending,
+                        headcount: attending === 1 ? (parseInt(countI.value, 10) || 1) : 0,
+                        message: msgI.value.trim()
+                    };
+                    submitBtn.disabled = true;
+                    fbMsg.textContent = '提交中…';
+                    fbMsg.className = 'rsvp-message';
+                    fetch(API + '/rsvp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                        .then(function(r) { return r.json(); })
+                        .then(function(res) {
+                            if (res.ok) {
+                                // 成功：整卡换成精致致谢
+                                wrap.innerHTML = '';
+                                const done = document.createElement('div');
+                                done.className = 're-done';
+                                const ic = document.createElement('div');
+                                ic.className = 'done-icon';
+                                ic.textContent = '✓';
+                                const dt = document.createElement('div');
+                                dt.className = 'done-title';
+                                dt.textContent = '回执已收到';
+                                const ds = document.createElement('div');
+                                ds.className = 'done-sub';
+                                ds.textContent = '感谢您的祝福，期待在婚礼上与您相见';
+                                done.appendChild(ic);
+                                done.appendChild(dt);
+                                done.appendChild(ds);
+                                wrap.appendChild(done);
+                            } else {
+                                fbMsg.textContent = res.error || '提交失败，请稍后重试';
+                                fbMsg.className = 'rsvp-message error';
+                                submitBtn.disabled = false;
+                            }
+                        })
+                        .catch(function(err) {
+                            fbMsg.textContent = '网络错误，请稍后重试';
+                            fbMsg.className = 'rsvp-message error';
+                            submitBtn.disabled = false;
+                            console.error('RSVP 提交失败:', err);
+                        });
+                });
 
                 initCarouselSync();
             }
@@ -1258,7 +1357,7 @@
             }
 
             document.addEventListener('pointerdown', function(e) {
-                if (e.target.closest && (e.target.closest('.rsvp-overlay') || e.target.closest('#musicBtn'))) return;
+                if (e.target.closest && (e.target.closest('.rsvp-end') || e.target.closest('#musicBtn'))) return;
                 const card = document.querySelector('.invitation-card');
                 if (!card) return;
                 baseBlurPx = readBaseBlur();

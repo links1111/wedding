@@ -859,9 +859,14 @@
                         </div>
                     </div>
                     <div class="form-card" style="margin-top:8px">
-                        <h3 style="margin-bottom:10px">背景图片（可多选作本卡轮播）</h3>
-                        <div class="img-grid" id="cImagePick"></div>
-                        <div class="empty-tip" id="cImageEmpty" style="display:none">先到上方「背景图片」上传图片，再回来为卡片选择</div>
+                        <h3 style="margin-bottom:10px">本卡背景图片（每卡单独上传，可多张作轮播）</h3>
+                        <div class="upload-row">
+                            <input type="file" class="upload-input" id="cImageFile" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp" multiple>
+                            <button class="upload-btn" id="cImageUploadBtn">上传到本卡</button>
+                            <span class="upload-hint">支持 jpg/png/gif/webp/bmp，单张 ≤20MB，可一次多选，自动压缩长边至 1920px。上传后作为本卡专属背景，不会进入上方主图库或主卡轮播。</span>
+                        </div>
+                        <div class="img-grid" id="cImageList"></div>
+                        <div class="empty-tip" id="cImageEmpty" style="display:none">本卡暂无背景图片（请柬将沿用全局背景）</div>
                     </div>
                     <div class="form-actions">
                         <button class="save-btn" id="cardSaveBtn">保存卡片</button>
@@ -1273,44 +1278,78 @@
             document.getElementById('cardMsg').textContent = '';
             document.getElementById('cardMsg').className = 'save-msg';
             renderCardPreview();
-            loadCardImagePicker(id);
+            cardImages = (cd.images || []).slice();
+            renderCardImgs();
             renderCardsTabs();
         }
 
-        // 本卡背景图选择（勾选婚礼图片库中的图；用 DOM API 构建避免注入）
-        function loadCardImagePicker(cardId) {
-            fetch(API + '/images').then(function(r){ return r.json(); }).then(function(json) {
-                var cd = cardsData.find(function(c){ return c.id === cardId; });
-                var names = (cd && cd.images) || [];
-                var items = json.data || [];
-                document.getElementById('cImageEmpty').style.display = items.length ? 'none' : 'block';
-                var grid = document.getElementById('cImagePick');
-                grid.innerHTML = '';
-                items.forEach(function(img) {
-                    var picked = names.indexOf(img.name) !== -1;
-                    var div = document.createElement('div');
-                    div.className = 'img-pick' + (picked ? ' picked' : '');
-                    div.dataset.img = img.name;
-                    var pic = document.createElement('img');
-                    pic.src = img.url;
-                    pic.alt = img.name;
-                    pic.style.width = '100%'; pic.style.height = '90px';
-                    pic.style.objectFit = 'cover'; pic.style.display = 'block';
-                    div.appendChild(pic);
+        // ===== 本卡背景图：单独上传（非主图库） =====
+        var cardImages = [];
+
+        function renderCardImgs() {
+            document.getElementById('cImageEmpty').style.display = cardImages.length ? 'none' : 'block';
+            var grid = document.getElementById('cImageList');
+            grid.innerHTML = '';
+            if (!cardImages.length) return;
+            // 取本卡独立图库 url 映射后渲染缩略图
+            fetch(API + '/cardimages').then(function(r){ return r.json(); }).then(function(json) {
+                var urls = {};
+                (json.data || []).forEach(function(img) { urls[img.name] = img.url; });
+                cardImages.forEach(function(name) {
+                    var card = document.createElement('div');
+                    card.className = 'img-card';
+                    var img = document.createElement('img');
+                    img.src = urls[name] || '';
+                    img.alt = name;
+                    card.appendChild(img);
                     var nm = document.createElement('div');
                     nm.className = 'img-name';
-                    nm.style.cssText = 'padding:4px 6px;font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-                    nm.textContent = img.name;
-                    div.appendChild(nm);
-                    grid.appendChild(div);
+                    nm.textContent = name;
+                    nm.title = name;
+                    card.appendChild(nm);
+                    var del = document.createElement('button');
+                    del.className = 'img-del';
+                    del.textContent = '移除';
+                    del.dataset.name = name;
+                    card.appendChild(del);
+                    grid.appendChild(card);
                 });
             }).catch(function(){});
         }
 
-        document.getElementById('cImagePick').addEventListener('click', function(e) {
-            var pick = e.target.closest('.img-pick');
-            if (pick) pick.classList.toggle('picked');
+        document.getElementById('cImageList').addEventListener('click', function(e) {
+            var del = e.target.closest('.img-del');
+            if (del) {
+                cardImages = cardImages.filter(function(n){ return n !== del.dataset.name; });
+                renderCardImgs();
+            }
         });
+
+        document.getElementById('cImageUploadBtn').addEventListener('click', uploadCardImages);
+        async function uploadCardImages() {
+            var input = document.getElementById('cImageFile');
+            if (!input.files || !input.files.length) { alert('请先选择图片'); return; }
+            var btn = document.getElementById('cImageUploadBtn');
+            btn.disabled = true; btn.textContent = '上传中...';
+            var ok = 0, fail = 0;
+            for (var i = 0; i < input.files.length; i++) {
+                var fd = new FormData();
+                fd.append('file', input.files[i]);
+                fd.append('compress', 'true');
+                try {
+                    var res = await fetch(API + '/cardimages', { method: 'POST', body: fd });
+                    var json = await res.json();
+                    if (json.ok) {
+                        if (cardImages.indexOf(json.data.name) === -1) cardImages.push(json.data.name);
+                        ok++;
+                    } else fail++;
+                } catch(e) { fail++; }
+            }
+            btn.disabled = false; btn.textContent = '上传到本卡';
+            input.value = '';
+            renderCardImgs();
+            if (fail) alert(ok + ' 张成功，' + fail + ' 张失败');
+        }
 
         // 卡片 tab 切换（事件委托）
         document.getElementById('cardsTabs').addEventListener('click', function(e) {
@@ -1349,13 +1388,11 @@
         document.getElementById('cardSaveBtn').addEventListener('click', saveCard);
         async function saveCard() {
             var msg = document.getElementById('cardMsg');
-            var picks = document.querySelectorAll('#cImagePick .img-pick.picked');
-            var images = Array.prototype.map.call(picks, function(p){ return p.dataset.img; });
             var payload = {
                 title: document.getElementById('cTitle').value.trim(),
                 date: document.getElementById('cDate').value.trim(),
                 content: document.getElementById('cContent').value.trim(),
-                images: images,
+                images: cardImages.slice(),
                 enabled: document.getElementById('cEnabled').checked
             };
             if (!payload.title) { msg.textContent = '请填写标题'; msg.className = 'save-msg error'; return; }
