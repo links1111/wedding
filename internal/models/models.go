@@ -11,13 +11,16 @@ type Wedding struct {
 	CreatedAt  time.Time `json:"created_at" gorm:"autoCreateTime"`
 }
 
-// 子卡片预设类型 key
+// 子卡片预设类型 key（无自定义）
 const (
-	CardTypeFirstMeet  = "first_meet"
-	CardTypeTravel     = "travel"
-	CardTypeProposal   = "proposal"
-	CardTypeEngagement = "engagement"
-	CardTypeCustom     = "custom"
+	CardTypeMeet      = "meet"      // 相遇
+	CardTypeHeartbeat = "heartbeat" // 心动瞬间
+	CardTypeDate      = "date"      // 约会
+	CardTypeConfess   = "confess"   // 表白
+	CardTypeTogether  = "together"  // 在一起
+	CardTypeTravel    = "travel"    // 旅行
+	CardTypePropose   = "propose"   // 求婚
+	CardTypeEngage    = "engage"    // 订婚
 )
 
 // Card 子卡片（我们的故事）：主请柬由 settings 驱动，卡片表只存子卡片

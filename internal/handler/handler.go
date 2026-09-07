@@ -874,12 +874,16 @@ func (h *Handler) deleteWedding(c *gin.Context) {
 
 // --- 故事卡片 ---
 
-// cardTypePresets 预设卡片类型的默认标题/文案占位（可编辑）
+// cardTypePresets 8 种预设卡片类型的默认标题/文案占位（可编辑）
 var cardTypePresets = map[string]struct{ Title, Content string }{
-	models.CardTypeFirstMeet:  {"第一次相遇", "写下你们相遇的那一刻……"},
-	models.CardTypeTravel:     {"旅行", "一起走过的风景，都值得被纪念……"},
-	models.CardTypeProposal:   {"求婚", "那一天，单膝跪地，说出「嫁给我」……"},
-	models.CardTypeEngagement: {"订婚", "共同的决定，属于彼此的新开始……"},
+	models.CardTypeMeet:      {"相遇", "写下你们初遇的那一天……"},
+	models.CardTypeHeartbeat: {"心动瞬间", "某个瞬间，心跳悄悄漏了一拍……"},
+	models.CardTypeDate:      {"约会", "一起去过的餐厅、散过的步、看过的电影……"},
+	models.CardTypeConfess:   {"表白", "鼓起勇气的告白，和等来的那句回应……"},
+	models.CardTypeTogether:  {"在一起", "从那天起，我们成为了「我们」……"},
+	models.CardTypeTravel:    {"旅行", "一起看过的风景，都值得被纪念……"},
+	models.CardTypePropose:   {"求婚", "单膝跪地的那天，她笑着说「好」……"},
+	models.CardTypeEngage:    {"订婚", "共同的决定，属于彼此的新开始……"},
 }
 
 // cardInput 卡片编辑入参
@@ -942,13 +946,16 @@ func (h *Handler) validateCardImages(token string, names []string) ([]string, er
 	return out, nil
 }
 
-// normalizeCardType 归一化卡片类型；未知类型归为 custom
+// normalizeCardType 校验卡片类型；仅允许 8 种预设，未知返回空串
 func normalizeCardType(t string) string {
-	switch strings.TrimSpace(t) {
-	case models.CardTypeFirstMeet, models.CardTypeTravel, models.CardTypeProposal, models.CardTypeEngagement, models.CardTypeCustom:
-		return strings.TrimSpace(t)
+	t = strings.TrimSpace(t)
+	switch t {
+	case models.CardTypeMeet, models.CardTypeHeartbeat, models.CardTypeDate,
+		models.CardTypeConfess, models.CardTypeTogether, models.CardTypeTravel,
+		models.CardTypePropose, models.CardTypeEngage:
+		return t
 	default:
-		return models.CardTypeCustom
+		return ""
 	}
 }
 
@@ -982,6 +989,10 @@ func (h *Handler) createCard(c *gin.Context) {
 		return
 	}
 	ctype := normalizeCardType(req.Type)
+	if ctype == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请选择卡片类型"})
+		return
+	}
 	title := strings.TrimSpace(req.Title)
 	content := strings.TrimSpace(req.Content)
 	if title == "" {
@@ -1002,9 +1013,9 @@ func (h *Handler) createCard(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "内容过长（≤2000字）"})
 		return
 	}
-	// 预设类型且未填内容时给占位
+	// 未填内容时给占位
 	if content == "" {
-		if p, ok := cardTypePresets[ctype]; ok && ctype != models.CardTypeCustom {
+		if p, ok := cardTypePresets[ctype]; ok {
 			content = p.Content
 		}
 	}
