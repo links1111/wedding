@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -162,5 +165,101 @@ func TestDeleteWeddingCascade(t *testing.T) {
 		if count != 0 {
 			t.Errorf("%T 未级联删除: 剩余 %d", m, count)
 		}
+	}
+}
+
+// TestCardImagesIsolation 验证卡片图独立于主图库：上传进 cardimages 目录、
+// 列表/公开 URL 走 cardimages、未引用孤儿图被回收。
+func TestCardImagesIsolation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	db := newHandlerDB(t)
+	static := t.TempDir()
+	h := New(db, nil, static)
+
+	w := models.Wedding{Token: "cardiso_123456789", Name: "卡片图隔离"}
+	if err := db.Create(&w).Error; err != nil {
+		t.Fatalf("创建婚礼失败: %v", err)
+	}
+	cardDir := h.cardImagesDirFor(w.Token)
+	mainDir := h.imagesDirFor(w.Token)
+
+	// 最小 1x1 PNG
+	png := []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\x0aIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\x0d\x0a\x2d\xb4\x00\x00\x00\x00IEND\xaeB`\x82")
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) { c.Set("wedding", &w); c.Next() })
+	r.POST("/card", h.uploadCardImage)
+	r.POST("/main", h.uploadImage)
+	r.GET("/cards", h.listCardImages)
+	r.GET("/mainlist", h.listImages)
+
+	upload := func(path, fname string) *httptest.ResponseRecorder {
+		body := &strings.Builder{}
+		mw := multipart.NewWriter(body)
+		fw, _ := mw.CreateFormFile("file", fname)
+		_, _ = fw.Write(png)
+		_ = mw.Close()
+		req := httptest.NewRequest("POST", path, strings.NewReader(body.String()))
+		req.Header.Set("Content-Type", mw.FormDataContentType())
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+		return rec
+	}
+
+	// 上传到卡片：文件应落在 cardimages 而非 images
+	rec := upload("/card", "story.png")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("卡片图上传状态码 = %d, body=%s", rec.Code, rec.Body.String())
+	}
+	if _, err := os.Stat(filepath.Join(cardDir, "story.png")); err != nil {
+		t.Fatalf("卡片图未写入 cardimages: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(mainDir, "story.png")); !os.IsNotExist(err) {
+		t.Fatal("卡片图不应写入主图库 images 目录")
+	}
+
+	// 主图库上传互不干扰
+	rec = upload("/main", "hero.jpg")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("主图上传状态码 = %d, body=%s", rec.Code, rec.Body.String())
+	}
+	if _, err := os.Stat(filepath.Join(mainDir, "hero.jpg")); err != nil {
+		t.Fatalf("主图未写入 images: %v", err)
+	}
+
+	// 卡片图列表不含主图库文件，URL 前缀为 cardimages
+	rec = httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest("GET", "/cards", nil))
+	if !strings.Contains(rec.Body.String(), "/static/"+w.Token+"/cardimages/story.png") {
+		t.Fatalf("卡片图列表 URL 异常: %s", rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "hero.jpg") {
+		t.Fatal("卡片图列表不应包含主图库文件")
+	}
+
+	// 公开 invitation 子卡图走 cardimages
+	cd := models.Card{WeddingID: w.ID, Type: "meet", Title: "相遇", Sort: 1, Images: "story.png", Enabled: true}
+	if err := db.Create(&cd).Error; err != nil {
+		t.Fatal(err)
+	}
+	got := h.publicCards(w.ID, w.Token)
+	if len(got) != 1 {
+		t.Fatalf("publicCards 返回 %d 张, 期望 1", len(got))
+	}
+	imgs := got[0]["images"].([]string)
+	if len(imgs) != 1 || imgs[0] != "/static/"+w.Token+"/cardimages/story.png" {
+		t.Fatalf("公开卡片图 URL = %v, 期望 cardimages 路径", imgs)
+	}
+
+	// 孤儿回收：cardimages 里多放一个未引用文件，cleanup 应删掉、保留被引用的
+	if err := os.WriteFile(filepath.Join(cardDir, "orphan.png"), png, 0644); err != nil {
+		t.Fatal(err)
+	}
+	h.cleanupCardImages(&w)
+	if _, err := os.Stat(filepath.Join(cardDir, "story.png")); err != nil {
+		t.Fatal("被引用的卡片图不应被回收")
+	}
+	if _, err := os.Stat(filepath.Join(cardDir, "orphan.png")); !os.IsNotExist(err) {
+		t.Fatal("未引用孤儿卡片图应被回收")
 	}
 }

@@ -50,9 +50,14 @@ func (h *Handler) weddingDir(token string) string {
 	return filepath.Join(h.StaticDir, token)
 }
 
-// imagesDirFor 某 token 的静态图片目录
+// imagesDirFor 某 token 的主请柬静态图片目录
 func (h *Handler) imagesDirFor(token string) string {
 	return filepath.Join(h.weddingDir(token), "images")
+}
+
+// cardImagesDirFor 某 token 的卡片背景图目录（与主图库隔离，主请柬轮播/图库不使用）
+func (h *Handler) cardImagesDirFor(token string) string {
+	return filepath.Join(h.weddingDir(token), "cardimages")
 }
 
 // musicDirFor 某 token 的背景音乐目录
@@ -151,6 +156,9 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	a.GET("/images", h.listImages)
 	a.POST("/images", h.uploadImage)
 	a.DELETE("/images/:name", h.deleteImage)
+	a.GET("/cardimages", h.listCardImages)
+	a.POST("/cardimages", h.uploadCardImage)
+	a.DELETE("/cardimages/:name", h.deleteCardImage)
 	a.GET("/audio", h.listAudio)
 	a.POST("/audio", h.uploadAudio)
 	a.DELETE("/audio/:name", h.deleteAudio)
@@ -220,7 +228,7 @@ func (h *Handler) publicCards(weddingID int64, token string) []gin.H {
 	for _, cd := range cards {
 		urls := make([]string, 0, len(cd.Images))
 		for _, n := range splitImageNames(cd.Images) {
-			urls = append(urls, "/static/"+token+"/images/"+n)
+			urls = append(urls, "/static/"+token+"/cardimages/"+n)
 		}
 		out = append(out, gin.H{
 			"id": cd.ID, "type": cd.Type, "title": cd.Title,
@@ -917,9 +925,9 @@ func cardJSON(cd models.Card) gin.H {
 	}
 }
 
-// validateCardImages 校验图片文件名存在且位于该婚礼 images 目录内（防任意路径）
+// validateCardImages 校验图片文件名存在且位于该婚礼 cardimages 目录内（防任意路径）
 func (h *Handler) validateCardImages(token string, names []string) ([]string, error) {
-	dir := h.imagesDirFor(token)
+	dir := h.cardImagesDirFor(token)
 	out := []string{}
 	seen := map[string]bool{}
 	for _, n := range names {
@@ -1094,6 +1102,8 @@ func (h *Handler) updateCard(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存失败"})
 		return
 	}
+	// 保存后回收本卡已移除/未引用的孤立卡片图
+	h.cleanupCardImages(w)
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": cardJSON(cd)})
 }
 
@@ -1112,7 +1122,39 @@ func (h *Handler) deleteCard(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
 		return
 	}
+	// 删除后回收该卡独享的卡片图（不再被引用）
+	h.cleanupCardImages(w)
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
+// cleanupCardImages 回收该婚礼 cardimages 目录中不被任何卡片引用的孤立图片。
+// 上传后未保存即切换/移除的图会在下一次保存或删除卡片时被清理，避免目录膨胀。
+func (h *Handler) cleanupCardImages(w *models.Wedding) {
+	dir := h.cardImagesDirFor(w.Token)
+	names, err := images.List(dir)
+	if err != nil {
+		return
+	}
+	var cards []models.Card
+	if err := h.DB.Where("wedding_id = ?", w.ID).Select("images").Find(&cards).Error; err != nil {
+		return
+	}
+	referenced := map[string]bool{}
+	for _, cd := range cards {
+		for _, n := range splitImageNames(cd.Images) {
+			referenced[n] = true
+		}
+	}
+	for _, n := range names {
+		if referenced[n] {
+			continue
+		}
+		if p, err := images.SafeJoin(dir, n); err == nil {
+			if err := os.Remove(p); err == nil {
+				log.Printf("清理未引用的卡片图: %s", n)
+			}
+		}
+	}
 }
 
 // reorderCards 按提供的 id 顺序重排 sort
@@ -1137,60 +1179,74 @@ func (h *Handler) reorderCards(c *gin.Context) {
 
 // --- 背景图片管理 ---
 
-// listImages 列出背景图片
+// listImageItems 列出某图片目录文件并转为 {name,url}
+func (h *Handler) listImageItems(w *models.Wedding, dir, urlBase string) ([]gin.H, error) {
+	names, err := images.List(dir)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]gin.H, 0, len(names))
+	for _, n := range names {
+		items = append(items, gin.H{"name": n, "url": urlBase + "/" + n})
+	}
+	return items, nil
+}
+
+// listImages 列出主请柬背景图片
 func (h *Handler) listImages(c *gin.Context) {
 	w := weddingFrom(c)
 	if w == nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
-	names, err := images.List(h.imagesDirFor(w.Token))
+	items, err := h.listImageItems(w, h.imagesDirFor(w.Token), "/static/"+w.Token+"/images")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取图片目录失败"})
 		return
 	}
-	items := make([]gin.H, 0, len(names))
-	for _, n := range names {
-		items = append(items, gin.H{"name": n, "url": "/static/" + w.Token + "/images/" + n})
-	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": items})
 }
 
-// uploadImage 上传背景图片到 static/{token}/images；compress=true 时压缩到最佳大小后保存
-func (h *Handler) uploadImage(c *gin.Context) {
+// listCardImages 列出本卡上传的卡片图（独立于主图库）
+func (h *Handler) listCardImages(c *gin.Context) {
 	w := weddingFrom(c)
 	if w == nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
+	items, err := h.listImageItems(w, h.cardImagesDirFor(w.Token), "/static/"+w.Token+"/cardimages")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取卡片图片目录失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": items})
+}
+
+// saveImageUpload 将 multipart "file" 保存到 dir；compress 时压缩到最佳大小。
+// 返回最终文件名（同名自动递增，不覆盖已有文件）。
+func (h *Handler) saveImageUpload(w *models.Wedding, c *gin.Context, dir string, compress bool) (string, error) {
 	// 限制请求体大小，防止超大文件
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadBytes)
 
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "请选择要上传的图片"})
-		return
+		return "", errors.New("请选择要上传的图片")
 	}
 	defer file.Close()
 
 	name, err := images.SanitizeName(header.Filename)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
-		return
+		return "", err
 	}
 	if header.Size > maxUploadBytes {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "图片大小不能超过 20MB"})
-		return
+		return "", errors.New("图片大小不能超过 20MB")
 	}
 
 	// 先读入内存：压缩需要，且便于压缩失败时回退保存原图
 	data, err := io.ReadAll(file)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "读取图片失败"})
-		return
+		return "", errors.New("读取图片失败")
 	}
-
-	compress := c.PostForm("compress") == "true"
 	if compress {
 		name = images.CompressedName(name)
 		if compressed, cerr := images.CompressToJPEG(bytes.NewReader(data), maxImageDim, jpegQuality); cerr == nil {
@@ -1199,11 +1255,8 @@ func (h *Handler) uploadImage(c *gin.Context) {
 			log.Printf("压缩图片失败，保存原图 %s: %v", header.Filename, cerr)
 		}
 	}
-
-	dir := h.imagesDirFor(w.Token)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "创建图片目录失败"})
-		return
+		return "", errors.New("创建图片目录失败")
 	}
 
 	// 同名文件已存在时自动追加序号，避免覆盖已有图片
@@ -1211,8 +1264,7 @@ func (h *Handler) uploadImage(c *gin.Context) {
 	for i := 2; ; i++ {
 		p, jerr := images.SafeJoin(dir, dst)
 		if jerr != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": jerr.Error()})
-			return
+			return "", jerr
 		}
 		if _, serr := os.Stat(p); os.IsNotExist(serr) {
 			break
@@ -1220,42 +1272,64 @@ func (h *Handler) uploadImage(c *gin.Context) {
 		ext := filepath.Ext(name)
 		dst = strings.TrimSuffix(name, ext) + "_" + strconv.Itoa(i) + ext
 	}
-
 	dstPath, err := images.SafeJoin(dir, dst)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
-		return
+		return "", err
 	}
 	out, err := os.Create(dstPath)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存图片失败"})
-		return
+		return "", errors.New("保存图片失败")
 	}
 	defer out.Close()
 	if _, err := io.Copy(out, bytes.NewReader(data)); err != nil {
 		_ = os.Remove(dstPath)
-		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "保存图片失败"})
-		return
+		return "", errors.New("保存图片失败")
 	}
-
-	log.Printf("管理员上传背景图片: %s (compress=%v)", dst, compress)
-	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/" + w.Token + "/images/" + dst}})
+	return dst, nil
 }
 
-// deleteImage 删除背景图片
-func (h *Handler) deleteImage(c *gin.Context) {
+// uploadImage 上传背景图片到 static/{token}/images；compress=true 时压缩
+func (h *Handler) uploadImage(c *gin.Context) {
 	w := weddingFrom(c)
 	if w == nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
+	compress := c.PostForm("compress") == "true"
+	dst, err := h.saveImageUpload(w, c, h.imagesDirFor(w.Token), compress)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	log.Printf("管理员上传背景图片: %s (compress=%v)", dst, compress)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/" + w.Token + "/images/" + dst}})
+}
+
+// uploadCardImage 上传卡片背景图到 static/{token}/cardimages（独立于主图库）；compress=true 时压缩
+func (h *Handler) uploadCardImage(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	compress := c.PostForm("compress") == "true"
+	dst, err := h.saveImageUpload(w, c, h.cardImagesDirFor(w.Token), compress)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": err.Error()})
+		return
+	}
+	log.Printf("管理员上传卡片图: %s (compress=%v)", dst, compress)
+	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"name": dst, "url": "/static/" + w.Token + "/cardimages/" + dst}})
+}
+
+// removeImageFile 删除 dir 下的单张图片（白名单 + 直接子项）
+func (h *Handler) removeImageFile(c *gin.Context, dir, what string) {
 	name := c.Param("name")
-	// 仅允许删除图片文件，且必须为 images 目录的直接子项
 	if !images.IsAllowedImage(name) {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
 		return
 	}
-	p, err := images.SafeJoin(h.imagesDirFor(w.Token), name)
+	p, err := images.SafeJoin(dir, name)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": "非法的文件名"})
 		return
@@ -1268,8 +1342,28 @@ func (h *Handler) deleteImage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "删除失败"})
 		return
 	}
-	log.Printf("管理员删除背景图片: %s", name)
+	log.Printf("管理员删除%s: %s", what, name)
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{"status": "ok"}})
+}
+
+// deleteImage 删除主请柬背景图片
+func (h *Handler) deleteImage(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	h.removeImageFile(c, h.imagesDirFor(w.Token), "背景图片")
+}
+
+// deleteCardImage 删除卡片背景图
+func (h *Handler) deleteCardImage(c *gin.Context) {
+	w := weddingFrom(c)
+	if w == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	h.removeImageFile(c, h.cardImagesDirFor(w.Token), "卡片图")
 }
 
 // --- 背景音乐管理 ---
