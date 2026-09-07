@@ -15,8 +15,9 @@
             background: #1a1410;
             font-family: 'Inter', sans-serif;
             overscroll-behavior-y: contain;
+            scroll-snap-type: y mandatory;
         }
-        /* 场景：每个至少一屏，垂直堆叠，可滚动浏览 */
+        /* 全屏翻页场景：上下滑只切换卡片，吸附一屏 */
         .scene {
             position: relative;
             min-height: 100vh;
@@ -26,17 +27,31 @@
             align-items: center;
             justify-content: center;
             padding: 16px;
-            overflow: hidden;
+            scroll-snap-align: center;
         }
-        .scene-card { background: #1a1410; }
-        /* 子卡场景背景层（自身背景轮播） */
-        .scene-bg { position: absolute; inset: 0; overflow: hidden; background: #1a1410; }
-        .scene-bg .slide {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover; background-position: center;
-            opacity: 0; transition: opacity 1.4s ease-in-out; will-change: opacity;
+        /* 顶部常驻“长按看清文字”提示 */
+        .gesture-top {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 55;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 16px;
+            border-radius: 50px;
+            background: rgba(15,12,10,0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,245,235,0.16);
+            color: rgba(255,245,235,0.85);
+            font-size: 12px;
+            letter-spacing: 2px;
+            pointer-events: none;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            max-width: 88vw;
         }
-        .scene-bg .slide.active { opacity: 1; }
         .carousel-bg {
             position: fixed;
             top: 0;
@@ -672,11 +687,8 @@
     <audio id="bgm" loop preload="auto"></audio>
     <button class="music-btn" id="musicBtn" aria-label="背景音乐">♪</button>
 
-    <!-- ===== 手势演示提示（显示几秒后自动消失） ===== -->
-    <div class="gesture-hint" id="gestureHint">
-        <div class="gh-main">上下滑动</div>
-        <div class="gh-sub">上滑 · 文字更清晰</div>
-    </div>
+    <!-- 顶部常驻提示：长按看清文字 -->
+    <div class="gesture-top" id="gestureHint">长按，让文字更清晰</div>
 
     <!-- ===== 轮播 & API 对接 ===== -->
     <script>
@@ -840,40 +852,72 @@
                 colorAnim = requestAnimationFrame(frame);
             }
 
-            function buildCarousel(urls) {
-                const carousel = document.getElementById('bgCarousel');
-                if (!carousel || !urls || !urls.length) return;
-                urls.forEach(function(url, i) {
-                    slideBrightness.push(null);
-                    computeBrightness(url, function(b) {
-                        slideBrightness[i] = b;
-                        if (i === currentIndex) applyBrightness(i);
-                    });
-                    const div = document.createElement('div');
-                    div.className = 'slide';
-                    div.style.backgroundImage = "url('" + url + "')";
-                    carousel.appendChild(div);
-                });
-                const slides = carousel.querySelectorAll('.slide');
-                let currentIndex = 0;
-                const totalSlides = slides.length;
-                const intervalTime = 5000;
-                function goToSlide(index) {
-                    slides.forEach(s => s.classList.remove('active'));
-                    const safeIndex = (index + totalSlides) % totalSlides;
-                    slides[safeIndex].classList.add('active');
-                    currentIndex = safeIndex;
-                    applyBrightness(safeIndex);
-                }
-                function nextSlide() { goToSlide(currentIndex + 1); }
-                slides[0].classList.add('active');
-                applyBrightness(0);
-                let timer = setInterval(nextSlide, intervalTime);
-                carousel.addEventListener('mouseenter', function() { clearInterval(timer); });
-                carousel.addEventListener('mouseleave', function() { timer = setInterval(nextSlide, intervalTime); });
-                carousel.addEventListener('touchstart', function() { clearInterval(timer); });
-                carousel.addEventListener('touchend', function() { timer = setInterval(nextSlide, intervalTime); });
+            // ===== 全局背景轮播：图片列表随所在页面切换；自动轮播 + 手动左右划 =====
+            let mainSlideList = [];
+            let carList = [];
+            let carIdx = 0;
+            let carTimer = null;
+            const carouselEl = document.getElementById('bgCarousel');
+
+            function stopCar() { if (carTimer) { clearInterval(carTimer); carTimer = null; } }
+            function startCar() {
+                stopCar();
+                if (carList.length > 1) carTimer = setInterval(function() { carNext(1); }, 5000);
             }
+            // 渲染当前列表：淡入首图，列表切换平滑
+            function renderCarousel(list) {
+                stopCar();
+                carList = (list || []).slice();
+                carIdx = 0;
+                carouselEl.innerHTML = '';
+                if (!carList.length) {
+                    const d = document.createElement('div');
+                    d.className = 'slide active';
+                    d.style.background = '#1a1410';
+                    carouselEl.appendChild(d);
+                }
+                carList.forEach(function(url, i) {
+                    const d = document.createElement('div');
+                    d.className = 'slide' + (i === 0 ? ' active' : '');
+                    d.style.backgroundImage = "url('" + url + "')";
+                    carouselEl.appendChild(d);
+                });
+                startCar();
+            }
+            function carShow(i) {
+                const slides = carouselEl.querySelectorAll('.slide');
+                if (!slides.length) return;
+                carIdx = (i + slides.length) % slides.length;
+                for (let k = 0; k < slides.length; k++) slides[k].classList.toggle('active', k === carIdx);
+                if (carList.length) {
+                    computeBrightness(carList[carIdx], function(b) {
+                        if (b != null) {
+                            const mc = document.querySelector('.invitation-card');
+                            if (mc) mc.classList.toggle('light-bg', b > 150);
+                        }
+                    });
+                }
+            }
+            function carNext(dir) { if (carList.length) carShow((carIdx + dir + carList.length) % carList.length); }
+            function carManual(dir) { if (carList.length > 1) { carNext(dir); startCar(); } } // 手动后自动轮播重新计时
+
+            // 手动左右划切换当前列表图片（横划；纵向仍交还翻页）
+            (function bindHorizontalSwipe() {
+                let sx = 0, sy = 0, tracking = false;
+                carouselEl.addEventListener('touchstart', function(e) {
+                    if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true; }
+                }, { passive: true });
+                carouselEl.addEventListener('touchend', function(e) {
+                    if (!tracking) return;
+                    tracking = false;
+                    const dx = e.changedTouches[0].clientX - sx;
+                    const dy = e.changedTouches[0].clientY - sy;
+                    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) carManual(dx < 0 ? 1 : -1);
+                }, { passive: true });
+            })();
+
+            // 主请柬列表构建入口
+            function buildCarousel(urls) { mainSlideList = (urls || []).slice(); renderCarousel(mainSlideList); }
 
             // ===== 位置导航 =====
             // safeHref 仅允许 http/https 或站内相对路径，防止 javascript:/data: 注入
@@ -1001,8 +1045,8 @@
                 rsvpMessage.className = 'rsvp-message';
             }
 
-            // 主卡"回执"按钮 → 滚到末尾回执场景；末尾场景按钮再打开回执弹窗
-            rsvpBtn.addEventListener('click', function() { scrollToScene('rsvpScene'); });
+            // 主卡/末尾"回执"按钮 → 直接打开填写回执页（弹层），不切翻页
+            rsvpBtn.addEventListener('click', openRSVP);
             rsvpCloseBtn.addEventListener('click', closeRSVP);
             rsvpOverlay.addEventListener('click', function(e) {
                 if (e.target === rsvpOverlay) closeRSVP();
@@ -1059,22 +1103,10 @@
                 if (!holder) return;
                 holder.innerHTML = '';
                 (cards || []).forEach(function(card) {
+                    const urls = (card.images || []);
                     const sec = document.createElement('section');
-                    sec.className = 'scene scene-card';
-                    const bg = document.createElement('div');
-                    bg.className = 'scene-bg';
-                    const urls = card.images || [];
-                    if (!urls.length) {
-                        bg.style.background = '#1a1410';
-                    }
-                    urls.forEach(function(url, i) {
-                        const s = document.createElement('div');
-                        s.className = 'slide' + (i === 0 ? ' active' : '');
-                        s.style.backgroundImage = "url('" + url + "')";
-                        bg.appendChild(s);
-                    });
-                    sec.appendChild(bg);
-
+                    sec.className = 'scene';
+                    sec.__slideList = urls; // 该页轮播图列表
                     const box = document.createElement('div');
                     box.className = 'sub-card';
                     if (card.date) {
@@ -1093,34 +1125,53 @@
                     box.appendChild(ct);
                     sec.appendChild(box);
                     holder.appendChild(sec);
-
-                    // 文字颜色随本卡首图亮度自适应（其余图轮播时沿用该判定）
+                    // 该卡文字颜色随其首图亮度自适应
                     if (urls.length) {
                         computeBrightness(urls[0], function(b) {
                             if (b != null && box) box.classList.toggle('light-bg', b > 150);
                         });
                     }
-                    // 本卡背景轮播
-                    if (urls.length > 1) {
-                        let idx = 0;
-                        setInterval(function() {
-                            idx = (idx + 1) % urls.length;
-                            const slides = bg.querySelectorAll('.slide');
-                            for (let i = 0; i < slides.length; i++) slides[i].classList.toggle('active', i === idx);
-                        }, 4500);
-                    }
                 });
 
-                // 末尾回执场景
+                // 末尾回执场景（高级版式占位，背景复用主图）
                 const rsvp = document.createElement('section');
-                rsvp.className = 'scene scene-card';
+                rsvp.className = 'scene';
                 rsvp.id = 'rsvpScene';
+                rsvp.__slideList = mainSlideList;
                 rsvp.innerHTML = '<div class="rsvp-end">' +
                     '<div class="rsvp-end-title">诚邀见证</div>' +
                     '<div class="rsvp-end-sub">敬候您的光临与祝福</div>' +
                     '<button class="rsvp-btn" id="rsvpEndBtn">填写回执</button></div>';
                 holder.appendChild(rsvp);
                 document.getElementById('rsvpEndBtn').addEventListener('click', openRSVP);
+
+                initCarouselSync();
+            }
+
+            // 轮播图列表随当前可见页面切换（平滑淡入）
+            function initCarouselSync() {
+                const main = document.getElementById('sceneMain');
+                if (main) main.__slideList = mainSlideList.slice();
+                const rsvp = document.getElementById('rsvpScene');
+                if (rsvp) rsvp.__slideList = mainSlideList.slice();
+                const scenes = Array.prototype.slice.call(document.querySelectorAll('.scene'));
+                let activeIdx = 0;
+                if ('IntersectionObserver' in window) {
+                    const io = new IntersectionObserver(function(entries) {
+                        entries.forEach(function(en) {
+                            if (en.isIntersecting && en.intersectionRatio >= 0.6) {
+                                activeIdx = scenes.indexOf(en.target);
+                            }
+                        });
+                        const target = scenes[activeIdx];
+                        if (!target) return;
+                        const list = target.__slideList || [];
+                        if (list.join('|') !== carList.join('|')) renderCarousel(list);
+                    }, { threshold: [0.55, 0.75, 0.95] });
+                    scenes.forEach(function(s) { io.observe(s); });
+                } else {
+                    renderCarousel(mainSlideList);
+                }
             }
 
             // ===== 长按：毛玻璃随时间逐渐增强（文字更清晰）；松手平滑恢复 =====
@@ -1195,30 +1246,6 @@
             document.addEventListener('pointerup', function() { cancelHold(true); });
             document.addEventListener('pointercancel', function() { cancelHold(true); });
             document.addEventListener('pointerleave', function() { cancelHold(true); });
-
-            // ===== 手势演示提示：开场显示约 5 秒，或用户首次触摸即消失 =====
-            (function showGestureHint() {
-                const hint = document.getElementById('gestureHint');
-                if (!hint) return;
-                requestAnimationFrame(function() { hint.classList.add('show'); });
-                let hidden = false;
-                function hide() {
-                    if (hidden) return;
-                    hidden = true;
-                    hint.classList.remove('show');
-                    hint.classList.add('hide');
-                    setTimeout(function() {
-                        if (hint.parentNode) hint.parentNode.removeChild(hint);
-                    }, 700);
-                    document.removeEventListener('touchstart', hide);
-                    document.removeEventListener('click', hide);
-                    document.removeEventListener('wheel', hide);
-                }
-                document.addEventListener('touchstart', hide);
-                document.addEventListener('click', hide);
-                document.addEventListener('wheel', hide);
-                setTimeout(hide, 5000);
-            })();
 
             console.log('✨ 婚礼请柬 · 磨砂透明 · API 已对接');
         })();
