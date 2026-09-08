@@ -1091,29 +1091,32 @@
                 const slides = carouselEl.querySelectorAll('.slide');
                 const currentSlides = Array.from(slides);
                 
-                // 创建新列表的 DOM（初始透明）
+                // 创建新列表的 DOM（初始透明，先设置 transition）
                 const newSlides = [];
                 newList.forEach(function(url, i) {
                     const d = document.createElement('div');
                     d.className = 'slide';
                     d.style.backgroundImage = "url('" + url + "')";
+                    d.style.transition = 'opacity 0.8s ease-in-out';
                     d.style.opacity = '0';
                     carouselEl.appendChild(d);
                     newSlides.push(d);
                 });
                 
+                // 强制重绘，确保初始状态应用
+                carouselEl.offsetHeight;
+                
                 // 同时执行：旧图片淡出，新图片第一张淡入
-                requestAnimationFrame(function() {
+                if (currentSlides.length > 0) {
                     currentSlides.forEach(function(slide) {
                         slide.style.transition = 'opacity 0.8s ease-in-out';
                         slide.style.opacity = '0';
                     });
-                    
-                    if (newSlides.length > 0) {
-                        newSlides[0].style.transition = 'opacity 0.8s ease-in-out';
-                        newSlides[0].style.opacity = '1';
-                    }
-                });
+                }
+                
+                if (newSlides.length > 0) {
+                    newSlides[0].style.opacity = '1';
+                }
                 
                 // 等待过渡完成后，移除旧图片
                 setTimeout(function() {
