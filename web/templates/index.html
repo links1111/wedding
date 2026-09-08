@@ -844,7 +844,7 @@
     <div id="storyScenes"></div>
 
     <!-- ===== 背景音乐 ===== -->
-    <audio id="bgm" loop preload="auto"></audio>
+    <audio id="bgm" loop preload="auto" playsinline webkit-playsinline></audio>
     <button class="music-btn" id="musicBtn" aria-label="背景音乐">♪</button>
 
     <!-- 顶部常驻提示：长按看清文字 -->
@@ -1122,27 +1122,40 @@
                 const bgm = document.getElementById('bgm');
                 const btn = document.getElementById('musicBtn');
                 if (!bgm || !btn || !url) return;
+                
                 bgm.src = url;
-                bgm.load();
-
+                bgm.preload = 'auto';
+                
                 let userInteracted = false;
+                let autoPlayAttempted = false;
 
-                function markPlaying() { btn.classList.add('playing'); }
+                function markPlaying() {
+                    btn.classList.add('playing');
+                    btn.innerHTML = '❚❚'; // 播放中显示暂停图标
+                }
+                
                 // 有声播放（需用户手势或浏览器放行自动播放）
                 function playAudible() {
                     bgm.muted = false;
                     const p = bgm.play();
-                    if (p) p.then(markPlaying).catch(function(){});
+                    if (p) p.then(markPlaying).catch(function(err) {
+                        console.log('有声播放失败:', err);
+                    });
                 }
-                // 静音播放：浏览器普遍放行，用于“一打开就在播”，首笔手势即恢复声音
+                
+                // 静音播放：浏览器普遍放行，用于"一打开就在播"，首笔手势恢复声音
                 function playMuted() {
                     bgm.muted = true;
                     const p = bgm.play();
-                    if (p) p.then(markPlaying).catch(function(){});
+                    if (p) p.then(markPlaying).catch(function(err) {
+                        console.log('静音播放失败:', err);
+                    });
                 }
+                
                 function stop() {
                     bgm.pause();
                     btn.classList.remove('playing');
+                    btn.innerHTML = '♪';
                 }
 
                 // 仅当音频在用户操作前就加载失败（文件缺失等）才隐藏按钮；播放错误不隐藏
@@ -1154,34 +1167,74 @@
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     userInteracted = true;
-                    if (bgm.paused) playAudible();
-                    else if (bgm.muted) playAudible();
-                    else stop();
+                    if (bgm.paused) {
+                        playAudible();
+                    } else if (bgm.muted) {
+                        playAudible();
+                    } else {
+                        stop();
+                    }
                 });
 
-                // 尝试自动播放：先有声；被浏览器拦截则静音自动播放（静音放行），首次手势恢复声音
-                bgm.addEventListener('canplay', function() {
+                // 尝试自动播放策略
+                function tryAutoPlay() {
+                    if (autoPlayAttempted) return;
+                    autoPlayAttempted = true;
+                    
+                    // 先尝试有声播放
                     const p = bgm.play();
-                    if (p) p.then(markPlaying).catch(function() {
-                        playMuted();
-                        const firstGesture = function(ev) {
-                            // 音乐按钮自身由上面的点击处理，避免冲突
-                            if (ev.target.closest && ev.target.closest('#musicBtn')) return;
-                            document.removeEventListener('touchstart', firstGesture);
-                            document.removeEventListener('click', firstGesture);
-                            if (bgm.paused || bgm.muted) playAudible();
-                        };
-                        document.addEventListener('touchstart', firstGesture);
-                        document.addEventListener('click', firstGesture);
-                    });
+                    if (p) {
+                        p.then(function() {
+                            markPlaying();
+                        }).catch(function(err) {
+                            // 有声播放被拦截，尝试静音播放
+                            console.log('自动播放被拦截，尝试静音播放');
+                            playMuted();
+                            
+                            // 首次用户手势恢复声音
+                            const firstGesture = function(ev) {
+                                if (ev.target.closest && ev.target.closest('#musicBtn')) return;
+                                document.removeEventListener('touchstart', firstGesture);
+                                document.removeEventListener('click', firstGesture);
+                                userInteracted = true;
+                                if (bgm.paused || bgm.muted) playAudible();
+                            };
+                            document.addEventListener('touchstart', firstGesture, { once: true });
+                            document.addEventListener('click', firstGesture, { once: true });
+                        });
+                    }
+                }
+
+                // 页面可见性变化时尝试恢复播放
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden && !autoPlayAttempted && !userInteracted) {
+                        tryAutoPlay();
+                    }
                 });
+
+                // 设置完成后立即尝试自动播放
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', tryAutoPlay);
+                } else {
+                    // 延迟一小段时间确保页面完全加载
+                    setTimeout(tryAutoPlay, 100);
+                }
 
                 // 微信 X5 内核：JSBridge 就绪后尝试自动播放
                 if (typeof WeixinJSBridge !== 'undefined') {
-                    document.addEventListener('WeixinJSBridgeReady', function() {
-                        const p = bgm.play();
-                        if (p) p.then(markPlaying).catch(function(){});
+                    WeixinJSBridge.invoke('getNetworkType', {}, function() {
+                        setTimeout(function() {
+                            const p = bgm.play();
+                            if (p) p.then(markPlaying).catch(function(){});
+                        }, 200);
                     });
+                } else if (document.addEventListener) {
+                    document.addEventListener('WeixinJSBridgeReady', function() {
+                        setTimeout(function() {
+                            const p = bgm.play();
+                            if (p) p.then(markPlaying).catch(function(){});
+                        }, 200);
+                    }, false);
                 }
             }
 
