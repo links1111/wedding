@@ -610,6 +610,114 @@
         .cards-add-select option { background: #1b1626; color: var(--text); }
         .img-pick { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
         .img-pick.picked { border-color: var(--gold); }
+        /* 主请柬预览样式 */
+        .invitation-card {
+            --card-rgb: 247, 242, 235;
+            --card-alpha: 0.16;
+            --glass-blur: 16px;
+            --glass-saturate: 1.8;
+            --text-strong: #ffffff;
+            --text-body: #faf5ee;
+            --text-muted: rgba(255,248,240,0.9);
+            --text-dim: rgba(255,248,240,0.65);
+            --line: rgba(255,245,235,0.18);
+            --line-strong: rgba(255,245,235,0.3);
+            --card-inset: rgba(255,245,235,0.15);
+            --glow: rgba(0,0,0,0.35);
+            --accent: #d7b26e;
+            
+            text-align: center;
+            background: rgba(var(--card-rgb), var(--card-alpha));
+            border: 1px solid rgba(255,245,235,0.28);
+            border-radius: 48px;
+            padding: 26px 26px 22px;
+            color: var(--text-body);
+            font-family: 'Noto Serif SC', serif;
+            position: relative;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2);
+        }
+        .invitation-card .ornament-line {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 12px 0;
+            font-size: 12px;
+            color: var(--accent);
+            opacity: 0.6;
+        }
+        .invitation-card .names {
+            font-family: 'Cormorant Garamond', 'Songti SC', serif;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--text-strong);
+            margin: 8px 0 12px;
+        }
+        .invitation-card .title {
+            font-family: 'Cormorant Garamond', 'Songti SC', serif;
+            font-size: 18px;
+            letter-spacing: 4px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin: 0 0 16px;
+        }
+        .invitation-card .date-box {
+            margin: 12px 0;
+        }
+        .invitation-card .date-main {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: var(--text-strong);
+            margin-bottom: 4px;
+        }
+        .invitation-card .date-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+        .invitation-card .section {
+            margin: 16px 0;
+            padding: 12px 0;
+            border-top: 1px solid var(--line);
+        }
+        .invitation-card .section:first-child {
+            border-top: none;
+        }
+        .invitation-card .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        .invitation-card .section-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .invitation-card .section-time {
+            font-size: 14px;
+            color: var(--text-strong);
+            font-weight: 500;
+        }
+        .invitation-card .footer {
+            margin: 16px 0 8px;
+        }
+        .invitation-card .footer-line {
+            font-size: 13px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin: 4px 0;
+        }
+        .invitation-card .handwrite {
+            font-family: 'Dancing Script', cursive;
+            font-size: 18px;
+            color: var(--accent);
+            margin: 12px 0;
+        }
         /* 子卡类型版式预览 */
         .sub-card {
             --text-strong: #ffffff; --text-body: #faf5ee;
@@ -979,7 +1087,7 @@
                     <!-- 右侧内容区 -->
                     <div class="settings-content">
                         <!-- 左侧预览区 - 固定 -->
-                        <div class="preview-sidebar">
+                        <div class="preview-sidebar" id="previewSidebar">
                             <div class="preview-label" id="previewLabel">主请柬预览</div>
                             <div id="cardPreview"></div>
                         </div>
@@ -1091,7 +1199,8 @@
                         </div><!-- /settings-form-area -->
 
                         <!-- 子卡片编辑区 -->
-                        <div class="settings-form-area" id="cardPane" style="display:none">
+                        <div id="cardPane" style="display:none; width:100%;">
+                        <div class="settings-form-area">
                         <div class="form-card">
                             <div style="margin-bottom:12px">
                                 <h3 id="cardEditorTitle" style="margin:0; font-size:15px;">编辑子卡片</h3>
@@ -1447,6 +1556,176 @@
             together: { g: '∞', label: '在一起' }, travel: { g: '✈', label: '旅行' },
             propose: { g: '♥', label: '求婚' }, engage: { g: '❁', label: '订婚' }
         };
+        // 渲染主请柬预览
+        function renderMainCardPreview() {
+            var box = document.getElementById('cardPreview');
+            if (!box) return;
+            box.innerHTML = '';
+            
+            var card = document.createElement('div');
+            card.className = 'invitation-card';
+            card.style.width = '100%';
+            card.style.maxWidth = '460px';
+            
+            // 获取表单值
+            var groom = document.getElementById('setGroom').value.trim() || '新郎';
+            var bride = document.getElementById('setBride').value.trim() || '新娘';
+            var chineseTitle = document.getElementById('setChineseTitle').value.trim() || '我们结婚啦';
+            var dateMain = document.getElementById('setDateMain').value.trim() || '2025 年 5 月 20 日';
+            var dateSub = document.getElementById('setDateSub').value.trim() || '星期二 农历四月初三';
+            var venue = document.getElementById('setVenue').value.trim() || '婚礼场地';
+            var ceremonyTitle = document.getElementById('setCeremonyTitle').value.trim() || '婚礼仪式';
+            var ceremonySub = document.getElementById('setCeremonySub').value.trim() || '神圣时刻';
+            var ceremonyTime = document.getElementById('setCeremonyTime').value.trim() || '15:30';
+            var dinnerTitle = document.getElementById('setDinnerTitle').value.trim() || '婚宴';
+            var dinnerSub = document.getElementById('setDinnerSub').value.trim() || '幸福晚宴';
+            var dinnerTime = document.getElementById('setDinnerTime').value.trim() || '18:00';
+            var dressTitle = document.getElementById('setDressTitle').value.trim() || '着装要求';
+            var dressSub = document.getElementById('setDressSub').value.trim() || '正装出席';
+            var footer1 = document.getElementById('setFooter1').value.trim() || '期待您的光临';
+            var footer2 = document.getElementById('setFooter2').value.trim() || '';
+            var footer3 = document.getElementById('setFooter3').value.trim() || '';
+            var handwrite = document.getElementById('setHandwrite').value.trim() || '';
+            
+            // 装饰线
+            var ornament = document.createElement('div');
+            ornament.className = 'ornament-line';
+            ornament.innerHTML = '<span>✦</span><span>✦</span><span>✦</span>';
+            card.appendChild(ornament);
+            
+            // 新人姓名
+            var names = document.createElement('div');
+            names.className = 'names';
+            names.innerHTML = groom + ' & ' + bride;
+            card.appendChild(names);
+            
+            // 主标题
+            var title = document.createElement('div');
+            title.className = 'title';
+            title.textContent = chineseTitle;
+            card.appendChild(title);
+            
+            // 日期
+            var dateBox = document.createElement('div');
+            dateBox.className = 'date-box';
+            var dateMainEl = document.createElement('div');
+            dateMainEl.className = 'date-main';
+            dateMainEl.textContent = dateMain;
+            var dateSubEl = document.createElement('div');
+            dateSubEl.className = 'date-sub';
+            dateSubEl.textContent = dateSub;
+            dateBox.appendChild(dateMainEl);
+            dateBox.appendChild(dateSubEl);
+            card.appendChild(dateBox);
+            
+            // 装饰线
+            var ornament2 = document.createElement('div');
+            ornament2.className = 'ornament-line';
+            ornament2.innerHTML = '<span>✦</span><span>✦</span><span>✦</span>';
+            card.appendChild(ornament2);
+            
+            // 仪式信息
+            if (ceremonyTitle) {
+                var section = document.createElement('div');
+                section.className = 'section';
+                var secTitle = document.createElement('div');
+                secTitle.className = 'section-title';
+                secTitle.textContent = ceremonyTitle;
+                var secSub = document.createElement('div');
+                secSub.className = 'section-sub';
+                secSub.textContent = ceremonySub;
+                var secTime = document.createElement('div');
+                secTime.className = 'section-time';
+                secTime.textContent = ceremonyTime;
+                section.appendChild(secTitle);
+                section.appendChild(secSub);
+                section.appendChild(secTime);
+                card.appendChild(section);
+            }
+            
+            // 晚宴信息
+            if (dinnerTitle) {
+                var section2 = document.createElement('div');
+                section2.className = 'section';
+                var secTitle2 = document.createElement('div');
+                secTitle2.className = 'section-title';
+                secTitle2.textContent = dinnerTitle;
+                var secSub2 = document.createElement('div');
+                secSub2.className = 'section-sub';
+                secSub2.textContent = dinnerSub;
+                var secTime2 = document.createElement('div');
+                secTime2.className = 'section-time';
+                secTime2.textContent = dinnerTime;
+                section2.appendChild(secTitle2);
+                section2.appendChild(secSub2);
+                section2.appendChild(secTime2);
+                card.appendChild(section2);
+            }
+            
+            // 着装要求
+            if (dressTitle) {
+                var section3 = document.createElement('div');
+                section3.className = 'section';
+                var secTitle3 = document.createElement('div');
+                secTitle3.className = 'section-title';
+                secTitle3.textContent = dressTitle;
+                var secSub3 = document.createElement('div');
+                secSub3.className = 'section-sub';
+                secSub3.textContent = dressSub;
+                section3.appendChild(secTitle3);
+                section3.appendChild(secSub3);
+                card.appendChild(section3);
+            }
+            
+            // 装饰线
+            var ornament3 = document.createElement('div');
+            ornament3.className = 'ornament-line';
+            ornament3.innerHTML = '<span>✦</span><span>✦</span><span>✦</span>';
+            card.appendChild(ornament3);
+            
+            // 底部文案
+            if (footer1) {
+                var footer = document.createElement('div');
+                footer.className = 'footer';
+                var f1 = document.createElement('div');
+                f1.className = 'footer-line';
+                f1.textContent = footer1;
+                footer.appendChild(f1);
+                if (footer2) {
+                    var f2 = document.createElement('div');
+                    f2.className = 'footer-line';
+                    f2.textContent = footer2;
+                    footer.appendChild(f2);
+                }
+                if (footer3) {
+                    var f3 = document.createElement('div');
+                    f3.className = 'footer-line';
+                    f3.textContent = footer3;
+                    footer.appendChild(f3);
+                }
+                card.appendChild(footer);
+            }
+            
+            // 手写寄语
+            if (handwrite) {
+                var handwriteEl = document.createElement('div');
+                handwriteEl.className = 'handwrite';
+                handwriteEl.textContent = handwrite;
+                card.appendChild(handwriteEl);
+            }
+            
+            box.appendChild(card);
+        }
+        
+        // 监听主请柬表单输入，实时更新预览
+        ['setGroom', 'setBride', 'setChineseTitle', 'setDateMain', 'setDateSub', 'setVenue',
+         'setCeremonyTitle', 'setCeremonySub', 'setCeremonyTime', 'setDinnerTitle', 'setDinnerSub',
+         'setDinnerTime', 'setDressTitle', 'setDressSub', 'setFooter1', 'setFooter2', 'setFooter3',
+         'setHandwrite'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', renderMainCardPreview);
+        });
+        
         // 按当前编辑内容与类型渲染版式预览（DOM 构建避免注入）
         function renderCardPreview() {
             var box = document.getElementById('cardPreview');
@@ -1616,7 +1895,8 @@
             document.getElementById('mainPane').style.display = '';
             document.getElementById('cardPane').style.display = 'none';
             document.getElementById('previewLabel').textContent = '主请柬预览';
-            renderCardPreview();
+            document.getElementById('previewSidebar').style.display = '';
+            renderMainCardPreview();
             renderCardsList();
         }
 
@@ -1636,6 +1916,7 @@
             document.getElementById('cEnabled').checked = !!cd.enabled;
             document.getElementById('cardMsg').textContent = '';
             document.getElementById('cardMsg').className = 'save-msg';
+            document.getElementById('previewSidebar').style.display = 'none';
             renderCardPreview();
             cardImages = (cd.images || []).slice();
             renderCardImgs();
