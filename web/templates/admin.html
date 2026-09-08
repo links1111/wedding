@@ -429,9 +429,34 @@
             white-space: nowrap;
             background: none;
             font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
         }
         .cards-tab:hover { color: var(--text); border-color: var(--gold); }
         .cards-tab.active { background: var(--gold); color: #0f0f1a; font-weight: 600; border-color: var(--gold); }
+        .cards-tab .del-x {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(255,107,107,0.2);
+            color: var(--red);
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            padding: 0;
+        }
+        .cards-tab .del-x:hover {
+            background: var(--red);
+            color: #fff;
+        }
+        .cards-tab.main-card .del-x { display: none; }
         /* 添加卡片：下拉直选类型即建 */
         .cards-add-select {
             flex: 0 0 auto;
@@ -463,14 +488,29 @@
             border-radius: 24px; padding: 24px 20px; color: var(--text-body);
             font-family: 'Noto Serif SC', serif;
         }
-        .sub-card .emblem { width: 46px; height: 46px; line-height: 1; font-size: 22px; margin: 0 auto 10px; border-radius: 50%; border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent); }
-        .sub-card .type-label { font-size: 10px; letter-spacing: 4px; color: var(--accent); margin-bottom: 12px; }
-        .sub-card .sub-date { font-size: 12px; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 8px; }
-        .sub-card .sub-title { font-size: 20px; color: var(--text-strong); letter-spacing: 2px; margin-bottom: 10px; }
-        .sub-card .sub-content { font-size: 13px; color: var(--text-body); line-height: 1.7; white-space: pre-line; }
-        .sub-card.t-meet{--accent:#d7b26e}.sub-card.t-heartbeat{--accent:#e39aa0}.sub-card.t-date{--accent:#a9c0d8}
-        .sub-card.t-confess{--accent:#dfa6d2}.sub-card.t-together{--accent:#c9a9d0}.sub-card.t-travel{--accent:#7fb6a8}
-        .sub-card.t-propose{--accent:#e2b07a}.sub-card.t-engage{--accent:#b99a72}
+        .sub-card .emblem { width: 46px; height: 46px; line-height: 1; font-size: 22px; margin: 0 auto 10px; border-radius: 50%; border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent); background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.12), transparent 68%); box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2); }
+        .sub-card .emblem::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0.35; }
+        .sub-card .type-label { font-size: 10px; letter-spacing: 4px; color: var(--accent); margin-bottom: 12px; text-transform: uppercase; }
+        .sub-card .sub-date { font-size: 12px; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+        .sub-card .sub-title { font-size: 20px; color: var(--text-strong); letter-spacing: 2px; margin-bottom: 10px; font-family: 'Noto Serif SC', serif; }
+        .sub-card .sub-content { font-size: 13px; color: var(--text-body); line-height: 1.8; white-space: pre-line; }
+        /* 各类型专属配色和装饰 */
+        .sub-card.t-meet { --accent: #d7b26e; }
+        .sub-card.t-meet .sub-title::before { content: '✦ '; color: var(--accent); }
+        .sub-card.t-heartbeat { --accent: #e39aa0; }
+        .sub-card.t-heartbeat .emblem { border-width: 2px; }
+        .sub-card.t-date { --accent: #a9c0d8; }
+        .sub-card.t-date .sub-date { color: var(--accent); }
+        .sub-card.t-confess { --accent: #dfa6d2; }
+        .sub-card.t-confess .sub-title { font-style: italic; }
+        .sub-card.t-together { --accent: #c9a9d0; }
+        .sub-card.t-together .emblem::before { content: '∞'; font-size: 28px; }
+        .sub-card.t-travel { --accent: #7fb6a8; }
+        .sub-card.t-travel .emblem::before { content: '✈'; font-size: 24px; }
+        .sub-card.t-propose { --accent: #e2b07a; }
+        .sub-card.t-propose .emblem { border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%; }
+        .sub-card.t-engage { --accent: #b99a72; }
+        .sub-card.t-engage .sub-title { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
         .preview-title { font-size: 13px; color: var(--text-muted); margin: 6px 0 12px; letter-spacing: 1px; }
         .form-grid {
             display: grid;
@@ -928,7 +968,14 @@
                 var couple = groom && bride ? groom + ' & ' + bride : (groom || bride);
                 if (couple) document.title = couple + ' · 婚礼请柬 · 管理后台';
             }
-            document.getElementById('inviteLink').href = '/w/' + WEDDING_TOKEN;
+            var inviteBtn = document.getElementById('inviteLink');
+            if (inviteBtn) {
+                inviteBtn.href = '/w/' + WEDDING_TOKEN;
+                inviteBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.open('/w/' + WEDDING_TOKEN, '_blank');
+                });
+            }
             document.getElementById('exportLink').href = API + '/guests/export';
             showAdmin();
         }
@@ -1236,38 +1283,86 @@
             // 主请柬
             var main = document.createElement('button');
             main.type = 'button';
-            main.className = 'cards-tab' + (currentCardId == null ? ' active' : '');
+            main.className = 'cards-tab main-card' + (currentCardId == null ? ' active' : '');
             main.dataset.card = 'main';
-            main.textContent = '✉ 主请柬';
+            main.innerHTML = '<span>✉ 主请柬</span>';
             bar.appendChild(main);
-            // 各子卡（图标 + 标题）
+            // 各子卡（图标 + 标题 + 删除按钮）
             cardsData.forEach(function(cd) {
                 var meta = TYPE_META[cd.type] || TYPE_META.meet;
                 var b = document.createElement('button');
                 b.type = 'button';
                 b.className = 'cards-tab' + (currentCardId === cd.id ? ' active' : '');
                 b.dataset.card = cd.id;
+                b.dataset.cardId = cd.id;
                 b.title = cd.title || '未命名';
-                b.textContent = (meta.g ? meta.g + ' ' : '') + (cd.title || '未命名');
+                var span = document.createElement('span');
+                span.textContent = (meta.g ? meta.g + ' ' : '') + (cd.title || '未命名');
+                b.appendChild(span);
+                // 删除按钮
+                var delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'del-x';
+                delBtn.innerHTML = '×';
+                delBtn.title = '删除此卡片';
+                delBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    if (confirm('确定要删除卡片「' + (cd.title || '未命名') + '」吗？')) {
+                        deleteCard(cd.id);
+                    }
+                };
+                b.appendChild(delBtn);
                 bar.appendChild(b);
             });
-            // 添加卡片：下拉直选类型即创建
+            // 添加卡片：优化下拉框 - 分组显示
             var sel = document.createElement('select');
             sel.id = 'cardsAddType';
             sel.className = 'cards-add-select';
             sel.title = '添加卡片';
             var ph = document.createElement('option');
             ph.value = '';
-            ph.textContent = '＋ 添加卡片';
+            ph.textContent = '+ 添加卡片';
             ph.disabled = true;
             ph.selected = true;
             sel.appendChild(ph);
-            Object.keys(TYPE_META).forEach(function(t) {
+            // 按分类分组
+            var commonTypes = ['meet', 'date', 'propose', 'engage'];
+            var romanticTypes = ['heartbeat', 'confess', 'together'];
+            var otherTypes = ['travel'];
+            
+            // 常见类型
+            var group1 = document.createElement('optgroup');
+            group1.label = '常见类型';
+            commonTypes.forEach(function(t) {
                 var o = document.createElement('option');
                 o.value = t;
-                o.textContent = TYPE_META[t].g + ' 添加「' + TYPE_META[t].label + '」';
-                sel.appendChild(o);
+                o.textContent = TYPE_META[t].g + ' ' + TYPE_META[t].label;
+                group1.appendChild(o);
             });
+            sel.appendChild(group1);
+            
+            // 浪漫类型
+            var group2 = document.createElement('optgroup');
+            group2.label = '浪漫类型';
+            romanticTypes.forEach(function(t) {
+                var o = document.createElement('option');
+                o.value = t;
+                o.textContent = TYPE_META[t].g + ' ' + TYPE_META[t].label;
+                group2.appendChild(o);
+            });
+            sel.appendChild(group2);
+            
+            // 其他类型
+            var group3 = document.createElement('optgroup');
+            group3.label = '其他';
+            otherTypes.forEach(function(t) {
+                var o = document.createElement('option');
+                o.value = t;
+                o.textContent = TYPE_META[t].g + ' ' + TYPE_META[t].label;
+                group3.appendChild(o);
+            });
+            sel.appendChild(group3);
+            
             bar.appendChild(sel);
         }
 
@@ -1440,6 +1535,24 @@
                 });
                 loadCards();
             } catch(e) {}
+        }
+
+        // 删除卡片（供菜单上的删除按钮调用）
+        async function deleteCard(cardId) {
+            try {
+                var res = await fetch(API + '/cards/' + cardId, { method: 'DELETE' });
+                var json = await res.json();
+                if (json.ok) {
+                    if (currentCardId === cardId) {
+                        switchMainCard();
+                    }
+                    loadCards();
+                } else {
+                    alert(json.error || '删除失败');
+                }
+            } catch(e) {
+                alert('网络错误');
+            }
         }
 
         document.getElementById('cardDelBtn').addEventListener('click', async function() {
