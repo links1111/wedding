@@ -30,7 +30,7 @@
             justify-content: center;
             padding: 16px;
             scroll-snap-align: start;
-            scroll-snap-stop: always;
+            scroll-snap-stop: normal;
         }
         /* 顶部常驻“长按看清文字”提示 */
         .gesture-top {
@@ -1592,20 +1592,39 @@
                 if (rsvp) rsvp.__slideList = mainSlideList.slice();
                 const scenes = Array.prototype.slice.call(document.querySelectorAll('.scene'));
                 let activeIdx = 0;
+                let lastActiveIdx = 0;
+                let isScrolling = false;
+                let scrollTimer = null;
+                
                 if ('IntersectionObserver' in window) {
                     const io = new IntersectionObserver(function(entries) {
+                        // 找到当前最可见的卡片（intersectionRatio 最大的）
+                        let bestIdx = activeIdx;
+                        let bestRatio = 0;
+                        
                         entries.forEach(function(en) {
-                            if (en.isIntersecting && en.intersectionRatio >= 0.6) {
-                                activeIdx = scenes.indexOf(en.target);
+                            if (en.isIntersecting && en.intersectionRatio > bestRatio) {
+                                bestRatio = en.intersectionRatio;
+                                bestIdx = scenes.indexOf(en.target);
                             }
                         });
-                        const target = scenes[activeIdx];
-                        if (!target) return;
-                        const list = target.__slideList || [];
-                        // 该页没有专属图片：保持上一页的列表继续轮播，不空屏
-                        if (!list.length) return;
-                        if (list.join('|') !== carList.join('|')) smoothSwitchCarousel(list);
-                    }, { threshold: [0.55, 0.75, 0.95] });
+                        
+                        // 只有当最可见的卡片超过阈值才更新
+                        if (bestRatio >= 0.4 && bestIdx !== activeIdx) {
+                            activeIdx = bestIdx;
+                            
+                            // 防抖：等待滚动稳定后再切换轮播图
+                            clearTimeout(scrollTimer);
+                            scrollTimer = setTimeout(function() {
+                                const target = scenes[activeIdx];
+                                if (!target) return;
+                                const list = target.__slideList || [];
+                                // 该页没有专属图片：保持上一页的列表继续轮播，不空屏
+                                if (!list.length) return;
+                                if (list.join('|') !== carList.join('|')) smoothSwitchCarousel(list);
+                            }, 100); // 100ms 防抖
+                        }
+                    }, { threshold: [0.1, 0.25, 0.4, 0.6, 0.8] });
                     scenes.forEach(function(s) { io.observe(s); });
                 } else {
                     renderCarousel(mainSlideList);
