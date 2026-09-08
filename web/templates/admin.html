@@ -496,10 +496,10 @@
             padding: 24px 0;
             overflow: hidden;
         }
-        /* 左侧预览区 - 固定 */
+        /* 左侧预览区 - 固定，宽度容纳 460px 卡片 + padding */
         .preview-sidebar {
-            width: 260px;
-            max-width: 260px;
+            width: 492px;
+            max-width: 492px;
             flex-shrink: 0;
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -549,6 +549,8 @@
             --text-muted: rgba(255,248,240,0.9); --text-dim: rgba(255,248,240,0.65);
             --line: rgba(255,245,235,0.18);
             --accent: #d7b26e;
+            width: 100%;
+            max-width: 460px;
             text-align: center;
             background: rgba(247,242,235,0.16);
             border: 1px solid rgba(255,245,235,0.28);
@@ -755,7 +757,7 @@
             .preview-sidebar {
                 width: 100%;
                 position: static;
-                max-width: 320px;
+                max-width: 492px;
                 margin: 0 auto;
             }
             .settings-form-area {
