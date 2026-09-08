@@ -944,8 +944,6 @@
 
     <script>
         // ===== token 解析与后台初始化（无登录，token 即访问凭证） =====
-        var WEDDING_TOKEN = (location.pathname.split('/')[2] || '');
-        var API = '/api/a/' + WEDDING_TOKEN;
 
         async function initAdmin() {
             let json;
@@ -974,13 +972,8 @@
                 inviteBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     window.open('/w/' + WEDDING_TOKEN, '_blank');
-                });
             }
             document.getElementById('exportLink').href = API + '/guests/export';
-            showAdmin();
-        }
-        initAdmin();
-
         function showAdmin() {
             document.getElementById('adminLayout').classList.add('show');
             loadStats();
