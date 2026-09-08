@@ -88,26 +88,26 @@
         }
         .carousel-bg .slide.active { opacity: 1; }
         .invitation-card {
-            /* 可通过管理后台动态调整：卡片底色、透明度、毛玻璃模糊/饱和度 */
-            --card-rgb: 247, 242, 235;
-            --card-alpha: 0.15;
-            --glass-blur: 16px;
-            --glass-saturate: 1.8;
-            /* 文字与装饰色（随轮播背景亮度自适应切换） */
-            --text-strong: #ffffff;
-            --text-body: #faf5ee;
-            --text-muted: rgba(255,248,240,0.9);
-            --text-dim: rgba(255,248,240,0.65);
-            --line: rgba(255,245,235,0.18);
-            --line-soft: rgba(255,245,235,0.12);
-            --line-bright: rgba(255,245,235,0.55);
-            --line-strong: rgba(255,245,235,0.3);
-            --card-inset: rgba(255,245,235,0.15);
-            --glow: rgba(0,0,0,0.35);
-            --btn-bg: rgba(255,245,235,0.16);
-            --btn-border: rgba(255,245,235,0.4);
-            --btn-bg-hover: rgba(255,245,235,0.3);
-            --btn-border-hover: rgba(255,245,235,0.65);
+            /* 方案一：莫兰迪粉 + 灰蓝绿 - 法式轻奢 */
+            --card-rgb: 255, 255, 255;
+            --card-alpha: 0.92;
+            --glass-blur: 20px;
+            --glass-saturate: 1.4;
+            /* 文字与装饰色（莫兰迪色系） */
+            --text-strong: #4a403a;
+            --text-body: #5a4f48;
+            --text-muted: rgba(74, 64, 58, 0.75);
+            --text-dim: rgba(74, 64, 58, 0.55);
+            --line: rgba(74, 64, 58, 0.15);
+            --line-soft: rgba(74, 64, 58, 0.1);
+            --line-bright: rgba(74, 64, 58, 0.35);
+            --line-strong: rgba(74, 64, 58, 0.22);
+            --card-inset: rgba(212, 165, 165, 0.12);
+            --glow: rgba(74, 64, 58, 0.15);
+            --btn-bg: rgba(212, 165, 165, 0.15);
+            --btn-border: rgba(212, 165, 165, 0.45);
+            --btn-bg-hover: rgba(212, 165, 165, 0.25);
+            --btn-border-hover: rgba(212, 165, 165, 0.6);
             position: relative;
             z-index: 10;
             max-width: 460px;
@@ -152,18 +152,19 @@
         /* 子卡片：与主请柬同款磨砂玻璃面；宽一致、高与主卡逐屏相等(JS 同步)。
            版式向主请柬看齐：徽记 / 章节眉 / 衬线大字标题 / 正文排版 / 落款点缀 */
         .sub-card {
-            --card-rgb: 247, 242, 235;
-            --card-alpha: 0.16;
-            --glass-blur: 16px;
-            --glass-saturate: 1.8;
-            /* 文字与装饰色默认（深底），随背景亮度切换 .light-bg */
-            --text-strong: #ffffff; --text-body: #fbf6ef;
-            --text-muted: rgba(255,248,240,0.92); --text-dim: rgba(255,248,240,0.7);
-            --line: rgba(255,245,235,0.16);
-            --line-soft: rgba(255,245,235,0.1);
-            --line-strong: rgba(255,245,235,0.3);
-            --card-inset: rgba(255,245,235,0.16);
-            --glow: rgba(0,0,0,0.42);
+            /* 方案一：莫兰迪粉 + 灰蓝绿 */
+            --card-rgb: 255, 255, 255;
+            --card-alpha: 0.92;
+            --glass-blur: 20px;
+            --glass-saturate: 1.4;
+            /* 文字与装饰色（莫兰迪色系） */
+            --text-strong: #4a403a; --text-body: #5a4f48;
+            --text-muted: rgba(74, 64, 58, 0.75); --text-dim: rgba(74, 64, 58, 0.55);
+            --line: rgba(74, 64, 58, 0.15);
+            --line-soft: rgba(74, 64, 58, 0.1);
+            --line-strong: rgba(74, 64, 58, 0.22);
+            --card-inset: rgba(212, 165, 165, 0.12);
+            --glow: rgba(74, 64, 58, 0.15);
             position: relative;
             z-index: 10;
             display: flex;
@@ -247,19 +248,19 @@
                 radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.55), transparent 52%),
                 rgba(var(--card-rgb), var(--card-alpha));
         }
-        /* 类型专属点缀色和装饰 */
+        /* 类型专属点缀色和装饰 - 莫兰迪色系 */
         .sub-card.t-meet {
-            --accent: #d7b26e;
+            --accent: #d4a5a5; /* 干枯玫瑰粉 */
         }
         .sub-card.t-meet .emblem::before { content: '✦'; font-size: 26px; }
         .sub-card.t-meet .sub-title::before { content: '✦ '; color: var(--accent); opacity: 0.7; }
         
         .sub-card.t-heartbeat {
-            --accent: #e39aa0;
+            --accent: #e8c4c4; /* 浅玫瑰粉 */
         }
         .sub-card.t-heartbeat .emblem {
             border-width: 2px;
-            box-shadow: 0 0 0 2px rgba(227,154,160,0.15) inset, 0 0 28px rgba(227,154,160,0.25);
+            box-shadow: 0 0 0 2px rgba(232, 196, 196, 0.2) inset, 0 0 28px rgba(232, 196, 196, 0.25);
         }
         .sub-card.t-heartbeat .emblem::after {
             border-width: 2px;
@@ -267,7 +268,7 @@
         }
         
         .sub-card.t-date {
-            --accent: #a9c0d8;
+            --accent: #84a59d; /* 灰蓝绿 */
         }
         .sub-card.t-date .emblem::before { content: '✿'; font-size: 24px; }
         .sub-card.t-date .sub-date {
@@ -276,7 +277,7 @@
         }
         
         .sub-card.t-confess {
-            --accent: #dfa6d2;
+            --accent: #b89090; /* 深玫瑰粉 */
         }
         .sub-card.t-confess .emblem::before { content: '✎'; font-size: 24px; }
         .sub-card.t-confess .sub-title {
@@ -285,7 +286,7 @@
         }
         
         .sub-card.t-together {
-            --accent: #c9a9d0;
+            --accent: #a3c4bc; /* 浅灰蓝绿 */
         }
         .sub-card.t-together .emblem::before { content: '∞'; font-size: 30px; }
         .sub-card.t-together .sub-content {
@@ -293,31 +294,31 @@
         }
         
         .sub-card.t-travel {
-            --accent: #7fb6a8;
+            --accent: #6a8a85; /* 深灰蓝绿 */
         }
         .sub-card.t-travel .emblem::before { content: '✈'; font-size: 26px; }
         .sub-card.t-travel .sub-title::after { content: ' ✈'; color: var(--accent); opacity: 0.6; }
         
         .sub-card.t-propose {
-            --accent: #e2b07a;
+            --accent: #c9a96e; /* 香槟金 */
         }
         .sub-card.t-propose .emblem {
             border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%;
-            box-shadow: 0 0 0 2px rgba(226,176,122,0.12) inset, 0 0 32px rgba(226,176,122,0.3);
+            box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.15) inset, 0 0 32px rgba(201, 169, 110, 0.25);
         }
         .sub-card.t-propose .emblem::after {
             border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%;
         }
         
         .sub-card.t-engage {
-            --accent: #b99a72;
+            --accent: #d4a5a5; /* 干枯玫瑰粉 */
         }
         .sub-card.t-engage .emblem::before { content: '❁'; font-size: 26px; }
         .sub-card.t-engage .sub-title {
             text-decoration: underline;
             text-decoration-color: var(--accent);
             text-decoration-thickness: 2px;
-            text-underline-offset: 4px;
+        }
         }
         /* 亮底：同色相加深保证可读（无 color-mix 时退回原点缀色） */
         .sub-card.light-bg .emblem {

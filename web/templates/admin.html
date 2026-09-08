@@ -8,33 +8,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* 香槟金 - 主色调 */
-            --gold: #d4af37;
-            --gold-light: #f4e4bc;
-            --gold-dark: #b8941f;
+            /* 方案一：莫兰迪粉 + 灰蓝绿 - 法式轻奢 */
             
-            /* 酒红背景 - 喜庆高级 */
-            --bg: #1a0a0a;
-            --bg-card: #2d1515;
-            --bg-hover: #3d1f1f;
+            /* 主色调：干枯玫瑰粉 */
+            --gold: #d4a5a5;
+            --gold-light: #e8c4c4;
+            --gold-dark: #b89090;
             
-            /* 暖白文字 */
-            --text: #fff5f0;
-            --text-muted: #d4a5a5;
-            --text-dim: #a87878;
+            /* 辅助色：灰蓝绿 */
+            --accent: #84a59d;
+            --accent-light: #a3c4bc;
+            --accent-dark: #6a8a85;
             
-            /* 边框 */
-            --border: rgba(212, 175, 55, 0.2);
+            /* 背景：暖灰白 */
+            --bg: #faf7f5;
+            --bg-card: #ffffff;
+            --bg-hover: #f5f2f0;
+            
+            /* 文字：深灰褐 */
+            --text: #4a403a;
+            --text-muted: #7a6f68;
+            --text-dim: #a89f96;
+            
+            /* 边框：浅灰 */
+            --border: rgba(74, 64, 58, 0.12);
             
             /* 强调色 */
-            --green: #c9e4ca;
-            --red: #ff6b6b;
-            --yellow: #ffd93d;
+            --green: #84a59d;
+            --red: #d4a5a5;
+            --yellow: #c9a96e;
             
-            /* 玫瑰金点缀 */
-            --rose: #e8b4b8;
-            /* 珊瑚橙活力 */
-            --coral: #ff8a65;
+            /* 香槟金点缀 */
+            --rose: #c9a96e;
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -624,31 +629,31 @@
         .cards-add-select option { background: #1b1626; color: var(--text); }
         .img-pick { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
         .img-pick.picked { border-color: var(--gold); }
-        /* 主请柬预览样式 */
+        /* 主请柬预览样式 - 莫兰迪色系 */
         .invitation-card {
-            --card-rgb: 247, 242, 235;
-            --card-alpha: 0.16;
-            --glass-blur: 16px;
-            --glass-saturate: 1.8;
-            --text-strong: #ffffff;
-            --text-body: #faf5ee;
-            --text-muted: rgba(255,248,240,0.9);
-            --text-dim: rgba(255,248,240,0.65);
-            --line: rgba(255,245,235,0.18);
-            --line-strong: rgba(255,245,235,0.3);
-            --card-inset: rgba(255,245,235,0.15);
-            --glow: rgba(0,0,0,0.35);
-            --accent: #d7b26e;
+            --card-rgb: 255, 255, 255;
+            --card-alpha: 0.92;
+            --glass-blur: 20px;
+            --glass-saturate: 1.4;
+            --text-strong: #4a403a;
+            --text-body: #5a4f48;
+            --text-muted: rgba(74, 64, 58, 0.75);
+            --text-dim: rgba(74, 64, 58, 0.55);
+            --line: rgba(74, 64, 58, 0.15);
+            --line-strong: rgba(74, 64, 58, 0.22);
+            --card-inset: rgba(212, 165, 165, 0.12);
+            --glow: rgba(74, 64, 58, 0.15);
+            --accent: #d4a5a5;
             
             text-align: center;
             background: rgba(var(--card-rgb), var(--card-alpha));
-            border: 1px solid rgba(255,245,235,0.28);
+            border: 1px solid rgba(74, 64, 58, 0.12);
             border-radius: 48px;
             padding: 26px 26px 22px;
             color: var(--text-body);
             font-family: 'Noto Serif SC', serif;
             position: relative;
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2);
+            box-shadow: 0 0 0 1px rgba(212, 165, 165, 0.08) inset, 0 10px 40px rgba(74, 64, 58, 0.08);
         }
         .invitation-card .ornament-line {
             display: flex;
@@ -732,59 +737,59 @@
             color: var(--accent);
             margin: 12px 0;
         }
-        /* 子卡类型版式预览 */
+        /* 子卡类型版式预览 - 莫兰迪色系 */
         .sub-card {
-            --text-strong: #ffffff; --text-body: #faf5ee;
-            --text-muted: rgba(255,248,240,0.9); --text-dim: rgba(255,248,240,0.65);
-            --line: rgba(255,245,235,0.18);
-            --accent: #d7b26e;
+            --text-strong: #4a403a; --text-body: #5a4f48;
+            --text-muted: rgba(74, 64, 58, 0.75); --text-dim: rgba(74, 64, 58, 0.55);
+            --line: rgba(74, 64, 58, 0.15);
+            --accent: #d4a5a5;
             width: 100%;
             max-width: 460px;
             text-align: center;
-            background: rgba(247,242,235,0.16);
-            border: 1px solid rgba(255,245,235,0.28);
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(74, 64, 58, 0.12);
             border-radius: 48px; padding: 26px 26px 22px; color: var(--text-body);
             font-family: 'Noto Serif SC', serif;
             position: relative;
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2);
+            box-shadow: 0 0 0 1px rgba(212, 165, 165, 0.08) inset, 0 10px 40px rgba(74, 64, 58, 0.08);
         }
-        .sub-card .emblem { width: 46px; height: 46px; line-height: 1; font-size: 22px; margin: 0 auto 10px; border-radius: 50%; border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent); background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.12), transparent 68%); box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2); position: relative; }
+        .sub-card .emblem { width: 46px; height: 46px; line-height: 1; font-size: 22px; margin: 0 auto 10px; border-radius: 50%; border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent); background: radial-gradient(circle at 50% 32%, rgba(212, 165, 165, 0.1), transparent 68%); box-shadow: 0 0 0 1px rgba(212, 165, 165, 0.08) inset, 0 8px 24px rgba(74, 64, 58, 0.08); position: relative; }
         .sub-card .emblem::before { content: ''; position: absolute; }
-        .sub-card .emblem::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0.35; }
+        .sub-card .emblem::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0.25; }
         .sub-card .type-label { font-size: 13px; letter-spacing: 6px; color: var(--accent); margin-bottom: 6px; padding-left: 5px; text-transform: uppercase; text-align: left; }
         .sub-card .sub-date { font-size: 17px; letter-spacing: 3px; color: var(--text-muted); margin: 8px 0 14px; font-family: 'Cormorant Garamond', serif; font-weight: 500; }
         .sub-card .sub-title { font-size: 24px; color: var(--text-strong); letter-spacing: 2px; margin: 0 0 16px; font-family: 'Cormorant Garamond', 'Songti SC', 'Noto Serif SC', serif; font-weight: 600; }
         .sub-card .sub-content { font-size: 14px; color: var(--text-body); line-height: 2.0; white-space: pre-line; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 16px; font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }
-        /* 各类型专属配色和装饰 */
-        .sub-card.t-meet { --accent: #d7b26e; }
+        /* 各类型专属配色和装饰 - 莫兰迪色系 */
+        .sub-card.t-meet { --accent: #d4a5a5; }
         .sub-card.t-meet .emblem::before { content: '✦'; font-size: 26px; }
         .sub-card.t-meet .sub-title::before { content: '✦ '; color: var(--accent); opacity: 0.7; }
         
-        .sub-card.t-heartbeat { --accent: #e39aa0; }
-        .sub-card.t-heartbeat .emblem { border-width: 2px; box-shadow: 0 0 0 2px rgba(227,154,160,0.15) inset, 0 0 28px rgba(227,154,160,0.25); }
-        .sub-card.t-heartbeat .emblem::after { border-width: 2px; opacity: 0.5; }
+        .sub-card.t-heartbeat { --accent: #e8c4c4; }
+        .sub-card.t-heartbeat .emblem { border-width: 2px; box-shadow: 0 0 0 2px rgba(232, 196, 196, 0.15) inset, 0 0 28px rgba(232, 196, 196, 0.2); }
+        .sub-card.t-heartbeat .emblem::after { border-width: 2px; opacity: 0.4; }
         
-        .sub-card.t-date { --accent: #a9c0d8; }
+        .sub-card.t-date { --accent: #84a59d; }
         .sub-card.t-date .emblem::before { content: '✿'; font-size: 24px; }
         .sub-card.t-date .sub-date { color: var(--accent); font-style: italic; }
         
-        .sub-card.t-confess { --accent: #dfa6d2; }
+        .sub-card.t-confess { --accent: #b89090; }
         .sub-card.t-confess .emblem::before { content: '✎'; font-size: 24px; }
         .sub-card.t-confess .sub-title { font-style: italic; font-weight: 400; }
         
-        .sub-card.t-together { --accent: #c9a9d0; }
+        .sub-card.t-together { --accent: #a3c4bc; }
         .sub-card.t-together .emblem::before { content: '∞'; font-size: 30px; }
         .sub-card.t-together .sub-content { border-top-style: dashed; }
         
-        .sub-card.t-travel { --accent: #7fb6a8; }
+        .sub-card.t-travel { --accent: #6a8a85; }
         .sub-card.t-travel .emblem::before { content: '✈'; font-size: 26px; }
         .sub-card.t-travel .sub-title::after { content: ' ✈'; color: var(--accent); opacity: 0.6; }
         
-        .sub-card.t-propose { --accent: #e2b07a; }
-        .sub-card.t-propose .emblem { border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%; box-shadow: 0 0 0 2px rgba(226,176,122,0.12) inset, 0 0 32px rgba(226,176,122,0.3); }
+        .sub-card.t-propose { --accent: #c9a96e; }
+        .sub-card.t-propose .emblem { border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%; box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.12) inset, 0 0 32px rgba(201, 169, 110, 0.2); }
         .sub-card.t-propose .emblem::after { border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%; }
         
-        .sub-card.t-engage { --accent: #b99a72; }
+        .sub-card.t-engage { --accent: #d4a5a5; }
         .sub-card.t-engage .emblem::before { content: '❁'; font-size: 26px; }
         .sub-card.t-engage .sub-title { text-decoration: underline; text-decoration-color: var(--accent); }
         .preview-title { font-size: 13px; color: var(--text-muted); margin: 6px 0 12px; letter-spacing: 1px; }
