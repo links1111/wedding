@@ -1493,9 +1493,11 @@
 
         function switchMainCard() {
             currentCardId = null;
+            currentCardType = 'meet';
             document.getElementById('mainPane').style.display = '';
             document.getElementById('cardPane').style.display = 'none';
             document.getElementById('previewLabel').textContent = '主请柬预览';
+            renderCardPreview();
             renderCardsList();
         }
 
