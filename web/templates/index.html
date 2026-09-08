@@ -557,25 +557,59 @@
         /* 背景音乐悬浮按钮 */
         .music-btn {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 18px;
+            right: 18px;
             z-index: 50;
-            width: 44px;
-            height: 44px;
-            background: transparent;
-            border: none;
-            color: #ffffff;
-            font-size: 22px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.55);
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(212, 165, 165, 0.35);
+            border-radius: 50%;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 4px 16px rgba(74, 64, 58, 0.18);
         }
-        .music-btn:active { transform: scale(0.92); }
-        .music-btn.playing { animation: musicPulse 2s ease-in-out infinite; }
+        .music-btn::before {
+            content: '♪';
+            font-size: 24px;
+            font-weight: 300;
+            color: rgba(212, 165, 165, 0.95);
+            transition: all 0.35s ease;
+            text-shadow: 0 2px 8px rgba(212, 165, 165, 0.3);
+        }
+        .music-btn:hover {
+            background: rgba(212, 165, 165, 0.18);
+            border-color: rgba(212, 165, 165, 0.55);
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(212, 165, 165, 0.25);
+        }
+        .music-btn:active {
+            transform: scale(0.95);
+        }
+        .music-btn.playing {
+            background: rgba(212, 165, 165, 0.22);
+            border-color: rgba(212, 165, 165, 0.65);
+            box-shadow: 0 6px 24px rgba(212, 165, 165, 0.35);
+            animation: musicRotate 3s linear infinite;
+        }
+        .music-btn.playing::before {
+            content: '❚❚';
+            font-size: 20px;
+            font-weight: 400;
+            letter-spacing: 3px;
+            color: rgba(212, 165, 165, 1);
+            text-shadow: 0 2px 10px rgba(212, 165, 165, 0.5);
+        }
+        @keyframes musicRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         /* 开场手势提示 */
         .gesture-hint {
             position: fixed;
@@ -602,10 +636,6 @@
         .gesture-hint .gh-sub { font-size: 12px; letter-spacing: 1px; color: rgba(245, 236, 228, 0.85); }
         .gesture-hint.show { opacity: 1; transform: translate(-50%, 0); }
         .gesture-hint.hide { opacity: 0; transform: translate(-50%, 8px); }
-        @keyframes musicPulse {
-            0%, 100% { text-shadow: 0 2px 10px rgba(0,0,0,0.55); }
-            50% { text-shadow: 0 2px 16px rgba(0,0,0,0.55), 0 0 14px rgba(255,255,255,0.4); }
-        }
         .footer-note {
             display: flex;
             justify-content: center;
