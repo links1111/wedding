@@ -1199,8 +1199,8 @@
                         </div><!-- /settings-form-area -->
 
                         <!-- 子卡片编辑区 -->
-                        <div id="cardPane" style="display:none; width:100%;">
-                        <div class="settings-form-area">
+                        <div id="cardPane" style="display:none;">
+                        <div class="settings-form-area" style="width:100%;">
                         <div class="form-card">
                             <div style="margin-bottom:12px">
                                 <h3 id="cardEditorTitle" style="margin:0; font-size:15px;">编辑子卡片</h3>
@@ -1230,7 +1230,6 @@
                             </div>
                         </div>
                         </div><!-- /cardPane -->
-                        </div><!-- /settings-form-area -->
                     </div><!-- /settings-content -->
                 </div><!-- /左右分栏 -->
                 </div><!-- /view-settings -->
@@ -1916,7 +1915,7 @@
             document.getElementById('cEnabled').checked = !!cd.enabled;
             document.getElementById('cardMsg').textContent = '';
             document.getElementById('cardMsg').className = 'save-msg';
-            document.getElementById('previewSidebar').style.display = 'none';
+            document.getElementById('previewSidebar').style.display = '';
             renderCardPreview();
             cardImages = (cd.images || []).slice();
             renderCardImgs();
