@@ -944,6 +944,9 @@
 
     <script>
         // ===== token 解析与后台初始化（无登录，token 即访问凭证） =====
+        var ADMIN_TOKEN = (location.pathname.split('/')[2] || '');
+        var API = '/api/a/' + ADMIN_TOKEN;
+        var WEDDING_TOKEN = ''; // 从 API 获取真正的请柬 token
 
         async function initAdmin() {
             let json;
@@ -965,15 +968,18 @@
                 var bride = json.data.bride || '';
                 var couple = groom && bride ? groom + ' & ' + bride : (groom || bride);
                 if (couple) document.title = couple + ' · 婚礼请柬 · 管理后台';
+                // 获取真正的请柬 token
+                WEDDING_TOKEN = json.data.token || '';
             }
             var inviteBtn = document.getElementById('inviteLink');
-            if (inviteBtn) {
+            if (inviteBtn && WEDDING_TOKEN) {
                 inviteBtn.href = '/w/' + WEDDING_TOKEN;
-                inviteBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    window.open('/w/' + WEDDING_TOKEN, '_blank');
             }
             document.getElementById('exportLink').href = API + '/guests/export';
+            showAdmin();
+        }
+        initAdmin();
+
         function showAdmin() {
             document.getElementById('adminLayout').classList.add('show');
             loadStats();
