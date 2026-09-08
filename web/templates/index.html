@@ -1029,6 +1029,7 @@
             let carList = [];
             let carIdx = 0;
             let carTimer = null;
+            let pendingList = null; // 待切换的图片列表（等当前轮播完再应用）
             const carouselEl = document.getElementById('bgCarousel');
 
             function stopCar() { if (carTimer) { clearInterval(carTimer); carTimer = null; } }
@@ -1055,6 +1056,47 @@
                     carouselEl.appendChild(d);
                 });
                 startCar();
+            }
+            // 平滑切换列表：预加载新图片，等当前图片播完再替换
+            function smoothSwitchCarousel(list) {
+                const newList = (list || []).slice();
+                if (!newList.length) return;
+                
+                // 如果列表相同，不需要切换
+                if (list.join('|') === carList.join('|')) return;
+                
+                // 如果已经有待切换的列表，更新它
+                if (pendingList) {
+                    pendingList = newList;
+                    return;
+                }
+                
+                // 预加载新图片
+                pendingList = newList;
+                let loadedCount = 0;
+                const total = newList.length;
+                
+                function onImageLoad() {
+                    loadedCount++;
+                    if (loadedCount >= total) {
+                        // 所有图片加载完成，等待当前轮播周期结束再切换
+                        // 重置定时器，让当前图片完整显示一个周期后再切换
+                        stopCar();
+                        setTimeout(function() {
+                            if (pendingList) {
+                                renderCarousel(pendingList);
+                                pendingList = null;
+                            }
+                        }, 2000); // 等待 2 秒后切换，给用户缓冲时间
+                    }
+                }
+                
+                newList.forEach(function(url) {
+                    const img = new Image();
+                    img.onload = onImageLoad;
+                    img.onerror = onImageLoad; // 加载失败也计数，避免卡住
+                    img.src = url;
+                });
             }
             function carShow(i) {
                 const slides = carouselEl.querySelectorAll('.slide');
@@ -1562,7 +1604,7 @@
                         const list = target.__slideList || [];
                         // 该页没有专属图片：保持上一页的列表继续轮播，不空屏
                         if (!list.length) return;
-                        if (list.join('|') !== carList.join('|')) renderCarousel(list);
+                        if (list.join('|') !== carList.join('|')) smoothSwitchCarousel(list);
                     }, { threshold: [0.55, 0.75, 0.95] });
                     scenes.forEach(function(s) { io.observe(s); });
                 } else {
