@@ -1263,16 +1263,14 @@
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     userInteracted = true;
-                    // 使用 setTimeout 确保在用户交互的上下文中调用
-                    setTimeout(function() {
-                        if (bgm.paused) {
-                            playAudible();
-                        } else if (bgm.muted) {
-                            playAudible();
-                        } else {
-                            stop();
-                        }
-                    }, 0);
+                    // 每次点击都尝试有声播放
+                    if (bgm.paused) {
+                        playAudible();
+                    } else if (bgm.muted) {
+                        playAudible();
+                    } else {
+                        stop();
+                    }
                 });
 
                 // 尝试自动播放策略
@@ -1289,22 +1287,7 @@
                             // 有声播放被拦截，尝试静音播放
                             console.log('自动播放被拦截，尝试静音播放');
                             playMuted();
-                            
-                            // 首次用户手势恢复声音
-                            const firstGesture = function(ev) {
-                                // 如果点击的是音乐按钮，由音乐按钮的点击事件处理
-                                if (ev.target.closest && ev.target.closest('#musicBtn')) return;
-                                
-                                userInteracted = true;
-                                if (bgm.paused || bgm.muted) {
-                                    playAudible();
-                                }
-                                // 移除事件监听，只触发一次
-                                document.removeEventListener('touchstart', firstGesture);
-                                document.removeEventListener('click', firstGesture);
-                            };
-                            document.addEventListener('touchstart', firstGesture, { passive: true });
-                            document.addEventListener('click', firstGesture);
+                            // 全局点击事件会处理恢复声音
                         });
                     }
                 }
@@ -1315,6 +1298,22 @@
                         tryAutoPlay();
                     }
                 });
+
+                // 全局点击事件：每次用户点击都尝试播放音乐
+                document.addEventListener('click', function(e) {
+                    // 如果点击的是音乐按钮，由音乐按钮的点击事件处理
+                    if (e.target.closest && e.target.closest('#musicBtn')) return;
+                    // 如果点击的是回执表单区域，不处理
+                    if (e.target.closest && e.target.closest('.rsvp-end')) return;
+                    
+                    // 每次点击都尝试有声播放
+                    if (bgm.paused) {
+                        userInteracted = true;
+                        playAudible();
+                    } else if (bgm.muted) {
+                        playAudible();
+                    }
+                }, { passive: true });
 
                 // 设置完成后立即尝试自动播放
                 if (document.readyState === 'loading') {
