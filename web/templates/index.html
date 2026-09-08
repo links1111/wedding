@@ -1126,10 +1126,15 @@
                         if (slide.parentNode) slide.parentNode.removeChild(slide);
                     });
                     
-                    // 激活新图片
-                    if (newSlides.length > 0) {
-                        newSlides[0].classList.add('active');
-                    }
+                    // 激活新图片：设置所有新图片的 opacity 为 1（除了当前激活的）
+                    newSlides.forEach(function(slide, index) {
+                        slide.style.opacity = '1';
+                        if (index === 0) {
+                            slide.classList.add('active');
+                        } else {
+                            slide.classList.remove('active');
+                        }
+                    });
                     
                     carList = newList;
                     carIdx = 0;
