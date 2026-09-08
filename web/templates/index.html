@@ -1144,12 +1144,11 @@
             function carShow(i) {
                 const slides = carouselEl.querySelectorAll('.slide');
                 if (!slides.length || !carList.length) return;
-                carIdx = (i + carList.length) % carList.length;
-                // 只更新当前 carList 对应的幻灯片
+                // i 已经是正确的索引，直接使用
+                carIdx = i;
+                // 更新所有幻灯片的 active 类
                 slides.forEach(function(slide, k) {
-                    if (k < carList.length) {
-                        slide.classList.toggle('active', k === carIdx);
-                    }
+                    slide.classList.toggle('active', k === carIdx);
                 });
                 if (carList.length) {
                     computeBrightness(carList[carIdx], function(b) {
