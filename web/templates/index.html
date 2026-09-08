@@ -1068,7 +1068,7 @@
                 });
                 startCar();
             }
-            // 平滑切换列表：预加载新图片，带淡入淡出过渡效果
+            // 平滑切换列表：立即执行淡入淡出切换，同时预加载后续图片
             function smoothSwitchCarousel(list) {
                 const newList = (list || []).slice();
                 if (!newList.length) return;
@@ -1076,32 +1076,12 @@
                 // 如果列表相同，不需要切换
                 if (list.join('|') === carList.join('|')) return;
                 
-                // 如果已经有待切换的列表，更新它
-                if (pendingList) {
-                    pendingList = newList;
-                    return;
-                }
+                // 立即执行淡入淡出切换
+                performFadeSwitch(newList);
                 
-                // 预加载新图片
-                pendingList = newList;
-                let loadedCount = 0;
-                const total = newList.length;
-                
-                function onImageLoad() {
-                    loadedCount++;
-                    if (loadedCount >= total) {
-                        // 所有图片加载完成，执行淡入淡出切换
-                        if (pendingList) {
-                            performFadeSwitch(pendingList);
-                            pendingList = null;
-                        }
-                    }
-                }
-                
+                // 同时预加载新图片（为后续轮播做准备）
                 newList.forEach(function(url) {
                     const img = new Image();
-                    img.onload = onImageLoad;
-                    img.onerror = onImageLoad; // 加载失败也计数，避免卡住
                     img.src = url;
                 });
             }
