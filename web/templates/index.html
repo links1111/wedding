@@ -1213,6 +1213,7 @@
                 
                 let userInteracted = false;
                 let autoPlayAttempted = false;
+                let musicClosed = false; // 标记音乐是否被用户主动关闭
 
                 function markPlaying() {
                     btn.classList.add('playing');
@@ -1278,6 +1279,7 @@
                     bgm.pause();
                     btn.classList.remove('playing');
                     btn.innerHTML = '♪';
+                    musicClosed = true; // 标记音乐被用户主动关闭
                 }
 
                 // 仅当音频在用户操作前就加载失败（文件缺失等）才隐藏按钮；播放错误不隐藏
@@ -1289,6 +1291,7 @@
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     userInteracted = true;
+                    musicClosed = false; // 用户点击音乐按钮，取消关闭状态
                     // 每次点击都尝试有声播放
                     if (bgm.paused) {
                         playAudible();
@@ -1325,12 +1328,15 @@
                     }
                 });
 
-                // 全局点击事件：每次用户点击都尝试播放音乐
+                // 全局点击事件：每次用户点击都尝试播放音乐（仅当音乐未被主动关闭时）
                 document.addEventListener('click', function(e) {
                     // 如果点击的是音乐按钮，由音乐按钮的点击事件处理
                     if (e.target.closest && e.target.closest('#musicBtn')) return;
                     // 如果点击的是回执表单区域，不处理
                     if (e.target.closest && e.target.closest('.rsvp-end')) return;
+                    
+                    // 如果音乐被用户主动关闭，点击页面不自动播放
+                    if (musicClosed) return;
                     
                     // 每次点击都尝试有声播放，不管当前状态
                     userInteracted = true;
