@@ -32,28 +32,36 @@
             scroll-snap-align: start;
             scroll-snap-stop: normal;
         }
-        /* 顶部常驻“长按看清文字”提示 */
+        /* 顶部常驻交互提示 */
         .gesture-top {
             position: fixed;
-            top: 18px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 55;
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 7px 16px;
+            gap: 10px;
+            padding: 8px 20px;
             border-radius: 50px;
-            background: rgba(15,12,10,0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,245,235,0.16);
-            color: rgba(255,245,235,0.85);
-            font-size: 12px;
-            letter-spacing: 2px;
+            background: linear-gradient(135deg, rgba(201,169,110,0.12), rgba(201,169,110,0.06));
+            backdrop-filter: blur(12px) saturate(1.3);
+            -webkit-backdrop-filter: blur(12px) saturate(1.3);
+            border: 1px solid rgba(201,169,110,0.25);
+            color: rgba(255,245,235,0.92);
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 3px;
             pointer-events: none;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-            max-width: 88vw;
+            box-shadow: 0 6px 20px rgba(201,169,110,0.15), 0 0 0 1px rgba(255,245,235,0.08) inset;
+            max-width: 90vw;
+            text-transform: uppercase;
+        }
+        .gesture-top::before {
+            content: '✦';
+            font-size: 14px;
+            color: rgba(201,169,110,0.8);
+            line-height: 1;
         }
         .carousel-bg {
             position: fixed;
@@ -847,8 +855,8 @@
     <audio id="bgm" loop preload="auto" playsinline webkit-playsinline></audio>
     <button class="music-btn" id="musicBtn" aria-label="背景音乐">♪</button>
 
-    <!-- 顶部常驻提示：长按看清文字 -->
-    <div class="gesture-top" id="gestureHint">长按，让文字更清晰</div>
+    <!-- 顶部常驻交互提示 -->
+    <div class="gesture-top" id="gestureHint">长按查看详情</div>
 
     <!-- ===== 轮播 & API 对接 ===== -->
     <script>
