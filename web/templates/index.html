@@ -1046,7 +1046,9 @@
             function stopCar() { if (carTimer) { clearInterval(carTimer); carTimer = null; } }
             function startCar() {
                 stopCar();
-                if (carList.length > 1) carTimer = setInterval(function() { carNext(1); }, 5000);
+                if (carList.length > 1) {
+                    carTimer = setInterval(function() { carNext(1); }, 5000);
+                }
             }
             // 渲染当前列表：淡入首图，列表切换平滑
             function renderCarousel(list) {
@@ -1137,9 +1139,14 @@
             }
             function carShow(i) {
                 const slides = carouselEl.querySelectorAll('.slide');
-                if (!slides.length) return;
-                carIdx = (i + slides.length) % slides.length;
-                for (let k = 0; k < slides.length; k++) slides[k].classList.toggle('active', k === carIdx);
+                if (!slides.length || !carList.length) return;
+                carIdx = (i + carList.length) % carList.length;
+                // 只更新当前 carList 对应的幻灯片
+                slides.forEach(function(slide, k) {
+                    if (k < carList.length) {
+                        slide.classList.toggle('active', k === carIdx);
+                    }
+                });
                 if (carList.length) {
                     computeBrightness(carList[carIdx], function(b) {
                         if (b != null) {
@@ -1216,10 +1223,20 @@
                 // 有声播放（需用户手势或浏览器放行自动播放）
                 function playAudible() {
                     bgm.muted = false;
+                    // 确保在用户交互的上下文中调用
                     const p = bgm.play();
-                    if (p) p.then(markPlaying).catch(function(err) {
-                        console.log('有声播放失败:', err);
-                    });
+                    if (p && p.catch) {
+                        p.then(function() {
+                            markPlaying();
+                        }).catch(function(err) {
+                            console.log('有声播放失败:', err);
+                            // 如果失败，尝试静音播放
+                            playMuted();
+                        });
+                    } else if (p) {
+                        // 某些浏览器直接返回 undefined，需要手动检查
+                        if (!bgm.paused) markPlaying();
+                    }
                 }
                 
                 // 静音播放：浏览器普遍放行，用于"一打开就在播"，首笔手势恢复声音
@@ -1246,13 +1263,16 @@
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
                     userInteracted = true;
-                    if (bgm.paused) {
-                        playAudible();
-                    } else if (bgm.muted) {
-                        playAudible();
-                    } else {
-                        stop();
-                    }
+                    // 使用 setTimeout 确保在用户交互的上下文中调用
+                    setTimeout(function() {
+                        if (bgm.paused) {
+                            playAudible();
+                        } else if (bgm.muted) {
+                            playAudible();
+                        } else {
+                            stop();
+                        }
+                    }, 0);
                 });
 
                 // 尝试自动播放策略
@@ -1272,14 +1292,19 @@
                             
                             // 首次用户手势恢复声音
                             const firstGesture = function(ev) {
+                                // 如果点击的是音乐按钮，由音乐按钮的点击事件处理
                                 if (ev.target.closest && ev.target.closest('#musicBtn')) return;
+                                
+                                userInteracted = true;
+                                if (bgm.paused || bgm.muted) {
+                                    playAudible();
+                                }
+                                // 移除事件监听，只触发一次
                                 document.removeEventListener('touchstart', firstGesture);
                                 document.removeEventListener('click', firstGesture);
-                                userInteracted = true;
-                                if (bgm.paused || bgm.muted) playAudible();
                             };
-                            document.addEventListener('touchstart', firstGesture, { once: true });
-                            document.addEventListener('click', firstGesture, { once: true });
+                            document.addEventListener('touchstart', firstGesture, { passive: true });
+                            document.addEventListener('click', firstGesture);
                         });
                     }
                 }
