@@ -403,80 +403,145 @@
             margin-bottom: 18px;
             letter-spacing: 1px;
         }
-        /* 左侧卡片列表（纵向菜单） */
+        /* 左侧卡片列表 — 时间轴 */
         .cards-sidebar {
-            width: 220px;
+            width: 240px;
             flex-shrink: 0;
             background: var(--bg-card);
             border-right: 1px solid var(--border);
-            padding: 16px 0;
+            padding: 20px 0 12px;
             overflow-y: auto;
             max-height: calc(100vh - 120px);
         }
         .cards-sidebar-title {
-            padding: 0 20px 12px;
-            font-size: 12px;
-            color: var(--text-muted);
-            letter-spacing: 1px;
+            padding: 0 20px 16px;
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 2px;
             text-transform: uppercase;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 12px;
         }
-        .card-item {
+        /* 时间轴容器 */
+        .timeline {
+            position: relative;
+            padding: 0 0 8px 0;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 28px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, var(--border) 8%, var(--border) 92%, transparent);
+        }
+        /* 时间轴节点项 */
+        .tl-item {
+            position: relative;
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
+            padding: 6px 12px 6px 0;
             cursor: pointer;
-            color: var(--text-muted);
-            font-size: 13px;
-            border-left: 3px solid transparent;
             transition: all 0.2s;
+        }
+        .tl-item:hover { background: rgba(255,255,255,0.02); }
+        .tl-item.active { background: rgba(201,169,110,0.06); }
+        /* 节点圆点 */
+        .tl-dot {
+            width: 32px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
+            z-index: 1;
         }
-        .card-item:hover {
-            color: var(--text);
-            background: rgba(255,255,255,0.02);
-        }
-        .card-item.active {
-            color: var(--gold-light);
-            border-left-color: var(--gold);
-            background: rgba(201,169,110,0.08);
-        }
-        .card-item .card-icon {
-            font-size: 14px;
-            opacity: 0.8;
-            width: 20px;
-            text-align: center;
-        }
-        .card-item .card-del {
-            margin-left: auto;
-            width: 18px;
-            height: 18px;
+        .tl-dot::before {
+            content: '';
+            width: 10px; height: 10px;
             border-radius: 50%;
-            background: rgba(255,107,107,0.15);
-            color: var(--red);
-            font-size: 12px;
-            line-height: 1;
+            background: var(--bg-card);
+            border: 2px solid var(--text-dim);
+            transition: all 0.25s;
+        }
+        .tl-item:hover .tl-dot::before {
+            border-color: var(--gold-dark);
+        }
+        .tl-item.active .tl-dot::before {
+            width: 12px; height: 12px;
+            border-color: var(--gold);
+            background: var(--gold);
+            box-shadow: 0 0 12px rgba(201,169,110,0.5);
+        }
+        /* 主请柬节点：星形大节点 */
+        .tl-item.main-card .tl-dot::before {
+            width: 14px; height: 14px;
+            border-color: var(--gold);
+            background: var(--gold);
+            box-shadow: 0 0 14px rgba(201,169,110,0.4);
+        }
+        .tl-item.main-card.active .tl-dot::before {
+            width: 16px; height: 16px;
+            box-shadow: 0 0 18px rgba(201,169,110,0.6);
+        }
+        /* 节点内容 */
+        .tl-content {
+            flex: 1;
+            min-width: 0;
+            padding-left: 4px;
+        }
+        .tl-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.2s;
+        }
+        .tl-item:hover .tl-label { color: var(--text); }
+        .tl-item.active .tl-label { color: var(--gold-light); font-weight: 500; }
+        .tl-type {
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-top: 1px;
+        }
+        .tl-item.active .tl-type { color: var(--gold-dark); }
+        /* 节点操作按钮组 */
+        .tl-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+        .tl-item:hover .tl-actions { opacity: 1; }
+        .tl-item.active .tl-actions { opacity: 1; }
+        .tl-btn {
+            width: 18px; height: 16px;
             border: none;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-dim);
+            font-size: 10px;
+            line-height: 1;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
+            transition: all 0.15s;
         }
-        .card-item .card-del:hover {
-            background: var(--red);
-            color: #fff;
-        }
-        .card-item.main-card .card-del { display: none; }
+        .tl-btn:hover { background: rgba(201,169,110,0.2); color: var(--gold-light); }
+        .tl-btn.del:hover { background: rgba(255,107,107,0.2); color: var(--red); }
+        .tl-item.main-card .tl-actions { display: none; }
+        /* 添加卡片按钮 */
         .add-card-btn {
-            margin: 12px 16px;
+            margin: 8px 16px 4px;
             padding: 8px 16px;
-            border: 1px dashed var(--gold);
+            border: 1px dashed var(--gold-dark);
             border-radius: 6px;
             background: none;
-            color: var(--gold);
+            color: var(--gold-dark);
             font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
@@ -487,6 +552,8 @@
         }
         .add-card-btn:hover {
             background: rgba(201,169,110,0.1);
+            border-color: var(--gold);
+            color: var(--gold);
         }
         /* 右侧内容区 - 左右分栏 */
         .settings-content {
@@ -723,7 +790,7 @@
             .stat-value { font-size: 24px; }
             th, td { padding: 10px 12px; font-size: 12px; }
             .search-input { width: 120px; }
-            /* 设置页面响应式：窄屏时左侧列表变为顶部横向滚动 */
+            /* 设置页面响应式：窄屏时时间轴变为顶部横向滚动 */
             .cards-sidebar {
                 width: 100%;
                 max-height: none;
@@ -732,23 +799,27 @@
                 padding: 12px 0;
             }
             .cards-sidebar-title { display: none; }
-            #cardsList {
+            .timeline {
                 display: flex;
                 flex-wrap: nowrap;
                 overflow-x: auto;
-                gap: 8px;
+                gap: 4px;
                 padding: 0 16px;
             }
-            .card-item {
+            .timeline::before { display: none; }
+            .tl-item {
                 flex: 0 0 auto;
-                border-left: none;
-                border-bottom: 3px solid transparent;
-                padding: 8px 16px;
+                flex-direction: column;
+                padding: 8px 12px;
+                border-bottom: 2px solid transparent;
+                border-radius: 6px;
             }
-            .card-item.active {
-                border-left-color: transparent;
+            .tl-item.active {
                 border-bottom-color: var(--gold);
+                background: rgba(201,169,110,0.08);
             }
+            .tl-dot { width: auto; margin-bottom: 4px; }
+            .tl-actions { flex-direction: row; opacity: 1; }
             .add-card-btn { margin: 0 16px 0 8px; }
             .settings-content {
                 padding: 16px 0;
@@ -893,10 +964,10 @@
                 <div class="view" id="view-settings">
                 <!-- 左右分栏布局 -->
                 <div style="display:flex; gap:20px;">
-                    <!-- 左侧卡片列表 -->
+                    <!-- 左侧卡片列表 — 时间轴 -->
                     <div class="cards-sidebar">
-                        <div class="cards-sidebar-title">卡片列表</div>
-                        <div id="cardsList"></div>
+                        <div class="cards-sidebar-title">故事时间轴</div>
+                        <div id="cardsList" class="timeline"></div>
                         <button class="add-card-btn" id="addCardBtn">
                             <span>+</span>
                             <select class="cards-add-select" id="cardsAddType" style="border:none; padding:0; margin-left:4px;">
@@ -1022,12 +1093,8 @@
                         <!-- 子卡片编辑区 -->
                         <div class="settings-form-area" id="cardPane" style="display:none">
                         <div class="form-card">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                            <div style="margin-bottom:12px">
                                 <h3 id="cardEditorTitle" style="margin:0; font-size:15px;">编辑子卡片</h3>
-                                <span style="display:flex; gap:8px;">
-                                    <button class="upload-btn" id="cardUpBtn" style="padding:6px 12px; font-size:12px;">↑上移</button>
-                                    <button class="upload-btn" id="cardDownBtn" style="padding:6px 12px; font-size:12px;">↓下移</button>
-                                </span>
                             </div>
                             <div class="form-grid">
                                 <div class="form-field"><label>标题</label><input type="text" id="cTitle" maxlength="100"></div>
@@ -1050,7 +1117,6 @@
                             </div>
                             <div class="form-actions">
                                 <button class="save-btn" id="cardSaveBtn">保存卡片</button>
-                                <button class="upload-btn" id="cardDelBtn" style="color:var(--red);border-color:var(--red)">删除卡片</button>
                                 <span class="save-msg" id="cardMsg"></span>
                             </div>
                         </div>
@@ -1469,45 +1535,76 @@
             var list = document.getElementById('cardsList');
             if (!list) return;
             list.innerHTML = '';
-            
-            // 主请柬
+
+            // 主请柬节点
             var main = document.createElement('div');
-            main.className = 'card-item main-card' + (currentCardId == null ? ' active' : '');
+            main.className = 'tl-item main-card' + (currentCardId == null ? ' active' : '');
             main.dataset.card = 'main';
-            main.innerHTML = '<span class="card-icon">✉</span><span>主请柬</span>';
+            main.innerHTML =
+                '<div class="tl-dot"></div>' +
+                '<div class="tl-content">' +
+                    '<div class="tl-label">主请柬</div>' +
+                    '<div class="tl-type">邀请函</div>' +
+                '</div>';
             main.onclick = function() { switchMainCard(); };
             list.appendChild(main);
-            
-            // 各子卡
-            cardsData.forEach(function(cd) {
+
+            // 各子卡节点
+            cardsData.forEach(function(cd, idx) {
                 var meta = TYPE_META[cd.type] || TYPE_META.meet;
                 var item = document.createElement('div');
-                item.className = 'card-item' + (currentCardId === cd.id ? ' active' : '');
+                item.className = 'tl-item' + (currentCardId === cd.id ? ' active' : '');
                 item.dataset.card = cd.id;
                 item.dataset.cardId = cd.id;
-                
-                var icon = document.createElement('span');
-                icon.className = 'card-icon';
-                icon.textContent = meta.g;
-                
-                var title = document.createElement('span');
-                title.textContent = (cd.title || '未命名').substring(0, 12);
-                if ((cd.title || '').length > 12) title.title = cd.title;
-                
+
+                var dot = document.createElement('div');
+                dot.className = 'tl-dot';
+
+                var content = document.createElement('div');
+                content.className = 'tl-content';
+                var label = document.createElement('div');
+                label.className = 'tl-label';
+                label.textContent = (cd.title || '未命名').substring(0, 12);
+                if ((cd.title || '').length > 12) label.title = cd.title;
+                var type = document.createElement('div');
+                type.className = 'tl-type';
+                type.textContent = meta.label;
+                content.appendChild(label);
+                content.appendChild(type);
+
+                var actions = document.createElement('div');
+                actions.className = 'tl-actions';
+
+                var upBtn = document.createElement('button');
+                upBtn.className = 'tl-btn';
+                upBtn.innerHTML = '↑';
+                upBtn.title = '上移';
+                upBtn.onclick = function(e) { e.stopPropagation(); moveCardById(cd.id, -1); };
+
+                var downBtn = document.createElement('button');
+                downBtn.className = 'tl-btn';
+                downBtn.innerHTML = '↓';
+                downBtn.title = '下移';
+                downBtn.onclick = function(e) { e.stopPropagation(); moveCardById(cd.id, 1); };
+
                 var delBtn = document.createElement('button');
-                delBtn.className = 'card-del';
+                delBtn.className = 'tl-btn del';
                 delBtn.innerHTML = '×';
-                delBtn.title = '删除此卡片';
+                delBtn.title = '删除';
                 delBtn.onclick = function(e) {
                     e.stopPropagation();
                     if (confirm('确定要删除卡片「' + (cd.title || '未命名') + '」吗？')) {
                         deleteCard(cd.id);
                     }
                 };
-                
-                item.appendChild(icon);
-                item.appendChild(title);
-                item.appendChild(delBtn);
+
+                actions.appendChild(upBtn);
+                actions.appendChild(downBtn);
+                actions.appendChild(delBtn);
+
+                item.appendChild(dot);
+                item.appendChild(content);
+                item.appendChild(actions);
                 item.onclick = function() { openCard(cd.id); };
                 list.appendChild(item);
             });
@@ -1613,12 +1710,12 @@
             if (fail) alert(ok + ' 张成功，' + fail + ' 张失败');
         }
 
-        // 左侧卡片列表：点击切换主请柬 / 子卡（事件委托）
+        // 左侧时间轴：点击切换主请柬 / 子卡（事件委托）
         document.getElementById('cardsList').addEventListener('click', function(e) {
-            var item = e.target.closest('.card-item');
+            // 如果点击的是操作按钮，不触发切换
+            if (e.target.closest('.tl-btn')) return;
+            var item = e.target.closest('.tl-item');
             if (!item) return;
-            // 如果点击的是删除按钮，不触发切换
-            if (e.target.closest('.card-del')) return;
             if (item.dataset.card === 'main') switchMainCard();
             else openCard(parseInt(item.dataset.card, 10));
         });
@@ -1672,11 +1769,9 @@
             btn.disabled = false;
         }
 
-        document.getElementById('cardUpBtn').addEventListener('click', function(){ moveCard(-1); });
-        document.getElementById('cardDownBtn').addEventListener('click', function(){ moveCard(1); });
-        async function moveCard(dir) {
-            if (currentCardId == null) return;
-            var idx = cardsData.findIndex(function(c){ return c.id === currentCardId; });
+        // 通过 ID 移动任意卡片（供时间轴按钮调用）
+        async function moveCardById(cardId, dir) {
+            var idx = cardsData.findIndex(function(c){ return c.id === cardId; });
             var j = idx + dir;
             if (idx < 0 || j < 0 || j >= cardsData.length) return;
             var arr = cardsData.slice();
@@ -1707,16 +1802,6 @@
                 alert('网络错误');
             }
         }
-
-        document.getElementById('cardDelBtn').addEventListener('click', async function() {
-            if (currentCardId == null) return;
-            if (!confirm('确定删除这张子卡片？')) return;
-            try {
-                var res = await fetch(API + '/cards/' + currentCardId, { method: 'DELETE' });
-                var json = await res.json();
-                if (json.ok) { switchMainCard(); loadCards(); } else alert(json.error || '删除失败');
-            } catch(e) { alert('网络错误'); }
-        });
 
         // ===== 背景图片管理（多文件 + 可选压缩） =====
         document.getElementById('uploadBtn').addEventListener('click', uploadImages);
