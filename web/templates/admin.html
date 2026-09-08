@@ -488,22 +488,26 @@
         .add-card-btn:hover {
             background: rgba(201,169,110,0.1);
         }
-        /* 右侧内容区 */
+        /* 右侧内容区 - 左右分栏 */
         .settings-content {
             flex: 1;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 24px;
-            overflow-y: auto;
+            gap: 24px;
+            padding: 24px 0;
+            overflow: hidden;
         }
-        /* 预览区 */
-        .preview-panel {
+        /* 左侧预览区 - 固定 */
+        .preview-sidebar {
+            width: 320px;
+            flex-shrink: 0;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
             text-align: center;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
         }
         .preview-label {
             font-size: 12px;
@@ -511,6 +515,12 @@
             letter-spacing: 1px;
             margin-bottom: 16px;
             text-transform: uppercase;
+        }
+        /* 右侧设置区 - 可滚动 */
+        .settings-form-area {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 8px;
         }
         /* 添加卡片：下拉直选类型即建 */
         .cards-add-select {
@@ -717,8 +727,19 @@
                 border-bottom-color: var(--gold);
             }
             .add-card-btn { margin: 0 16px 0 8px; }
-            .settings-content { padding: 16px; }
-            .preview-panel { padding: 16px; }
+            .settings-content {
+                padding: 16px 0;
+                flex-direction: column;
+            }
+            .preview-sidebar {
+                width: 100%;
+                position: static;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+            .settings-form-area {
+                padding-right: 0;
+            }
         }
     </style>
 </head>
@@ -863,13 +884,14 @@
 
                     <!-- 右侧内容区 -->
                     <div class="settings-content">
-                        <!-- 预览区 -->
-                        <div class="preview-panel">
+                        <!-- 左侧预览区 - 固定 -->
+                        <div class="preview-sidebar">
                             <div class="preview-label" id="previewLabel">主请柬预览</div>
                             <div id="cardPreview"></div>
                         </div>
 
-                        <!-- 设置项 -->
+                        <!-- 右侧设置区 - 可滚动 -->
+                        <div class="settings-form-area">
                         <div id="mainPane">
                         <!-- 请柬内容 -->
                         <div class="form-card">
@@ -972,9 +994,10 @@
                             <div class="empty-tip" id="audioEmpty" style="display:none;">暂无上传的音乐文件</div>
                         </div><!-- /背景音乐 form-card -->
                         </div><!-- /mainPane -->
+                        </div><!-- /settings-form-area -->
 
                         <!-- 子卡片编辑区 -->
-                        <div id="cardPane" style="display:none">
+                        <div class="settings-form-area" id="cardPane" style="display:none">
                         <div class="form-card">
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
                                 <h3 id="cardEditorTitle" style="margin:0; font-size:15px;">编辑子卡片</h3>
@@ -1009,6 +1032,7 @@
                             </div>
                         </div>
                         </div><!-- /cardPane -->
+                        </div><!-- /settings-form-area -->
                     </div><!-- /settings-content -->
                 </div><!-- /左右分栏 -->
                 </div><!-- /view-settings -->
