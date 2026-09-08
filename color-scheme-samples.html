@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级配色方案对比</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', 'Noto Serif SC', sans-serif; 
+            background: #1a1a2e; 
+            color: #fff; 
+            padding: 40px; 
+        }
+        h1 { 
+            text-align: center; 
+            margin-bottom: 40px; 
+            font-size: 28px; 
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+        
+        .schemes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 30px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .scheme-card {
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+        
+        .scheme-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .scheme-preview {
+            height: 300px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+        }
+        
+        .scheme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .scheme-title {
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        
+        .scheme-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+        
+        .demo-card {
+            flex: 1;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .demo-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .demo-text {
+            font-size: 13px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .demo-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: auto;
+            align-self: flex-start;
+        }
+        
+        .color-strip {
+            display: flex;
+            gap: 4px;
+            margin-top: 16px;
+        }
+        
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .color-label {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 4px;
+            text-align: center;
+        }
+        
+        /* 方案一：莫兰迪粉 + 灰蓝绿 */
+        .scheme-1 {
+            background: linear-gradient(135deg, #faf7f5 0%, #f0ebe8 100%);
+            color: #4a403a;
+        }
+        .scheme-1 .demo-card {
+            background: #ffffff;
+            color: #4a403a;
+        }
+        .scheme-1 .demo-title { color: #4a403a; }
+        .scheme-1 .demo-text { color: #6b5f56; }
+        .scheme-1 .demo-btn {
+            background: #d4a5a5;
+            color: #fff;
+        }
+        .scheme-1 .demo-btn:hover {
+            background: #c99898;
+        }
+        
+        /* 方案二：雾霾蓝 + 燕麦色 */
+        .scheme-2 {
+            background: linear-gradient(135deg, #f5f5f7 0%, #e8e8eb 100%);
+            color: #37474f;
+        }
+        .scheme-2 .demo-card {
+            background: #ffffff;
+            color: #37474f;
+            border: 1px solid #78909c;
+        }
+        .scheme-2 .demo-title { color: #37474f; }
+        .scheme-2 .demo-text { color: #546e7a; }
+        .scheme-2 .demo-btn {
+            background: #78909c;
+            color: #fff;
+        }
+        .scheme-2 .demo-btn:hover {
+            background: #607d8b;
+        }
+        
+        /* 方案三：灰紫 + 鼠尾草绿 */
+        .scheme-3 {
+            background: linear-gradient(135deg, #f8f6f3 0%, #efebe6 100%);
+            color: #2c2431;
+        }
+        .scheme-3 .demo-card {
+            background: #ffffff;
+            color: #2c2431;
+            box-shadow: 0 4px 20px rgba(149, 125, 173, 0.2);
+        }
+        .scheme-3 .demo-title { color: #2c2431; }
+        .scheme-3 .demo-text { color: #5d5466; }
+        .scheme-3 .demo-btn {
+            background: #957dad;
+            color: #fff;
+        }
+        .scheme-3 .demo-btn:hover {
+            background: #7d6596;
+        }
+        
+        /* 方案四：海军蓝 + 奶油黄 */
+        .scheme-4 {
+            background: linear-gradient(135deg, #e0e5ec 0%, #d0dbe8 100%);
+            color: #293241;
+        }
+        .scheme-4 .demo-card {
+            background: #ffffff;
+            color: #293241;
+            border: 2px solid #3d5a80;
+        }
+        .scheme-4 .demo-title { color: #293241; }
+        .scheme-4 .demo-text { color: #3d5a80; }
+        .scheme-4 .demo-btn {
+            background: #ee6c4d;
+            color: #fff;
+        }
+        .scheme-4 .demo-btn:hover {
+            background: #d65a3b;
+        }
+        
+        /* 方案五：灰绿 + 陶土色 */
+        .scheme-5 {
+            background: linear-gradient(135deg, #f4f1de 0%, #ebe5c9 100%);
+            color: #3d3d3d;
+        }
+        .scheme-5 .demo-card {
+            background: #ffffff;
+            color: #3d3d3d;
+            box-shadow: 0 4px 20px rgba(135, 169, 148, 0.2);
+        }
+        .scheme-5 .demo-title { color: #3d3d3d; }
+        .scheme-5 .demo-text { color: #5d5d5d; }
+        .scheme-5 .demo-btn {
+            background: #87a994;
+            color: #fff;
+        }
+        .scheme-5 .demo-btn:hover {
+            background: #6d8f7a;
+        }
+    </style>
+</head>
+<body>
+    <h1>高级配色方案对比</h1>
+    
+    <div class="schemes-grid">
+        <!-- 方案一：莫兰迪粉 + 灰蓝绿 -->
+        <div class="scheme-card">
+            <div class="scheme-preview scheme-1">
+                <div class="scheme-header">
+                    <div>
+                        <div class="scheme-title">莫兰迪粉 × 灰蓝绿</div>
+                        <div class="scheme-subtitle">法式轻奢 · 高级香水广告</div>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-title">婚礼请柬</div>
+                    <div class="demo-text">
+                        李明 & 王芳<br>
+                        诚邀您见证我们的幸福时刻<br>
+                        2025 年 5 月 20 日
+                    </div>
+                    <button class="demo-btn">查看详情</button>
+                </div>
+                <div class="color-strip">
+                    <div>
+                        <div class="color-swatch" style="background: #d4a5a5;"></div>
+                        <div class="color-label">干枯玫瑰</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #84a59d;"></div>
+                        <div class="color-label">灰蓝绿</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #faf7f5;"></div>
+                        <div class="color-label">暖灰白</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #c9a96e;"></div>
+                        <div class="color-label">香槟金</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 方案二：雾霾蓝 + 燕麦色 -->
+        <div class="scheme-card">
+            <div class="scheme-preview scheme-2">
+                <div class="scheme-header">
+                    <div>
+                        <div class="scheme-title">雾霾蓝 × 燕麦色</div>
+                        <div class="scheme-subtitle">北欧极简 · 苹果发布会</div>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-title">婚礼请柬</div>
+                    <div class="demo-text">
+                        李明 & 王芳<br>
+                        诚邀您见证我们的幸福时刻<br>
+                        2025 年 5 月 20 日
+                    </div>
+                    <button class="demo-btn">查看详情</button>
+                </div>
+                <div class="color-strip">
+                    <div>
+                        <div class="color-swatch" style="background: #78909c;"></div>
+                        <div class="color-label">雾霾蓝</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #d7c49e;"></div>
+                        <div class="color-label">燕麦色</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #f5f5f7;"></div>
+                        <div class="color-label">浅灰白</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #e5989b;"></div>
+                        <div class="color-label">脏粉色</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 方案三：灰紫 + 鼠尾草绿 -->
+        <div class="scheme-card">
+            <div class="scheme-preview scheme-3">
+                <div class="scheme-header">
+                    <div>
+                        <div class="scheme-title">灰紫 × 鼠尾草绿</div>
+                        <div class="scheme-subtitle">现代艺术 · 美术馆展览</div>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-title">婚礼请柬</div>
+                    <div class="demo-text">
+                        李明 & 王芳<br>
+                        诚邀您见证我们的幸福时刻<br>
+                        2025 年 5 月 20 日
+                    </div>
+                    <button class="demo-btn">查看详情</button>
+                </div>
+                <div class="color-strip">
+                    <div>
+                        <div class="color-swatch" style="background: #957dad;"></div>
+                        <div class="color-label">灰紫色</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #b2b8a8;"></div>
+                        <div class="color-label">鼠尾草绿</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #f8f6f3;"></div>
+                        <div class="color-label">米灰白</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #d4a574;"></div>
+                        <div class="color-label">琥珀色</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 方案四：海军蓝 + 奶油黄 -->
+        <div class="scheme-card">
+            <div class="scheme-preview scheme-4">
+                <div class="scheme-header">
+                    <div>
+                        <div class="scheme-title">海军蓝 × 奶油黄</div>
+                        <div class="scheme-subtitle">英伦学院 · 常春藤盟校</div>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-title">婚礼请柬</div>
+                    <div class="demo-text">
+                        李明 & 王芳<br>
+                        诚邀您见证我们的幸福时刻<br>
+                        2025 年 5 月 20 日
+                    </div>
+                    <button class="demo-btn">查看详情</button>
+                </div>
+                <div class="color-strip">
+                    <div>
+                        <div class="color-swatch" style="background: #3d5a80;"></div>
+                        <div class="color-label">海军蓝</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #ee6c4d;"></div>
+                        <div class="color-label">奶油黄</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #e0e5ec;"></div>
+                        <div class="color-label">浅灰蓝</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #ee6c4d;"></div>
+                        <div class="color-label">珊瑚红</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 方案五：灰绿 + 陶土色 -->
+        <div class="scheme-card">
+            <div class="scheme-preview scheme-5">
+                <div class="scheme-header">
+                    <div>
+                        <div class="scheme-title">灰绿 × 陶土色</div>
+                        <div class="scheme-subtitle">日式侘寂 · 无印良品</div>
+                    </div>
+                </div>
+                <div class="demo-card">
+                    <div class="demo-title">婚礼请柬</div>
+                    <div class="demo-text">
+                        李明 & 王芳<br>
+                        诚邀您见证我们的幸福时刻<br>
+                        2025 年 5 月 20 日
+                    </div>
+                    <button class="demo-btn">查看详情</button>
+                </div>
+                <div class="color-strip">
+                    <div>
+                        <div class="color-swatch" style="background: #87a994;"></div>
+                        <div class="color-label">灰绿色</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #c7826b;"></div>
+                        <div class="color-label">陶土色</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #f4f1de;"></div>
+                        <div class="color-label">浅米色</div>
+                    </div>
+                    <div>
+                        <div class="color-swatch" style="background: #e3b341;"></div>
+                        <div class="color-label">芥末黄</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

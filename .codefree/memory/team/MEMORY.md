@@ -1,0 +1,17 @@
+# Memory Index
+## project — subcard-design
+婚礼请柬系统子卡片视觉设计规范：8 种卡片类型需有独立的视觉装饰和样式，避免简单重复。相遇（meet）：星形徽记，标题前缀装饰。心动（heartbeat）：双层边框，增强阴影。约会（date）：花朵徽记，斜体日期。表白（confess）：笔形徽记，斜体标题。在一起（together）：无限符号徽记，...
+## project — color-scheme
+婚礼请柬系统配色规范（方案一：法式轻奢）：主色调：干枯玫瑰粉 (#d4a5a5)；辅助色：灰蓝绿 (#84a59d)；背景：暖灰白 (#faf7f5)
+## project — settings-preview-logic
+婚礼请柬系统设置页面预览功能逻辑： - 主请柬编辑时：左侧预览栏显示主请柬完整预览（调用 renderMainCardPreview），右侧显示主请柬配置表单。 - 子卡片编辑时：左侧预览栏显示对应子卡片预览（调用 renderCardPreview），右侧显示子卡片编辑表单。 - 预览栏显示/隐藏...
+## feedback — careful-before-edit
+用户要求：每次修改代码后必须 git commit。修改前务必仔细排查问题根因，一次性修改正确，强调错误修改会导致严重事故。排查时要完整阅读相关代码和布局层级后再动手，不要急于修改。用户对"桌面端空间有限"这类错误假设非常不满，要求认真对待用户的明确指令（如"保持和 index 一致"）。
+## project — admin-preview-link
+婚礼请柬系统管理后台查看请柬跳转逻辑：管理后台通过 /admin/{admin_token} 访问，admin_token 不是请柬 token。；必须从 /api/a/:token/meta 接口返回数据中的 token 字段获取真正的请柬 token。
+## project — settings-layout
+婚礼请柬系统设置页面布局与交互规范：整体布局为左右分栏结构。左侧为时间轴样式卡片列表（宽度 220px），右侧为内容区（预览 + 设置）。左侧时间轴：垂直渐变金线为主干，卡片为节点（圆点）。主请柬节点更大更亮带金色发光；选中节点实心金色发光且文字变金色。节点内容显示卡片标题与类型标签。每个子卡片节点...
+## project — carousel-smooth-switch
+婚礼请柬系统轮播图平滑切换机制：当用户滚动到不同卡片时，轮播图不再立即重置，而是先预加载新图片列表，等待当前图片完整显示（约 2 秒缓冲期）且所有新图片加载完成后，再平滑替换图片列表。保持原有轮播逻辑不变，仅优化切换时机，避免突兀效果。滚动吸附使用 scroll-snap-stop: normal，...
+## project — active-initiative
+当前工作流：Fix view invitation button not jumping to correct page；Convert settings page card list to horizontal menu (later changed to vertical sidebar)
