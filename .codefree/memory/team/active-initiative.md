@@ -2,7 +2,7 @@
 name: active-initiative
 type: project
 scope: team
-description: 当前工作流：Fix view invitation button not jumping to correct page；Convert settings page card list to horizontal menu (later changed to vertical sidebar)
-updated: "2026-09-08T03:03:02.944Z"
+description: "当前工作流：编辑页面右上角的查看请柬按钮点击后跳转不到请柬页面;设置页面:顶部的卡片列表改成横向菜单,子卡片文字后面添加删除x按钮,点击是删除;优化添加卡片的下拉框;子卡片太简单了需要针对每种类型单独做设计;每次修改代码后记得git commit；管理页面右上角的查看请柬跳转过去是空的，应该和总览页..."
+updated: "2026-09-08T03:08:25.827Z"
 ---
-当前工作流：Fix view invitation button not jumping to correct page；Convert settings page card list to horizontal menu (later changed to vertical sidebar)
+当前工作流：编辑页面右上角的查看请柬按钮点击后跳转不到请柬页面;设置页面:顶部的卡片列表改成横向菜单,子卡片文字后面添加删除x按钮,点击是删除;优化添加卡片的下拉框;子卡片太简单了需要针对每种类型单独做设计;每次修改代码后记得git commit；管理页面右上角的查看请柬跳转过去是空的，应该和总览页面的预览按钮逻辑一致，检查token是不是不对
