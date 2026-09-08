@@ -498,12 +498,13 @@
         }
         /* 左侧预览区 - 固定 */
         .preview-sidebar {
-            width: 320px;
+            width: 260px;
+            max-width: 260px;
             flex-shrink: 0;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 20px;
+            padding: 16px;
             text-align: center;
             height: fit-content;
             position: sticky;
@@ -734,7 +735,7 @@
             .preview-sidebar {
                 width: 100%;
                 position: static;
-                max-width: 400px;
+                max-width: 320px;
                 margin: 0 auto;
             }
             .settings-form-area {
