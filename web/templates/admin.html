@@ -403,68 +403,122 @@
             margin-bottom: 18px;
             letter-spacing: 1px;
         }
-        /* 卡片菜单栏：单行横向滚动，主请柬 + 各子卡 + 末尾下拉添加 */
-        .cards-tabs {
+        /* 左侧卡片列表（纵向菜单） */
+        .cards-sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+        }
+        .cards-sidebar-title {
+            padding: 0 20px 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+        .card-item {
             display: flex;
-            flex-wrap: nowrap;
             align-items: center;
             gap: 8px;
-            margin-bottom: 22px;
-            border-bottom: 1px solid var(--border);
-            padding: 0 2px 12px;
-            overflow-x: auto;
-            scrollbar-width: thin;
-        }
-        .cards-tabs::-webkit-scrollbar { height: 4px; }
-        .cards-tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-        .cards-tab {
-            flex: 0 0 auto;
-            padding: 7px 16px;
+            padding: 10px 20px;
             cursor: pointer;
             color: var(--text-muted);
             font-size: 13px;
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            transition: all 0.3s;
-            white-space: nowrap;
-            background: none;
-            font-family: inherit;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
             position: relative;
         }
-        .cards-tab:hover { color: var(--text); border-color: var(--gold); }
-        .cards-tab.active { background: var(--gold); color: #0f0f1a; font-weight: 600; border-color: var(--gold); }
-        .cards-tab .del-x {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 16px;
-            height: 16px;
+        .card-item:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.02);
+        }
+        .card-item.active {
+            color: var(--gold-light);
+            border-left-color: var(--gold);
+            background: rgba(201,169,110,0.08);
+        }
+        .card-item .card-icon {
+            font-size: 14px;
+            opacity: 0.8;
+            width: 20px;
+            text-align: center;
+        }
+        .card-item .card-del {
+            margin-left: auto;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            background: rgba(255,107,107,0.2);
+            background: rgba(255,107,107,0.15);
             color: var(--red);
             font-size: 12px;
             line-height: 1;
-            cursor: pointer;
-            transition: all 0.2s;
             border: none;
-            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
-        .cards-tab .del-x:hover {
+        .card-item .card-del:hover {
             background: var(--red);
             color: #fff;
         }
-        .cards-tab.main-card .del-x { display: none; }
+        .card-item.main-card .card-del { display: none; }
+        .add-card-btn {
+            margin: 12px 16px;
+            padding: 8px 16px;
+            border: 1px dashed var(--gold);
+            border-radius: 6px;
+            background: none;
+            color: var(--gold);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .add-card-btn:hover {
+            background: rgba(201,169,110,0.1);
+        }
+        /* 右侧内容区 */
+        .settings-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        /* 预览区 */
+        .preview-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .preview-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
         /* 添加卡片：下拉直选类型即建 */
         .cards-add-select {
-            flex: 0 0 auto;
-            padding: 7px 12px;
+            padding: 6px 12px;
             color: var(--gold);
-            font-size: 13px;
+            font-size: 12px;
             border: 1px dashed var(--gold);
-            border-radius: 20px;
+            border-radius: 6px;
             background: none;
             font-family: inherit;
             cursor: pointer;
@@ -472,9 +526,8 @@
             -webkit-appearance: none;
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23c9a962' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
             background-repeat: no-repeat;
-            background-position: right 10px center;
-            padding-right: 26px;
-            max-width: 170px;
+            background-position: right 8px center;
+            padding-right: 24px;
         }
         .cards-add-select option { background: #1b1626; color: var(--text); }
         .img-pick { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
@@ -637,6 +690,35 @@
             .stat-value { font-size: 24px; }
             th, td { padding: 10px 12px; font-size: 12px; }
             .search-input { width: 120px; }
+            /* 设置页面响应式：窄屏时左侧列表变为顶部横向滚动 */
+            .cards-sidebar {
+                width: 100%;
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 12px 0;
+            }
+            .cards-sidebar-title { display: none; }
+            #cardsList {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 8px;
+                padding: 0 16px;
+            }
+            .card-item {
+                flex: 0 0 auto;
+                border-left: none;
+                border-bottom: 3px solid transparent;
+                padding: 8px 16px;
+            }
+            .card-item.active {
+                border-left-color: transparent;
+                border-bottom-color: var(--gold);
+            }
+            .add-card-btn { margin: 0 16px 0 8px; }
+            .settings-content { padding: 16px; }
+            .preview-panel { padding: 16px; }
         }
     </style>
 </head>
@@ -765,154 +847,171 @@
                 </div><!-- /view-visits -->
 
                 <div class="view" id="view-settings">
-                <div class="table-card" style="padding: 24px;">
-                <!-- 卡片菜单栏：主请柬 + 各子卡 + 下拉直选添加（JS 动态构建） -->
-                <div class="cards-tabs" id="cardsTabs"></div>
-                <div id="mainPane">
-                <!-- 请柬内容 -->
-                <div class="form-card">
-                    <h3>请柬内容</h3>
-                    <div class="form-grid">
-                        <div class="form-field"><label>新郎姓名</label><input type="text" id="setGroom" maxlength="50"></div>
-                        <div class="form-field"><label>新娘姓名</label><input type="text" id="setBride" maxlength="50"></div>
-                        <div class="form-field"><label>婚礼日期（用于倒计时）</label><input type="date" id="setWeddingDate"></div>
-                        <div class="form-field"><label>主标题</label><input type="text" id="setChineseTitle" maxlength="50"></div>
-                        <div class="form-field"><label>日期主文案</label><input type="text" id="setDateMain" maxlength="100"></div>
-                        <div class="form-field"><label>日期副文案</label><input type="text" id="setDateSub" maxlength="100"></div>
-                        <div class="form-field"><label>举办地点</label><input type="text" id="setVenue" maxlength="100"></div>
-                        <div class="form-field"><label>仪式 · 标题</label><input type="text" id="setCeremonyTitle" maxlength="50"></div>
-                        <div class="form-field"><label>仪式 · 说明</label><input type="text" id="setCeremonySub" maxlength="100"></div>
-                        <div class="form-field"><label>仪式 · 时间</label><input type="text" id="setCeremonyTime" maxlength="20" placeholder="如 15:30"></div>
-                        <div class="form-field"><label>晚宴 · 标题</label><input type="text" id="setDinnerTitle" maxlength="50"></div>
-                        <div class="form-field"><label>晚宴 · 说明</label><input type="text" id="setDinnerSub" maxlength="100"></div>
-                        <div class="form-field"><label>晚宴 · 时间</label><input type="text" id="setDinnerTime" maxlength="20" placeholder="如 18:00"></div>
-                        <div class="form-field"><label>着装 · 标题</label><input type="text" id="setDressTitle" maxlength="50"></div>
-                        <div class="form-field"><label>着装 · 说明</label><input type="text" id="setDressSub" maxlength="100"></div>
-                        <div class="form-field"><label>底部文案 1</label><input type="text" id="setFooter1" maxlength="50"></div>
-                        <div class="form-field"><label>底部文案 2</label><input type="text" id="setFooter2" maxlength="50"></div>
-                        <div class="form-field"><label>底部文案 3</label><input type="text" id="setFooter3" maxlength="50"></div>
-                        <div class="form-field"><label>手写寄语</label><input type="text" id="setHandwrite" maxlength="100"></div>
-                        <div class="form-field"><label>导航链接（选填）</label><input type="text" id="setMapLink" maxlength="500" placeholder="留空则按地点跳高德地图"></div>
-                        <div class="form-field"><label>背景音乐地址</label><input type="text" id="setMusicUrl" maxlength="500" placeholder="/static/music/bgm.mp3 或外链"></div>
+                <!-- 左右分栏布局 -->
+                <div style="display:flex; gap:20px;">
+                    <!-- 左侧卡片列表 -->
+                    <div class="cards-sidebar">
+                        <div class="cards-sidebar-title">卡片列表</div>
+                        <div id="cardsList"></div>
+                        <button class="add-card-btn" id="addCardBtn">
+                            <span>+</span>
+                            <select class="cards-add-select" id="cardsAddType" style="border:none; padding:0; margin-left:4px;">
+                                <option value="" disabled selected>添加卡片</option>
+                            </select>
+                        </button>
                     </div>
-                </div>
 
-                <!-- 卡片样式 -->
-                <div class="form-card">
-                    <h3>卡片样式</h3>
-                    <div class="form-grid">
-                        <div class="form-field">
-                            <label>卡片透明度</label>
-                            <div class="range-row">
-                                <input type="range" id="setTransparency" min="0" max="100" value="15">
-                                <output id="setTransparencyVal">15%</output>
+                    <!-- 右侧内容区 -->
+                    <div class="settings-content">
+                        <!-- 预览区 -->
+                        <div class="preview-panel">
+                            <div class="preview-label" id="previewLabel">主请柬预览</div>
+                            <div id="cardPreview"></div>
+                        </div>
+
+                        <!-- 设置项 -->
+                        <div id="mainPane">
+                        <!-- 请柬内容 -->
+                        <div class="form-card">
+                            <h3>请柬内容</h3>
+                            <div class="form-grid">
+                                <div class="form-field"><label>新郎姓名</label><input type="text" id="setGroom" maxlength="50"></div>
+                                <div class="form-field"><label>新娘姓名</label><input type="text" id="setBride" maxlength="50"></div>
+                                <div class="form-field"><label>婚礼日期（用于倒计时）</label><input type="date" id="setWeddingDate"></div>
+                                <div class="form-field"><label>主标题</label><input type="text" id="setChineseTitle" maxlength="50"></div>
+                                <div class="form-field"><label>日期主文案</label><input type="text" id="setDateMain" maxlength="100"></div>
+                                <div class="form-field"><label>日期副文案</label><input type="text" id="setDateSub" maxlength="100"></div>
+                                <div class="form-field"><label>举办地点</label><input type="text" id="setVenue" maxlength="100"></div>
+                                <div class="form-field"><label>仪式 · 标题</label><input type="text" id="setCeremonyTitle" maxlength="50"></div>
+                                <div class="form-field"><label>仪式 · 说明</label><input type="text" id="setCeremonySub" maxlength="100"></div>
+                                <div class="form-field"><label>仪式 · 时间</label><input type="text" id="setCeremonyTime" maxlength="20" placeholder="如 15:30"></div>
+                                <div class="form-field"><label>晚宴 · 标题</label><input type="text" id="setDinnerTitle" maxlength="50"></div>
+                                <div class="form-field"><label>晚宴 · 说明</label><input type="text" id="setDinnerSub" maxlength="100"></div>
+                                <div class="form-field"><label>晚宴 · 时间</label><input type="text" id="setDinnerTime" maxlength="20" placeholder="如 18:00"></div>
+                                <div class="form-field"><label>着装 · 标题</label><input type="text" id="setDressTitle" maxlength="50"></div>
+                                <div class="form-field"><label>着装 · 说明</label><input type="text" id="setDressSub" maxlength="100"></div>
+                                <div class="form-field"><label>底部文案 1</label><input type="text" id="setFooter1" maxlength="50"></div>
+                                <div class="form-field"><label>底部文案 2</label><input type="text" id="setFooter2" maxlength="50"></div>
+                                <div class="form-field"><label>底部文案 3</label><input type="text" id="setFooter3" maxlength="50"></div>
+                                <div class="form-field"><label>手写寄语</label><input type="text" id="setHandwrite" maxlength="100"></div>
+                                <div class="form-field"><label>导航链接（选填）</label><input type="text" id="setMapLink" maxlength="500" placeholder="留空则按地点跳高德地图"></div>
+                                <div class="form-field"><label>背景音乐地址</label><input type="text" id="setMusicUrl" maxlength="500" placeholder="/static/music/bgm.mp3 或外链"></div>
                             </div>
                         </div>
-                        <div class="form-field">
-                            <label>毛玻璃效果</label>
-                            <div class="checkbox-row">
-                                <input type="checkbox" id="setGlassEnabled" checked>
-                                <span style="font-size:13px;color:var(--text-muted)">启用</span>
+
+                        <!-- 卡片样式 -->
+                        <div class="form-card">
+                            <h3>卡片样式</h3>
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label>卡片透明度</label>
+                                    <div class="range-row">
+                                        <input type="range" id="setTransparency" min="0" max="100" value="15">
+                                        <output id="setTransparencyVal">15%</output>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label>毛玻璃效果</label>
+                                    <div class="checkbox-row">
+                                        <input type="checkbox" id="setGlassEnabled" checked>
+                                        <span style="font-size:13px;color:var(--text-muted)">启用</span>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label>模糊强度（px）</label>
+                                    <div class="range-row">
+                                        <input type="range" id="setGlassBlur" min="0" max="50" value="16">
+                                        <output id="setGlassBlurVal">16px</output>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label>色彩饱和度（%）</label>
+                                    <div class="range-row">
+                                        <input type="range" id="setGlassSaturate" min="100" max="300" value="180">
+                                        <output id="setGlassSaturateVal">180%</output>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label>卡片底色</label>
+                                    <input type="color" id="setCardColor" value="#f7f2eb" style="width:64px;height:32px;">
+                                </div>
                             </div>
                         </div>
-                        <div class="form-field">
-                            <label>模糊强度（px）</label>
-                            <div class="range-row">
-                                <input type="range" id="setGlassBlur" min="0" max="50" value="16">
-                                <output id="setGlassBlurVal">16px</output>
+
+                        <div class="form-actions">
+                            <button class="save-btn" id="saveSettingsBtn">保存设置</button>
+                            <span class="save-msg" id="settingsMsg"></span>
+                        </div>
+
+                        <!-- 背景图片 -->
+                        <div class="form-card">
+                            <h3>背景图片</h3>
+                            <div class="upload-row">
+                                <input type="file" class="upload-input" id="imageFile" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp" multiple>
+                                <button class="upload-btn" id="uploadBtn">上传</button>
+                                <label class="checkbox-row" style="font-size:13px;color:var(--text-muted);margin-left:4px;">
+                                    <input type="checkbox" id="compressImages" checked>
+                                    压缩图片（自动缩放到最佳大小）
+                                </label>
+                                <span class="upload-hint">可一次选择多张图片；勾选压缩后，上传时自动将长边缩至 1920px 并统一转为 JPEG。单张原图不超过 20MB。轮播图会展示 images 目录下的全部图片（按文件名排序）。</span>
+                            </div>
+                            <div class="upload-status" id="uploadStatus"></div>
+                            <div class="img-grid" id="imageGrid"></div>
+                            <div class="empty-tip" id="imageEmpty" style="display:none;">暂无背景图片</div>
+                        </div><!-- /背景图片 form-card -->
+
+                        <!-- 背景音乐 -->
+                        <div class="form-card">
+                            <h3>背景音乐</h3>
+                            <div class="upload-row">
+                                <input type="file" class="upload-input" id="audioFile" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,audio/flac">
+                                <button class="upload-btn" id="audioUploadBtn">上传音乐</button>
+                                <span class="upload-hint">支持 mp3 / wav / ogg / m4a / aac / flac，不超过 20MB。上传后点下方"使用"设为背景音乐，或在"背景音乐地址"直接填 URL。</span>
+                            </div>
+                            <div class="img-grid" id="audioGrid"></div>
+                            <div class="empty-tip" id="audioEmpty" style="display:none;">暂无上传的音乐文件</div>
+                        </div><!-- /背景音乐 form-card -->
+                        </div><!-- /mainPane -->
+
+                        <!-- 子卡片编辑区 -->
+                        <div id="cardPane" style="display:none">
+                        <div class="form-card">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                                <h3 id="cardEditorTitle" style="margin:0; font-size:15px;">编辑子卡片</h3>
+                                <span style="display:flex; gap:8px;">
+                                    <button class="upload-btn" id="cardUpBtn" style="padding:6px 12px; font-size:12px;">↑上移</button>
+                                    <button class="upload-btn" id="cardDownBtn" style="padding:6px 12px; font-size:12px;">↓下移</button>
+                                </span>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-field"><label>标题</label><input type="text" id="cTitle" maxlength="100"></div>
+                                <div class="form-field"><label>日期</label><input type="text" id="cDate" maxlength="50" placeholder="如 2020-05-20 / 2019 年夏"></div>
+                                <div class="form-field" style="grid-column:1/-1"><label>正文（≤2000 字）</label><textarea id="cContent" maxlength="2000" style="min-height:100px"></textarea></div>
+                                <div class="form-field">
+                                    <label>是否启用</label>
+                                    <div class="checkbox-row"><input type="checkbox" id="cEnabled" checked><span style="font-size:13px;color:var(--text-muted)">在请柬中展示此卡</span></div>
+                                </div>
+                            </div>
+                            <div class="form-card" style="margin-top:16px">
+                                <h3 style="margin-bottom:10px; font-size:14px;">本卡背景图片（每卡单独上传）</h3>
+                                <div class="upload-row">
+                                    <input type="file" class="upload-input" id="cImageFile" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp" multiple>
+                                    <button class="upload-btn" id="cImageUploadBtn">上传到本卡</button>
+                                    <span class="upload-hint">支持 jpg/png/gif/webp/bmp，单张 ≤20MB，可一次多选，自动压缩长边至 1920px。上传后作为本卡专属背景。</span>
+                                </div>
+                                <div class="img-grid" id="cImageList"></div>
+                                <div class="empty-tip" id="cImageEmpty" style="display:none">本卡暂无背景图片</div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="save-btn" id="cardSaveBtn">保存卡片</button>
+                                <button class="upload-btn" id="cardDelBtn" style="color:var(--red);border-color:var(--red)">删除卡片</button>
+                                <span class="save-msg" id="cardMsg"></span>
                             </div>
                         </div>
-                        <div class="form-field">
-                            <label>色彩饱和度（%）</label>
-                            <div class="range-row">
-                                <input type="range" id="setGlassSaturate" min="100" max="300" value="180">
-                                <output id="setGlassSaturateVal">180%</output>
-                            </div>
-                        </div>
-                        <div class="form-field">
-                            <label>卡片底色</label>
-                            <input type="color" id="setCardColor" value="#f7f2eb" style="width:64px;height:32px;">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button class="save-btn" id="saveSettingsBtn">保存设置</button>
-                    <span class="save-msg" id="settingsMsg"></span>
-                </div>
-
-                <!-- 背景图片 -->
-                <div class="form-card" style="margin-top:30px;">
-                    <h3>背景图片</h3>
-                    <div class="upload-row">
-                        <input type="file" class="upload-input" id="imageFile" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp" multiple>
-                        <button class="upload-btn" id="uploadBtn">上传</button>
-                        <label class="checkbox-row" style="font-size:13px;color:var(--text-muted);margin-left:4px;">
-                            <input type="checkbox" id="compressImages" checked>
-                            压缩图片（自动缩放到最佳大小）
-                        </label>
-                        <span class="upload-hint">可一次选择多张图片；勾选压缩后，上传时自动将长边缩至 1920px 并统一转为 JPEG。单张原图不超过 20MB。轮播图会展示 images 目录下的全部图片（按文件名排序）。</span>
-                    </div>
-                    <div class="upload-status" id="uploadStatus"></div>
-                    <div class="img-grid" id="imageGrid"></div>
-                    <div class="empty-tip" id="imageEmpty" style="display:none;">暂无背景图片</div>
-                    </div><!-- /背景图片 form-card -->
-
-                    <!-- 背景音乐 -->
-                    <div class="form-card" style="margin-top:30px;">
-                        <h3>背景音乐</h3>
-                        <div class="upload-row">
-                            <input type="file" class="upload-input" id="audioFile" accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,audio/flac">
-                            <button class="upload-btn" id="audioUploadBtn">上传音乐</button>
-                            <span class="upload-hint">支持 mp3 / wav / ogg / m4a / aac / flac，不超过 20MB。上传后点下方"使用"设为背景音乐，或在"背景音乐地址"直接填 URL。</span>
-                        </div>
-                        <div class="img-grid" id="audioGrid"></div>
-                        <div class="empty-tip" id="audioEmpty" style="display:none;">暂无上传的音乐文件</div>
-                    </div><!-- /背景音乐 form-card -->
-                </div><!-- /mainPane -->
-
-                <!-- 子卡片编辑区 -->
-                <div id="cardPane" style="display:none">
-                <div class="form-card" style="margin-bottom:0">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                        <h3 id="cardEditorTitle" style="margin:0">编辑子卡片</h3>
-                        <span>
-                            <button class="upload-btn" id="cardUpBtn">↑上移</button>
-                            <button class="upload-btn" id="cardDownBtn">↓下移</button>
-                        </span>
-                    </div>
-                    <div style="text-align:center;margin:8px 0 14px">
-                        <div class="preview-title">当前类型版式预览（随编辑实时更新）</div>
-                        <div id="cardPreview"></div>
-                    </div>
-                    <div class="form-grid">
-                        <div class="form-field"><label>标题</label><input type="text" id="cTitle" maxlength="100"></div>
-                        <div class="form-field"><label>日期</label><input type="text" id="cDate" maxlength="50" placeholder="如 2020-05-20 / 2019 年夏"></div>
-                        <div class="form-field" style="grid-column:1/-1"><label>正文（≤2000 字）</label><textarea id="cContent" maxlength="2000" style="min-height:100px"></textarea></div>
-                        <div class="form-field">
-                            <label>是否启用</label>
-                            <div class="checkbox-row"><input type="checkbox" id="cEnabled" checked><span style="font-size:13px;color:var(--text-muted)">在请柬中展示此卡</span></div>
-                        </div>
-                    </div>
-                    <div class="form-card" style="margin-top:8px">
-                        <h3 style="margin-bottom:10px">本卡背景图片（每卡单独上传，可多张作轮播）</h3>
-                        <div class="upload-row">
-                            <input type="file" class="upload-input" id="cImageFile" accept="image/jpeg,image/png,image/gif,image/webp,image/bmp" multiple>
-                            <button class="upload-btn" id="cImageUploadBtn">上传到本卡</button>
-                            <span class="upload-hint">支持 jpg/png/gif/webp/bmp，单张 ≤20MB，可一次多选，自动压缩长边至 1920px。上传后作为本卡专属背景，不会进入上方主图库或主卡轮播。</span>
-                        </div>
-                        <div class="img-grid" id="cImageList"></div>
-                        <div class="empty-tip" id="cImageEmpty" style="display:none">本卡暂无背景图片（请柬将沿用全局背景）</div>
-                    </div>
-                    <div class="form-actions">
-                        <button class="save-btn" id="cardSaveBtn">保存卡片</button>
-                        <button class="upload-btn" id="cardDelBtn" style="color:var(--red);border-color:var(--red)">删除卡片</button>
-                        <span class="save-msg" id="cardMsg"></span>
-                    </div>
-                </div>
-                </div><!-- /cardPane -->
-                </div><!-- /table-card -->
-            </div><!-- /view-settings -->
+                        </div><!-- /cardPane -->
+                    </div><!-- /settings-content -->
+                </div><!-- /左右分栏 -->
+                </div><!-- /view-settings -->
             </div><!-- /main-content -->
         </div><!-- /admin-body -->
     </div><!-- /admin-layout -->
@@ -1273,52 +1372,16 @@
                 } else {
                     switchMainCard();
                 }
-                renderCardsTabs();
+                renderCardsList();
+                // 初始化添加卡片下拉框
+                initAddCardSelect();
             } catch(e) {}
         }
 
-        function renderCardsTabs() {
-            var bar = document.getElementById('cardsTabs');
-            bar.innerHTML = '';
-            // 主请柬
-            var main = document.createElement('button');
-            main.type = 'button';
-            main.className = 'cards-tab main-card' + (currentCardId == null ? ' active' : '');
-            main.dataset.card = 'main';
-            main.innerHTML = '<span>✉ 主请柬</span>';
-            bar.appendChild(main);
-            // 各子卡（图标 + 标题 + 删除按钮）
-            cardsData.forEach(function(cd) {
-                var meta = TYPE_META[cd.type] || TYPE_META.meet;
-                var b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'cards-tab' + (currentCardId === cd.id ? ' active' : '');
-                b.dataset.card = cd.id;
-                b.dataset.cardId = cd.id;
-                b.title = cd.title || '未命名';
-                var span = document.createElement('span');
-                span.textContent = (meta.g ? meta.g + ' ' : '') + (cd.title || '未命名');
-                b.appendChild(span);
-                // 删除按钮
-                var delBtn = document.createElement('button');
-                delBtn.type = 'button';
-                delBtn.className = 'del-x';
-                delBtn.innerHTML = '×';
-                delBtn.title = '删除此卡片';
-                delBtn.onclick = function(e) {
-                    e.stopPropagation();
-                    if (confirm('确定要删除卡片「' + (cd.title || '未命名') + '」吗？')) {
-                        deleteCard(cd.id);
-                    }
-                };
-                b.appendChild(delBtn);
-                bar.appendChild(b);
-            });
-            // 添加卡片：优化下拉框 - 分组显示
-            var sel = document.createElement('select');
-            sel.id = 'cardsAddType';
-            sel.className = 'cards-add-select';
-            sel.title = '添加卡片';
+        function initAddCardSelect() {
+            var sel = document.getElementById('cardsAddType');
+            if (!sel) return;
+            sel.innerHTML = '';
             var ph = document.createElement('option');
             ph.value = '';
             ph.textContent = '+ 添加卡片';
@@ -1331,46 +1394,84 @@
             var otherTypes = ['travel'];
             
             // 常见类型
-            var group1 = document.createElement('optgroup');
-            group1.label = '常见类型';
             commonTypes.forEach(function(t) {
                 var o = document.createElement('option');
                 o.value = t;
                 o.textContent = TYPE_META[t].g + ' ' + TYPE_META[t].label;
-                group1.appendChild(o);
+                sel.appendChild(o);
             });
-            sel.appendChild(group1);
             
             // 浪漫类型
-            var group2 = document.createElement('optgroup');
-            group2.label = '浪漫类型';
             romanticTypes.forEach(function(t) {
                 var o = document.createElement('option');
                 o.value = t;
                 o.textContent = TYPE_META[t].g + ' ' + TYPE_META[t].label;
-                group2.appendChild(o);
+                sel.appendChild(o);
             });
-            sel.appendChild(group2);
             
             // 其他类型
-            var group3 = document.createElement('optgroup');
-            group3.label = '其他';
             otherTypes.forEach(function(t) {
                 var o = document.createElement('option');
                 o.value = t;
                 o.textContent = TYPE_META[t].g + ' ' + TYPE_META[t].label;
-                group3.appendChild(o);
+                sel.appendChild(o);
             });
-            sel.appendChild(group3);
+        }
+
+        function renderCardsList() {
+            var list = document.getElementById('cardsList');
+            if (!list) return;
+            list.innerHTML = '';
             
-            bar.appendChild(sel);
+            // 主请柬
+            var main = document.createElement('div');
+            main.className = 'card-item main-card' + (currentCardId == null ? ' active' : '');
+            main.dataset.card = 'main';
+            main.innerHTML = '<span class="card-icon">✉</span><span>主请柬</span>';
+            main.onclick = function() { switchMainCard(); };
+            list.appendChild(main);
+            
+            // 各子卡
+            cardsData.forEach(function(cd) {
+                var meta = TYPE_META[cd.type] || TYPE_META.meet;
+                var item = document.createElement('div');
+                item.className = 'card-item' + (currentCardId === cd.id ? ' active' : '');
+                item.dataset.card = cd.id;
+                item.dataset.cardId = cd.id;
+                
+                var icon = document.createElement('span');
+                icon.className = 'card-icon';
+                icon.textContent = meta.g;
+                
+                var title = document.createElement('span');
+                title.textContent = (cd.title || '未命名').substring(0, 12);
+                if ((cd.title || '').length > 12) title.title = cd.title;
+                
+                var delBtn = document.createElement('button');
+                delBtn.className = 'card-del';
+                delBtn.innerHTML = '×';
+                delBtn.title = '删除此卡片';
+                delBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    if (confirm('确定要删除卡片「' + (cd.title || '未命名') + '」吗？')) {
+                        deleteCard(cd.id);
+                    }
+                };
+                
+                item.appendChild(icon);
+                item.appendChild(title);
+                item.appendChild(delBtn);
+                item.onclick = function() { openCard(cd.id); };
+                list.appendChild(item);
+            });
         }
 
         function switchMainCard() {
             currentCardId = null;
             document.getElementById('mainPane').style.display = '';
             document.getElementById('cardPane').style.display = 'none';
-            renderCardsTabs();
+            document.getElementById('previewLabel').textContent = '主请柬预览';
+            renderCardsList();
         }
 
         function openCard(id) {
@@ -1378,9 +1479,11 @@
             if (!cd) return;
             currentCardId = id;
             currentCardType = cd.type || 'meet';
+            var meta = TYPE_META[cd.type] || TYPE_META.meet;
             document.getElementById('mainPane').style.display = 'none';
             document.getElementById('cardPane').style.display = '';
             document.getElementById('cardEditorTitle').textContent = (cd.title || '编辑卡片');
+            document.getElementById('previewLabel').textContent = (meta.g ? meta.g + ' ' : '') + (cd.title || '未命名') + ' 预览';
             document.getElementById('cTitle').value = cd.title || '';
             document.getElementById('cDate').value = cd.date || '';
             document.getElementById('cContent').value = cd.content || '';
@@ -1390,7 +1493,7 @@
             renderCardPreview();
             cardImages = (cd.images || []).slice();
             renderCardImgs();
-            renderCardsTabs();
+            renderCardsList();
         }
 
         // ===== 本卡背景图：单独上传（非主图库） =====
@@ -1461,21 +1564,22 @@
             if (fail) alert(ok + ' 张成功，' + fail + ' 张失败');
         }
 
-        // 卡片菜单栏：点击切换主请柬 / 子卡（事件委托）
-        document.getElementById('cardsTabs').addEventListener('click', function(e) {
-            var tab = e.target.closest('.cards-tab');
-            if (!tab) return;
-            if (tab.dataset.card === 'main') switchMainCard();
-            else openCard(parseInt(tab.dataset.card, 10));
+        // 左侧卡片列表：点击切换主请柬 / 子卡（事件委托）
+        document.getElementById('cardsList').addEventListener('click', function(e) {
+            var item = e.target.closest('.card-item');
+            if (!item) return;
+            // 如果点击的是删除按钮，不触发切换
+            if (e.target.closest('.card-del')) return;
+            if (item.dataset.card === 'main') switchMainCard();
+            else openCard(parseInt(item.dataset.card, 10));
         });
 
-        // 添加卡片：下拉直选类型，选中立即创建并进入编辑
-        document.getElementById('cardsTabs').addEventListener('change', function(e) {
-            var sel = e.target;
-            if (!sel || sel.id !== 'cardsAddType') return;
+        // 添加卡片按钮
+        document.getElementById('addCardBtn').addEventListener('click', function(e) {
+            var sel = document.getElementById('cardsAddType');
             var type = sel.value;
-            sel.value = ''; // 复位回占位提示
             if (!type) return;
+            sel.value = ''; // 复位
             addCardByType(type);
         });
 
