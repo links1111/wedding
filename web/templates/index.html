@@ -1224,17 +1224,22 @@
                     bgm.muted = false;
                     // 确保在用户交互的上下文中调用
                     const p = bgm.play();
-                    if (p && p.catch) {
+                    if (p && typeof p.then === 'function') {
                         p.then(function() {
                             markPlaying();
                         }).catch(function(err) {
-                            console.log('有声播放失败:', err);
+                            console.log('有声播放失败:', err.message || err);
                             // 如果失败，尝试静音播放
                             playMuted();
                         });
-                    } else if (p) {
+                    } else {
                         // 某些浏览器直接返回 undefined，需要手动检查
-                        if (!bgm.paused) markPlaying();
+                        if (!bgm.paused) {
+                            markPlaying();
+                        } else {
+                            // 如果播放失败且处于暂停状态，尝试静音播放
+                            playMuted();
+                        }
                     }
                 }
                 
@@ -1242,9 +1247,31 @@
                 function playMuted() {
                     bgm.muted = true;
                     const p = bgm.play();
-                    if (p) p.then(markPlaying).catch(function(err) {
-                        console.log('静音播放失败:', err);
-                    });
+                    if (p && typeof p.then === 'function') {
+                        p.then(function() {
+                            markPlaying();
+                        }).catch(function(err) {
+                            console.log('静音播放失败:', err.message || err);
+                            // 如果静音播放也失败，尝试暂停后再播放
+                            bgm.pause();
+                            setTimeout(function() {
+                                bgm.currentTime = 0; // 重置到开头
+                                bgm.muted = false;
+                                const p2 = bgm.play();
+                                if (p2 && typeof p2.then === 'function') {
+                                    p2.then(function() {
+                                        markPlaying();
+                                    }).catch(function(err2) {
+                                        console.log('重试播放失败:', err2.message || err2);
+                                    });
+                                }
+                            }, 100);
+                        });
+                    } else {
+                        if (!bgm.paused) {
+                            markPlaying();
+                        }
+                    }
                 }
                 
                 function stop() {
@@ -1305,13 +1332,15 @@
                     // 如果点击的是回执表单区域，不处理
                     if (e.target.closest && e.target.closest('.rsvp-end')) return;
                     
-                    // 每次点击都尝试有声播放
-                    if (bgm.paused) {
-                        userInteracted = true;
-                        playAudible();
-                    } else if (bgm.muted) {
-                        playAudible();
+                    // 每次点击都尝试有声播放，不管当前状态
+                    userInteracted = true;
+                    // 先暂停，再播放，确保触发播放
+                    if (!bgm.paused) {
+                        bgm.pause();
                     }
+                    setTimeout(function() {
+                        playAudible();
+                    }, 50);
                 }, { passive: true });
 
                 // 设置完成后立即尝试自动播放
