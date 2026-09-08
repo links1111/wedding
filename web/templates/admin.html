@@ -547,35 +547,55 @@
         .sub-card {
             --text-strong: #ffffff; --text-body: #faf5ee;
             --text-muted: rgba(255,248,240,0.9); --text-dim: rgba(255,248,240,0.65);
-            max-width: 300px; margin: 0 auto; text-align: center;
-            background: rgba(245,240,232,0.14); border: 1px solid rgba(255,245,235,0.28);
-            border-radius: 24px; padding: 24px 20px; color: var(--text-body);
+            --line: rgba(255,245,235,0.18);
+            --accent: #d7b26e;
+            text-align: center;
+            background: rgba(247,242,235,0.16);
+            border: 1px solid rgba(255,245,235,0.28);
+            border-radius: 48px; padding: 26px 26px 22px; color: var(--text-body);
             font-family: 'Noto Serif SC', serif;
             position: relative;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2);
         }
         .sub-card .emblem { width: 46px; height: 46px; line-height: 1; font-size: 22px; margin: 0 auto 10px; border-radius: 50%; border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; color: var(--accent); background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.12), transparent 68%); box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2); position: relative; }
-        .sub-card .emblem::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0.25; }
-        .sub-card .type-label { font-size: 10px; letter-spacing: 4px; color: var(--accent); margin-bottom: 12px; text-transform: uppercase; }
-        .sub-card .sub-date { font-size: 12px; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-        .sub-card .sub-title { font-size: 20px; color: var(--text-strong); letter-spacing: 2px; margin-bottom: 10px; font-family: 'Noto Serif SC', serif; }
-        .sub-card .sub-content { font-size: 13px; color: var(--text-body); line-height: 1.8; white-space: pre-line; }
+        .sub-card .emblem::before { content: ''; position: absolute; }
+        .sub-card .emblem::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--accent); opacity: 0.35; }
+        .sub-card .type-label { font-size: 13px; letter-spacing: 6px; color: var(--accent); margin-bottom: 6px; padding-left: 5px; text-transform: uppercase; text-align: left; }
+        .sub-card .sub-date { font-size: 17px; letter-spacing: 3px; color: var(--text-muted); margin: 8px 0 14px; font-family: 'Cormorant Garamond', serif; font-weight: 500; }
+        .sub-card .sub-title { font-size: 24px; color: var(--text-strong); letter-spacing: 2px; margin: 0 0 16px; font-family: 'Cormorant Garamond', 'Songti SC', 'Noto Serif SC', serif; font-weight: 600; }
+        .sub-card .sub-content { font-size: 14px; color: var(--text-body); line-height: 2.0; white-space: pre-line; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 16px; font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }
         /* 各类型专属配色和装饰 */
         .sub-card.t-meet { --accent: #d7b26e; }
-        .sub-card.t-meet .sub-title::before { content: '✦ '; color: var(--accent); }
+        .sub-card.t-meet .emblem::before { content: '✦'; font-size: 26px; }
+        .sub-card.t-meet .sub-title::before { content: '✦ '; color: var(--accent); opacity: 0.7; }
+        
         .sub-card.t-heartbeat { --accent: #e39aa0; }
-        .sub-card.t-heartbeat .emblem { border-width: 2px; }
+        .sub-card.t-heartbeat .emblem { border-width: 2px; box-shadow: 0 0 0 2px rgba(227,154,160,0.15) inset, 0 0 28px rgba(227,154,160,0.25); }
+        .sub-card.t-heartbeat .emblem::after { border-width: 2px; opacity: 0.5; }
+        
         .sub-card.t-date { --accent: #a9c0d8; }
-        .sub-card.t-date .sub-date { color: var(--accent); }
+        .sub-card.t-date .emblem::before { content: '✿'; font-size: 24px; }
+        .sub-card.t-date .sub-date { color: var(--accent); font-style: italic; }
+        
         .sub-card.t-confess { --accent: #dfa6d2; }
-        .sub-card.t-confess .sub-title { font-style: italic; }
+        .sub-card.t-confess .emblem::before { content: '✎'; font-size: 24px; }
+        .sub-card.t-confess .sub-title { font-style: italic; font-weight: 400; }
+        
         .sub-card.t-together { --accent: #c9a9d0; }
-        .sub-card.t-together .emblem::before { content: '∞'; font-size: 28px; }
+        .sub-card.t-together .emblem::before { content: '∞'; font-size: 30px; }
+        .sub-card.t-together .sub-content { border-top-style: dashed; }
+        
         .sub-card.t-travel { --accent: #7fb6a8; }
-        .sub-card.t-travel .emblem::before { content: '✈'; font-size: 24px; }
+        .sub-card.t-travel .emblem::before { content: '✈'; font-size: 26px; }
+        .sub-card.t-travel .sub-title::after { content: ' ✈'; color: var(--accent); opacity: 0.6; }
+        
         .sub-card.t-propose { --accent: #e2b07a; }
-        .sub-card.t-propose .emblem { border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%; }
+        .sub-card.t-propose .emblem { border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%; box-shadow: 0 0 0 2px rgba(226,176,122,0.12) inset, 0 0 32px rgba(226,176,122,0.3); }
+        .sub-card.t-propose .emblem::after { border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%; }
+        
         .sub-card.t-engage { --accent: #b99a72; }
-        .sub-card.t-engage .sub-title { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+        .sub-card.t-engage .emblem::before { content: '❁'; font-size: 26px; }
+        .sub-card.t-engage .sub-title { text-decoration: underline; text-decoration-color: var(--accent); }
         .preview-title { font-size: 13px; color: var(--text-muted); margin: 6px 0 12px; letter-spacing: 1px; }
         .form-grid {
             display: grid;
