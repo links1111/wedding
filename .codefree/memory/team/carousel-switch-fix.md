@@ -2,11 +2,11 @@
 name: carousel-switch-fix
 type: project
 scope: team
-description: 婚礼请柬系统轮播图切换修复方案：
+description: "婚礼请柬系统轮播图切换修复方案： 根本原因：performFadeSwitch 过渡完成后，所有新图片的 inline style opacity 被设为 '1'，覆盖了 CSS .slide { opacity: 0 } 和 .slide.active { opacity: 1 } 的样式控制，导..."
 created: "2026-09-08T03:34:53.284Z"
-updated: "2026-09-08T03:55:39.506Z"
+updated: "2026-09-08T04:01:12.647Z"
 ---
-婚礼请柬系统轮播图切换修复方案：
+婚礼请柬系统轮播图切换修复方案： 根本原因：performFadeSwitch 过渡完成后，所有新图片的 inline style opacity 被设为 '1'，覆盖了 CSS .slide { opacity: 0 } 和 .slide.active { opacity: 1 } 的样式控制，导致 active 类切换失效，所有图片叠在一起。 修复方案：在 0.8 秒过渡结束后，清除所有新图片的 inline style opacity 和 transition，让 CSS class 重新控制可见性。 轮播图自动播放间隔：4 秒。
 
 核心问题：在 performFadeSwitch 切换卡片时，旧图片尚未移除，carShow 函数通过 querySelectorAll('.slide') 获取的幻灯片数量与 carList 长度不一致，导致 carIdx 计算错乱，定时器启动后图片无法正确切换。
 

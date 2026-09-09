@@ -14,3 +14,6 @@ logs/*.log
 # 每场婚礼的媒体目录（运行期按请柬 token 生成，勿跟踪）
 web/static/*/images/
 web/static/*/music/
+
+.codefree
+.codefree-mem

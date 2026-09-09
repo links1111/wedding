@@ -88,51 +88,55 @@
         }
         .carousel-bg .slide.active { opacity: 1; }
         .invitation-card {
-            /* 方案一：莫兰迪粉 + 灰蓝绿 - 法式轻奢 */
-            --card-rgb: 255, 255, 255;
-            --card-alpha: 0.92;
-            --glass-blur: 20px;
-            --glass-saturate: 1.4;
-            /* 文字与装饰色（莫兰迪色系） */
-            --text-strong: #4a403a;
-            --text-body: #5a4f48;
-            --text-muted: rgba(74, 64, 58, 0.75);
-            --text-dim: rgba(74, 64, 58, 0.55);
-            --line: rgba(74, 64, 58, 0.15);
-            --line-soft: rgba(74, 64, 58, 0.1);
-            --line-bright: rgba(74, 64, 58, 0.35);
-            --line-strong: rgba(74, 64, 58, 0.22);
-            --card-inset: rgba(212, 165, 165, 0.12);
-            --glow: rgba(74, 64, 58, 0.15);
-            --btn-bg: rgba(212, 165, 165, 0.15);
-            --btn-border: rgba(212, 165, 165, 0.45);
-            --btn-bg-hover: rgba(212, 165, 165, 0.25);
-            --btn-border-hover: rgba(212, 165, 165, 0.6);
             position: relative;
             z-index: 10;
             max-width: 460px;
             width: 100%;
-            background: rgba(var(--card-rgb), var(--card-alpha));
-            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-            border-radius: 48px;
-            padding: 26px 26px 22px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--card-inset) inset;
-            border: 1px solid var(--line-strong);
+            background: transparent;
             color: var(--text-body);
-            text-shadow: 0 2px 12px var(--glow);
         }
-        .invitation-card * { text-shadow: 0 2px 12px var(--glow); }
-        /* 卡片内容超高时卡片内部滚动，保证整页固定、一次翻一卡 */
+        /* 标题和重要文字加粗 + 阴影，提高可读性 */
+        .invitation-card h1,
+        .invitation-card h2,
+        .invitation-card h3,
+        .invitation-card .names,
+        .invitation-card .date-main,
+        .invitation-card .section-title {
+            font-weight: 600;
+            text-shadow: var(--ts-strong);
+        }
+        .invitation-card .date-sub,
+        .invitation-card .section-sub,
+        .invitation-card .section-time,
+        .invitation-card .footer-line,
+        .invitation-card .handwrite {
+            text-shadow: var(--ts-body);
+        }
+        .invitation-card .ornament-line,
+        .invitation-card .ornament-dot {
+            text-shadow: var(--ts-muted);
+        }
+        /* 禁止卡片内部滚动，上下滑动触发卡片切换 */
         .invitation-card, .sub-card {
             max-height: calc(100dvh - 40px);
-            overflow-y: auto;
-            scrollbar-width: none;
-            -webkit-overflow-scrolling: touch;
+            overflow-y: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
-        .invitation-card::-webkit-scrollbar,
-        .sub-card::-webkit-scrollbar { display: none; }
-        /* 亮背景 → 深色文字，始终保持最佳对比度 */
+        /* 屏蔽复制事件 */
+        .invitation-card, .sub-card,
+        .invitation-card *, .sub-card * {
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-drag: none !important;
+            -khtml-user-select: none !important;
+        }
+        /* 亮背景 → 深色文字 + 浅色阴影，始终保持最佳对比度 */
         .invitation-card.light-bg {
             --text-strong: #1f1a15;
             --text-body: #2a241e;
@@ -148,23 +152,18 @@
             --btn-border: rgba(42,36,30,0.42);
             --btn-bg-hover: rgba(42,36,30,0.16);
             --btn-border-hover: rgba(42,36,30,0.55);
+            /* 亮背景：深色文字配浅色光晕阴影 */
+            --ts-strong: 0 1px 2px rgba(255,255,255,0.6), 0 0 6px rgba(255,255,255,0.3);
+            --ts-body: 0 1px 1px rgba(255,255,255,0.5), 0 0 4px rgba(255,255,255,0.2);
+            --ts-muted: 0 1px 1px rgba(255,255,255,0.4);
         }
-        /* 子卡片：与主请柬同款磨砂玻璃面；宽一致、高与主卡逐屏相等(JS 同步)。
-           版式向主请柬看齐：徽记 / 章节眉 / 衬线大字标题 / 正文排版 / 落款点缀 */
+        /* 子卡片：文字直接悬浮，无卡片背景 */
         .sub-card {
-            /* 方案一：莫兰迪粉 + 灰蓝绿 */
-            --card-rgb: 255, 255, 255;
-            --card-alpha: 0.92;
-            --glass-blur: 20px;
-            --glass-saturate: 1.4;
-            /* 文字与装饰色（莫兰迪色系） */
             --text-strong: #4a403a; --text-body: #5a4f48;
             --text-muted: rgba(74, 64, 58, 0.75); --text-dim: rgba(74, 64, 58, 0.55);
-            --line: rgba(74, 64, 58, 0.15);
-            --line-soft: rgba(74, 64, 58, 0.1);
-            --line-strong: rgba(74, 64, 58, 0.22);
-            --card-inset: rgba(212, 165, 165, 0.12);
-            --glow: rgba(74, 64, 58, 0.15);
+            --ts-strong: 0 1px 3px rgba(0,0,0,0.4), 0 0 8px rgba(0,0,0,0.2);
+            --ts-body: 0 1px 2px rgba(0,0,0,0.3), 0 0 6px rgba(0,0,0,0.15);
+            --ts-muted: 0 1px 2px rgba(0,0,0,0.25);
             position: relative;
             z-index: 10;
             display: flex;
@@ -173,48 +172,35 @@
             justify-content: flex-start;
             max-width: 460px;
             width: 100%;
-            background:
-                radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.10), transparent 52%),
-                rgba(var(--card-rgb), var(--card-alpha));
-            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-            border-radius: 48px;
-            padding: 26px 26px 22px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--card-inset) inset;
-            border: 1px solid var(--line-strong);
+            background: transparent;
             color: var(--text-body);
             text-align: center;
         }
         /* 安全居中：内容超高时也能完整滚动（首尾元素用 auto 外边距平衡垂直空间） */
         .sub-card > :first-child { margin-top: auto; }
         .sub-card > :last-child  { margin-bottom: auto; }
-        .sub-card * { text-shadow: 0 2px 12px var(--glow); }
         .sub-card .emblem {
             position: relative;
             display: inline-flex; align-items: center; justify-content: center;
-            width: 58px; height: 58px; border-radius: 50%;
-            border: 1px solid var(--accent);
+            width: 40px; height: 40px;
             color: var(--accent);
-            font-size: 24px; line-height: 1;
-            margin-bottom: 18px;
-            background: radial-gradient(circle at 50% 32%, rgba(255,255,255,0.12), transparent 68%);
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.2);
-        }
-        .sub-card .emblem::after {
-            content: ''; position: absolute; inset: -7px; border-radius: 50%;
-            border: 1px solid var(--accent); opacity: 0.35;
+            font-size: 20px; line-height: 1;
+            margin-bottom: 12px;
+            background: transparent;
         }
         .sub-card .type-label {
             font-family: 'Cormorant Garamond', 'Songti SC', 'Noto Serif SC', serif;
             font-size: 13px; letter-spacing: 6px; text-transform: uppercase;
             color: var(--accent); font-weight: 500;
             margin-bottom: 6px; padding-left: 5px;
+            text-shadow: var(--ts-muted);
         }
         .sub-card .sub-date {
             font-family: 'Cormorant Garamond', serif;
             font-size: 17px; font-weight: 500; letter-spacing: 3px;
             color: var(--accent);
             margin: 8px 0 14px;
+            text-shadow: var(--ts-muted);
         }
         .sub-card .sub-title {
             font-family: 'Cormorant Garamond', 'Songti SC', 'Noto Serif SC', 'SimSun', serif;
@@ -222,102 +208,90 @@
             font-size: 30px; line-height: 1.3; letter-spacing: 3px; padding-left: 3px;
             color: var(--text-strong);
             margin: 0 0 16px;
+            text-shadow: var(--ts-strong);
         }
         .sub-card .sub-content {
             font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             font-size: 14px; font-weight: 400; line-height: 2.0;
             letter-spacing: 1px; color: var(--text-body);
             width: 100%;
-            padding-top: 14px;
-            border-top: 1px solid var(--line);
+            text-shadow: var(--ts-body);
         }
         .sub-card .sub-flourish {
             font-size: 9px; letter-spacing: 7px; color: var(--text-dim);
             margin-top: 18px; padding-left: 6px;
+            text-shadow: var(--ts-muted);
         }
         .sub-card.light-bg {
             --text-strong: #1f1a15; --text-body: #2a241e;
             --text-muted: rgba(30,25,20,0.85); --text-dim: rgba(30,25,20,0.62);
-            --line: rgba(42,36,30,0.2);
-            --line-soft: rgba(42,36,30,0.12);
-            --line-strong: rgba(42,36,30,0.3);
-            --card-inset: rgba(42,36,30,0.08);
-            --glow: rgba(255,255,255,0.5);
-            border-color: rgba(42,36,30,0.3);
-            background:
-                radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.55), transparent 52%),
-                rgba(var(--card-rgb), var(--card-alpha));
+            --ts-strong: 0 1px 2px rgba(0,0,0,0.3), 0 0 6px rgba(0,0,0,0.15);
+            --ts-body: 0 1px 1px rgba(0,0,0,0.25), 0 0 4px rgba(0,0,0,0.1);
+            --ts-muted: 0 1px 1px rgba(0,0,0,0.2);
         }
-        /* 类型专属点缀色和装饰 - 莫兰迪色系 */
+        /* ===== 类型专属设计 - 莫兰迪色系 · 个性化高级卡片 ===== */
+
+        /* 1. 相遇 */
         .sub-card.t-meet {
-            --accent: #d4a5a5; /* 干枯玫瑰粉 */
+            --accent: #d4a5a5;
         }
-        .sub-card.t-meet .emblem::before { content: '✦'; font-size: 26px; }
-        .sub-card.t-meet .sub-title::before { content: '✦ '; color: var(--accent); opacity: 0.7; }
-        
+        .sub-card.t-meet .emblem::before { content: '✦'; }
+
+        /* 2. 心动 */
         .sub-card.t-heartbeat {
-            --accent: #e8c4c4; /* 浅玫瑰粉 */
+            --accent: #e8c4c4;
         }
-        .sub-card.t-heartbeat .emblem {
-            border-width: 2px;
-            box-shadow: 0 0 0 2px rgba(232, 196, 196, 0.2) inset, 0 0 28px rgba(232, 196, 196, 0.25);
+        .sub-card.t-heartbeat .emblem::before { content: '♥'; }
+
+        /* 3. 约会 */
+        .sub-card.t-date {
+            --accent: #84a59d;
         }
-        .sub-card.t-heartbeat .emblem::after {
-            border-width: 2px;
+        .sub-card.t-date .emblem::before { content: '✿'; }
+        .sub-card.t-date .sub-date {
+            font-style: italic;
+            font-size: 19px;
+        }
+
+        /* 4. 表白 */
+        .sub-card.t-confess {
+            --accent: #b89090;
+        }
+        .sub-card.t-confess .emblem::before { content: '✎'; }
+
+        /* 5. 在一起 */
+        .sub-card.t-together {
+            --accent: #a3c4bc;
+        }
+        .sub-card.t-together .emblem::before { content: '∞'; }
+
+        /* 6. 旅行 */
+        .sub-card.t-travel {
+            --accent: #6a8a85;
+        }
+        .sub-card.t-travel .emblem::before { content: '✈'; }
+
+        /* 7. 求婚 */
+        .sub-card.t-propose {
+            --accent: #d4a5a5;
+        }
+        .sub-card.t-propose .emblem::before { content: '♢'; }
+
+        /* 8. 订婚 */
+        .sub-card.t-engage {
+            --accent: #d4a5a5;
+        }
+        .sub-card.t-engage .emblem::before { content: '❁'; }
+        
+        .sub-card.t-engage .sub-flourish::before {
+            content: '❁  ';
+            color: var(--accent);
             opacity: 0.5;
         }
-        
-        .sub-card.t-date {
-            --accent: #84a59d; /* 灰蓝绿 */
-        }
-        .sub-card.t-date .emblem::before { content: '✿'; font-size: 24px; }
-        .sub-card.t-date .sub-date {
+        .sub-card.t-engage .sub-flourish::after {
+            content: '  ❁';
             color: var(--accent);
-            font-style: italic;
-        }
-        
-        .sub-card.t-confess {
-            --accent: #b89090; /* 深玫瑰粉 */
-        }
-        .sub-card.t-confess .emblem::before { content: '✎'; font-size: 24px; }
-        .sub-card.t-confess .sub-title {
-            font-style: italic;
-            font-weight: 400;
-        }
-        
-        .sub-card.t-together {
-            --accent: #a3c4bc; /* 浅灰蓝绿 */
-        }
-        .sub-card.t-together .emblem::before { content: '∞'; font-size: 30px; }
-        .sub-card.t-together .sub-content {
-            border-top-style: dashed;
-        }
-        
-        .sub-card.t-travel {
-            --accent: #6a8a85; /* 深灰蓝绿 */
-        }
-        .sub-card.t-travel .emblem::before { content: '✈'; font-size: 26px; }
-        .sub-card.t-travel .sub-title::after { content: ' ✈'; color: var(--accent); opacity: 0.6; }
-        
-        .sub-card.t-propose {
-            --accent: #d4a5a5; /* 干枯玫瑰粉 */
-        }
-        .sub-card.t-propose .emblem {
-            border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%;
-            box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.15) inset, 0 0 32px rgba(201, 169, 110, 0.25);
-        }
-        .sub-card.t-propose .emblem::after {
-            border-radius: 60% 60% 60% 60% / 70% 70% 40% 40%;
-        }
-        
-        .sub-card.t-engage {
-            --accent: #d4a5a5; /* 干枯玫瑰粉 */
-        }
-        .sub-card.t-engage .emblem::before { content: '❁'; font-size: 26px; }
-        .sub-card.t-engage .sub-title {
-            text-decoration: underline;
-            text-decoration-color: var(--accent);
-            text-decoration-thickness: 2px;
+            opacity: 0.5;
         }
         /* 亮底：同色相加深保证可读（无 color-mix 时退回原点缀色） */
         .sub-card.light-bg .emblem {
@@ -716,7 +690,7 @@
         }
         .rsvp-end .re-field input::-webkit-outer-spin-button,
         .rsvp-end .re-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
-        .rsvp-end .re-field input[type=number] { -moz-appearance: textfield; }
+        .rsvp-end .re-field input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         .rsvp-end .re-field textarea { resize: none; min-height: 54px; }
         .rsvp-end .re-field input::placeholder,
         .rsvp-end .re-field textarea::placeholder { color: rgba(74, 64, 58, 0.35); }
@@ -1012,10 +986,25 @@
             }
 
             // 亮背景(brightness>150) → 深色文字；否则浅色文字
-            // 文字颜色随时间平滑渐变（时长与背景交叉淡化一致），而非瞬间切换
+            // 文字颜色和阴影随时间平滑渐变（时长与背景交叉淡化一致），而非瞬间切换
+            // PALETTES 包含文字颜色和阴影参数，f=0 为暗背景配色，f=1 为亮背景配色
             const PALETTES = {
-                dark:  { strong: [255,255,255,1], body: [250,245,238,1], muted: [255,248,240,0.9], dim: [255,248,240,0.65], glow: [0,0,0,0.35] },
-                light: { strong: [31,26,21,1], body: [42,36,30,1], muted: [30,25,20,0.85], dim: [30,25,20,0.65], glow: [255,255,255,0.35] }
+                dark:  {
+                    strong: [255,255,255,1], body: [250,245,238,1],
+                    muted: [255,248,240,0.9], dim: [255,248,240,0.65],
+                    glow: [0,0,0,0.35],
+                    // 暗背景：浅色文字 + 深色阴影
+                    tsStrong: [0,0,0,0.4], tsBody: [0,0,0,0.3], tsMuted: [0,0,0,0.25],
+                    tsStrongBlur: [0,0,0,0.2], tsBodyBlur: [0,0,0,0.15]
+                },
+                light: {
+                    strong: [31,26,21,1], body: [42,36,30,1],
+                    muted: [30,25,20,0.85], dim: [30,25,20,0.65],
+                    glow: [255,255,255,0.35],
+                    // 亮背景：深色文字 + 浅色阴影
+                    tsStrong: [255,255,255,0.6], tsBody: [255,255,255,0.5], tsMuted: [255,255,255,0.4],
+                    tsStrongBlur: [255,255,255,0.3], tsBodyBlur: [255,255,255,0.2]
+                }
             };
             let colorFactor = null; // null = 未初始化（首图直接落位）
             let colorAnim = null;
@@ -1029,6 +1018,18 @@
                     : 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + c[3].toFixed(2) + ')';
                 card.style.setProperty(name, col);
             }
+            // 构建阴影字符串：0 1px Npx rgba(r,g,b,a), 0 0 Mpx rgba(r,g,b,a)
+            function makeShadow(c1, c2) {
+                return '0 1px 3px rgba(' + Math.round(c1[0]) + ',' + Math.round(c1[1]) + ',' + Math.round(c1[2]) + ',' + c1[3].toFixed(2) + '),'
+                     + ' 0 0 8px rgba(' + Math.round(c2[0]) + ',' + Math.round(c2[1]) + ',' + Math.round(c2[2]) + ',' + c2[3].toFixed(2) + ')';
+            }
+            function makeShadowBody(c1, c2) {
+                return '0 1px 2px rgba(' + Math.round(c1[0]) + ',' + Math.round(c1[1]) + ',' + Math.round(c1[2]) + ',' + c1[3].toFixed(2) + '),'
+                     + ' 0 0 6px rgba(' + Math.round(c2[0]) + ',' + Math.round(c2[1]) + ',' + Math.round(c2[2]) + ',' + c2[3].toFixed(2) + ')';
+            }
+            function makeShadowMuted(c1) {
+                return '0 1px 2px rgba(' + Math.round(c1[0]) + ',' + Math.round(c1[1]) + ',' + Math.round(c1[2]) + ',' + c1[3].toFixed(2) + ')';
+            }
             function applyPalette(card, f) {
                 const p0 = PALETTES.dark, p1 = PALETTES.light;
                 setColorVar(card, '--text-strong', lerpColor(p0.strong, p1.strong, f));
@@ -1036,29 +1037,61 @@
                 setColorVar(card, '--text-muted', lerpColor(p0.muted, p1.muted, f));
                 setColorVar(card, '--text-dim', lerpColor(p0.dim, p1.dim, f));
                 setColorVar(card, '--glow', lerpColor(p0.glow, p1.glow, f));
+                // 动态生成文字阴影
+                const ts1 = lerpColor(p0.tsStrong, p1.tsStrong, f);
+                const ts1b = lerpColor(p0.tsStrongBlur, p1.tsStrongBlur, f);
+                const ts2 = lerpColor(p0.tsBody, p1.tsBody, f);
+                const ts2b = lerpColor(p0.tsBodyBlur, p1.tsBodyBlur, f);
+                const ts3 = lerpColor(p0.tsMuted, p1.tsMuted, f);
+                card.style.setProperty('--ts-strong', makeShadow(ts1, ts1b));
+                card.style.setProperty('--ts-body', makeShadowBody(ts2, ts2b));
+                card.style.setProperty('--ts-muted', makeShadowMuted(ts3));
             }
-            function applyBrightness(index) {
-                const card = document.querySelector('.invitation-card');
-                const b = slideBrightness[index];
-                if (!card || b == null) return;
+            // 获取当前可见的子卡片元素（如果有的话）
+            function getVisibleSubCard() {
+                const scenes = document.querySelectorAll('.scene');
+                const vh = window.innerHeight;
+                let best = null;
+                scenes.forEach(function(s) {
+                    const r = s.getBoundingClientRect();
+                    const visible = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+                    if (visible / vh > 0.5) {
+                        const sub = s.querySelector('.sub-card');
+                        if (sub) best = sub;
+                    }
+                });
+                return best;
+            }
+            // 同时更新主卡片和当前可见子卡片的颜色/阴影
+            function applyBrightnessToAll(f) {
+                const mc = document.querySelector('.invitation-card');
+                if (mc) applyPalette(mc, f);
+                const sc = getVisibleSubCard();
+                if (sc) applyPalette(sc, f);
+            }
+            function applyBrightness(b) {
+                if (b == null) return;
                 const target = b > 150 ? 1 : 0;
+                const mc = document.querySelector('.invitation-card');
                 // 结构性颜色（边框/按钮等）仍由 .light-bg 类即时切换
-                card.classList.toggle('light-bg', target === 1);
+                if (mc) mc.classList.toggle('light-bg', target === 1);
+                const sc = getVisibleSubCard();
+                if (sc) sc.classList.toggle('light-bg', target === 1);
                 if (colorFactor === null) {
                     colorFactor = target;
-                    applyPalette(card, target);
+                    applyBrightnessToAll(target);
                     return;
                 }
                 if (target === colorFactor) return;
                 if (colorAnim) cancelAnimationFrame(colorAnim);
                 const start = colorFactor;
                 const t0 = performance.now();
-                const dur = 1800;
+                const dur = 800; // 与轮播图淡入淡出同步
                 const ease = function(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; };
                 function frame(now) {
                     const t = Math.min((now - t0) / dur, 1);
                     colorFactor = start + (target - start) * ease(t);
-                    applyPalette(card, colorFactor);
+                    applyBrightnessToAll(colorFactor);
                     if (t < 1) colorAnim = requestAnimationFrame(frame);
                     else colorFactor = target;
                 }
@@ -1098,6 +1131,12 @@
                     d.style.backgroundImage = "url('" + url + "')";
                     carouselEl.appendChild(d);
                 });
+                // 初始化首图亮度自适应
+                if (carList.length) {
+                    computeBrightness(carList[0], function(b) {
+                        if (b != null) applyBrightness(b);
+                    });
+                }
                 startCar();
             }
             // 平滑切换列表：立即执行淡入淡出切换，同时预加载后续图片
@@ -1170,6 +1209,12 @@
                     
                     carList = newList;
                     carIdx = 0;
+                    // 切换完成后重新计算亮度，更新文字颜色和阴影
+                    if (carList.length) {
+                        computeBrightness(carList[0], function(b) {
+                            if (b != null) applyBrightness(b);
+                        });
+                    }
                     startCar();
                 }, 800); // 等待淡入淡出完成
             }
@@ -1182,12 +1227,10 @@
                 slides.forEach(function(slide, k) {
                     slide.classList.toggle('active', k === carIdx);
                 });
+                // 使用 applyBrightness 平滑过渡文字颜色和阴影
                 if (carList.length) {
                     computeBrightness(carList[carIdx], function(b) {
-                        if (b != null) {
-                            const mc = document.querySelector('.invitation-card');
-                            if (mc) mc.classList.toggle('light-bg', b > 150);
-                        }
+                        if (b != null) applyBrightness(b);
                     });
                 }
             }
@@ -1436,16 +1479,16 @@
             });
 
             // ===== 构建故事子卡与末尾回执场景 =====
-            // 8 种类型：徽记符号 + 中文标
+            // 8 种类型：徽记符号 + 中文标 + 专属装饰
             var TYPE_META = {
-                meet: { g: '✧', label: '相遇' },
-                heartbeat: { g: '♡', label: '心动瞬间' },
-                date: { g: '✿', label: '约会' },
-                confess: { g: '✎', label: '表白' },
-                together: { g: '∞', label: '在一起' },
-                travel: { g: '✈', label: '旅行' },
-                propose: { g: '♥', label: '求婚' },
-                engage: { g: '❁', label: '订婚' }
+                meet:      { g: '✦', label: '相遇',     flourish: '✦  ✧  ✦' },
+                heartbeat: { g: '♡', label: '心动瞬间', flourish: '♡  ❦  ♡' },
+                date:      { g: '✿', label: '约会',     flourish: '✿  ❀  ✿' },
+                confess:   { g: '✎', label: '表白',     flourish: '✎  ❦  ✎' },
+                together:  { g: '∞', label: '在一起',   flourish: '∞  ❧  ∞' },
+                travel:    { g: '✈', label: '旅行',     flourish: '✈  ❖  ✈' },
+                propose:   { g: '♥', label: '求婚',     flourish: '♢  ♥  ♢' },
+                engage:    { g: '❁', label: '订婚',     flourish: '❁  ❀  ❁' }
             };
 
             // 子卡与主请柬等高：以主请柬当前实际高度为准，令所有故事子卡高度一致且与主卡相等
@@ -1524,14 +1567,20 @@
                     }
                     const fl = document.createElement('div');
                     fl.className = 'sub-flourish';
-                    fl.textContent = '✦  ✧  ✦';
+                    fl.textContent = meta.flourish || '✦  ✧  ✦';
                     box.appendChild(fl);
                     sec.appendChild(box);
                     holder.appendChild(sec);
                     // 该卡文字颜色随其首图亮度自适应
                     if (urls.length) {
                         computeBrightness(urls[0], function(b) {
-                            if (b != null && box) box.classList.toggle('light-bg', b > 150);
+                            if (b != null && box) {
+                                const isLight = b > 150;
+                                box.classList.toggle('light-bg', isLight);
+                                // 同步应用文字颜色和阴影（使用当前 colorFactor 或直接按亮度设置）
+                                const f = (colorFactor !== null) ? colorFactor : (isLight ? 1 : 0);
+                                applyPalette(box, f);
+                            }
                         });
                     }
                 });
@@ -1713,6 +1762,46 @@
                     clearTimeout(_corr);
                     _corr = setTimeout(snapCorrectToScene, 120);
                 }, { passive: true });
+                
+                // 屏蔽卡片内的复制、拖拽等事件
+                const cardElements = document.querySelectorAll('.invitation-card, .sub-card');
+                cardElements.forEach(function(card) {
+                    // 禁止右键菜单
+                    card.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    
+                    // 禁止选中文本
+                    card.addEventListener('selectstart', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    
+                    // 禁止复制
+                    card.addEventListener('copy', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    
+                    // 禁止剪切
+                    card.addEventListener('cut', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    
+                    // 禁止粘贴
+                    card.addEventListener('paste', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                    
+                    // 禁止拖拽
+                    card.addEventListener('dragstart', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                });
             }
 
             // 轮播图列表随当前可见页面切换（平滑淡入）
@@ -1726,9 +1815,13 @@
                 let lastActiveIdx = 0;
                 let isScrolling = false;
                 let scrollTimer = null;
+                let isSwitching = false; // 防止连续切换
                 
                 if ('IntersectionObserver' in window) {
                     const io = new IntersectionObserver(function(entries) {
+                        // 如果正在切换中，忽略新的切换请求
+                        if (isSwitching) return;
+                        
                         // 找到当前最可见的卡片（intersectionRatio 最大的）
                         let bestIdx = activeIdx;
                         let bestRatio = 0;
@@ -1740,8 +1833,10 @@
                             }
                         });
                         
-                        // 只有当最可见的卡片超过阈值才更新
-                        if (bestRatio >= 0.4 && bestIdx !== activeIdx) {
+                        // 只有当最可见的卡片超过阈值且与当前卡片不同才更新
+                        if (bestRatio >= 0.4 && bestIdx !== activeIdx && bestIdx !== lastActiveIdx) {
+                            isSwitching = true; // 标记正在切换
+                            lastActiveIdx = activeIdx; // 记录上一次激活的卡片
                             activeIdx = bestIdx;
                             
                             // 防抖：等待滚动稳定后再切换轮播图
@@ -1753,6 +1848,11 @@
                                 // 该页没有专属图片：保持上一页的列表继续轮播，不空屏
                                 if (!list.length) return;
                                 if (list.join('|') !== carList.join('|')) smoothSwitchCarousel(list);
+                                
+                                // 切换完成后解除锁定
+                                setTimeout(function() {
+                                    isSwitching = false;
+                                }, 1000); // 1 秒内不允许再次切换
                             }, 100); // 100ms 防抖
                         }
                     }, { threshold: [0.1, 0.25, 0.4, 0.6, 0.8] });

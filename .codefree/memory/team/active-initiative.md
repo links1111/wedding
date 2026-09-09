@@ -2,10 +2,8 @@
 name: active-initiative
 type: project
 scope: team
-description: ------；婚礼请柬系统当前工作流与待办事项：
-updated: "2026-09-08T03:59:42.050Z"
----
----
+description: "婚礼请柬系统当前工作流与待办事项：编辑页面和管理页面右上角的"查看请柬"按钮已修复跳转逻辑：管理后台通过 /admin/{admin_token} 访问，必须从 /api/a/:token/meta 接口返回数据中的 token 字段获取真正的请柬 token，并构建跳转链接 /w/{WEDDING..."
+updated: "2026-09-08T04:01:25.261Z"
 ---
 婚礼请柬系统当前工作流与待办事项：
 1. 编辑页面和管理页面右上角的"查看请柬"按钮已修复跳转逻辑：管理后台通过 /admin/{admin_token} 访问，必须从 /api/a/:token/meta 接口返回数据中的 token 字段获取真正的请柬 token，并构建跳转链接 /w/{WEDDING_TOKEN}，禁止直接使用路径中的 admin_token 作为请柬 token。
